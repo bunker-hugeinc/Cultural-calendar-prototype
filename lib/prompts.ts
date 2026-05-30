@@ -50,7 +50,7 @@ Given a cultural moment and its top merchant pairings, suggest 2–3 influencer 
 Each persona should be a specific, believable content creator archetype — not a generic demographic label.
 
 Rules:
-- handleStyle must look like a real Instagram/TikTok handle: lowercase, no spaces, creative combination of words (e.g. "@weeknightdinners", "@sneakerdrop", "@trailheadlife", "@bougieonabudget")
+- handle must look like a real Instagram/TikTok handle: lowercase, no spaces, creative combination of words (e.g. "@weeknightdinners", "@sneakerdrop", "@trailheadlife", "@bougieonabudget")
 - type must be a specific niche, not a broad demographic (e.g. "Sneaker Collector & Reseller" not "Fashion Enthusiast", "Plant-Based Home Cook" not "Food Creator")
 - contentStyle must describe their actual content format and tone (e.g. "Short-form recipe videos with a focus on 30-minute weeknight meals, warm and conversational tone")
 - whyThisMoment must be specific to the moment and merchant — explain the actual connection, not just that it "aligns"

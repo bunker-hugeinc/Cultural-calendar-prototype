@@ -8,7 +8,7 @@ const DISP = `"SF Pro Display",-apple-system,BlinkMacSystemFont,sans-serif`;
 
 interface Persona {
   type: string;
-  handleStyle: string;
+  handle: string;
   audienceSize: string;
   contentStyle: string;
   whyThisMoment: string;
@@ -19,7 +19,8 @@ interface InfluencerPanelProps {
   hasPairings: boolean;
 }
 
-function avatarInitials(handle: string): string {
+function avatarInitials(handle: string | undefined | null): string {
+  if (!handle) return "??";
   return handle.replace(/^@/, "").slice(0, 2).toUpperCase();
 }
 
@@ -69,7 +70,7 @@ export function InfluencerPanel({ momentId, hasPairings }: InfluencerPanelProps)
     setSaving(true);
     const text = personas
       .map(p =>
-        `${p.type} · ${p.handleStyle} · ${p.audienceSize}\n${p.contentStyle}\nWhy: ${p.whyThisMoment}`
+        `${p.type} · ${p.handle} · ${p.audienceSize}\n${p.contentStyle}\nWhy: ${p.whyThisMoment}`
       )
       .join("\n\n");
     const notesText = `--- Influencer Personas (AI-generated) ---\n${text}`;
@@ -177,13 +178,13 @@ export function InfluencerPanel({ momentId, hasPairings }: InfluencerPanelProps)
                 fontFamily: MONO, fontSize: 10, fontWeight: 700, color: "#9c2050",
                 flexShrink: 0,
               }}>
-                {avatarInitials(p.handleStyle)}
+                {avatarInitials(p.handle)}
               </div>
 
               {/* Content */}
               <div>
                 <div style={{ display: "flex", alignItems: "baseline", gap: 8, flexWrap: "wrap", marginBottom: 4 }}>
-                  <span style={{ fontFamily: DISP, fontSize: 14, fontWeight: 700, color: "#111" }}>{p.handleStyle}</span>
+                  <span style={{ fontFamily: DISP, fontSize: 14, fontWeight: 700, color: "#111" }}>{p.handle}</span>
                   <span style={{ fontFamily: MONO, fontSize: 8, letterSpacing: ".1em", textTransform: "uppercase", color: "#9c2050", background: "rgba(220,80,120,.08)", border: "1px solid rgba(220,80,120,.2)", padding: "2px 7px", borderRadius: 4 }}>{p.type}</span>
                   <span style={{ fontFamily: MONO, fontSize: 8, color: "#6e6e80", letterSpacing: ".06em" }}>{p.audienceSize}</span>
                 </div>

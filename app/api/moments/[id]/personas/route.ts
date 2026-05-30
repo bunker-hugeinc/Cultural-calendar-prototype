@@ -14,7 +14,7 @@ if (!process.env.GROQ_API_KEY) {
 
 export interface InfluencerPersona {
   type: string;
-  handleStyle: string;
+  handle: string;
   audienceSize: string;
   contentStyle: string;
   whyThisMoment: string;
