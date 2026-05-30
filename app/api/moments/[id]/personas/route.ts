@@ -5,6 +5,8 @@ import { eq, desc } from "drizzle-orm";
 import { groq, parseJSON } from "@/lib/ai";
 import { PERSONAS_SYSTEM_PROMPT } from "@/lib/prompts";
 
+export const maxDuration = 60;
+
 if (!process.env.GROQ_API_KEY) {
   console.warn("[personas] GROQ_API_KEY is not set");
 }
