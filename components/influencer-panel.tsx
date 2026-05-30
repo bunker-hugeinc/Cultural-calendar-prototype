@@ -42,14 +42,23 @@ export function InfluencerPanel({ momentId, hasPairings }: InfluencerPanelProps)
     setSaved(false);
     try {
       const res = await fetch(`/api/moments/${momentId}/personas`, { method: "POST" });
-      const data = await res.json();
+      let data: { personas?: Persona[]; error?: string; details?: string } = {};
+      try {
+        data = await res.json();
+      } catch {
+        // Response body wasn't valid JSON (e.g. upstream gateway error)
+        setError(`Server error (${res.status}) — please try again`);
+        return;
+      }
       if (!res.ok) {
-        setError(data.error ?? "Failed to generate personas");
+        setError(data.error ?? `Request failed (${res.status})`);
       } else {
         setPersonas(data.personas ?? []);
       }
-    } catch {
-      setError("Network error — please try again");
+    } catch (err) {
+      // Network-level failure (offline, DNS, etc.)
+      const msg = err instanceof Error ? err.message : "Unknown error";
+      setError(`Network error — ${msg}`);
     } finally {
       setLoading(false);
     }
