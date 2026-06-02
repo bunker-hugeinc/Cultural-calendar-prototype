@@ -35,25 +35,21 @@ interface ProactiveFeedProps {
 
 type SortKey = "date" | "score" | "category";
 
-// ─── STYLES ──────────────────────────────────────────────────────────────────
-const MONO = `"SF Pro Mono","SFMono-Regular",ui-monospace,monospace`;
-const SANS = `-apple-system,"SF Pro Text",BlinkMacSystemFont,sans-serif`;
-const DISP = `"SF Pro Display",-apple-system,BlinkMacSystemFont,sans-serif`;
-
-const CAT = {
-  gather:  { bg: "rgba(52,168,83,.1)",   bd: "rgba(52,168,83,.55)", txt: "#1a6b2e", solid: "#34a853" },
-  improve: { bg: "rgba(220,80,120,.09)", bd: "rgba(220,80,120,.5)", txt: "#9c2050", solid: "#dc5078" },
-  excite:  { bg: "rgba(37,99,235,.09)",  bd: "rgba(37,99,235,.48)", txt: "#1a3fa8", solid: "#2563eb" },
-} as const;
+// ─── HELPERS ─────────────────────────────────────────────────────────────────
+const CAT_STYLE: Record<string, { pill: string; border: string; why: string }> = {
+  gather:  { pill: "bg-gather/10 text-gather border-gather/30",   border: "border-l-gather",   why: "bg-gather/5 border border-gather/20 text-gather"   },
+  improve: { pill: "bg-improve/10 text-improve border-improve/30", border: "border-l-improve",  why: "bg-improve/5 border border-improve/20 text-improve" },
+  excite:  { pill: "bg-excite/10 text-excite border-excite/30",    border: "border-l-excite",   why: "bg-excite/5 border border-excite/20 text-excite"   },
+};
 
 function catStyle(category: string) {
-  return CAT[category as keyof typeof CAT] ?? CAT.gather;
+  return CAT_STYLE[category as keyof typeof CAT_STYLE] ?? CAT_STYLE.gather;
 }
 
-function scoreStyle(score: number): { bg: string; txt: string } {
-  if (score >= 4)   return { bg: "rgba(22,163,74,.1)",   txt: "#15803d" };
-  if (score >= 2.5) return { bg: "rgba(217,119,6,.1)",   txt: "#b45309" };
-  return               { bg: "rgba(220,38,38,.1)",   txt: "#dc2626" };
+function scoreColor(score: number): string {
+  if (score >= 4)   return "text-apple-green";
+  if (score >= 2.5) return "text-apple-amber";
+  return "text-apple-red";
 }
 
 function formatRange(start: string, end: string | null): string {
@@ -67,7 +63,7 @@ function parseJSON<T>(s: string, fallback: T): T {
   try { return JSON.parse(s); } catch { return fallback; }
 }
 
-// ─── CARD ────────────────────────────────────────────────────────────────────
+// ─── FEED CARD ───────────────────────────────────────────────────────────────
 function FeedCard({
   c,
   exiting,
@@ -84,7 +80,6 @@ function FeedCard({
 }) {
   const [busy, setBusy] = useState<"approve" | "dismiss" | null>(null);
   const cs = catStyle(c.category);
-  const ss = scoreStyle(c.score);
   const partners: string[] = parseJSON(c.partners, []);
   const personas: Persona[] = parseJSON(c.personas, []);
   const hashtags: string[] = parseJSON(c.hashtags, []);
@@ -103,75 +98,50 @@ function FeedCard({
   }
 
   return (
-    <div style={{
-      background: "#fff",
-      border: "1px solid rgba(0,0,0,.1)",
-      borderLeft: `3px solid ${cs.solid}`,
-      borderRadius: 12,
-      overflow: "hidden",
-      opacity: exiting ? 0 : 1,
-      transform: exiting ? "translateY(-4px)" : "none",
-      transition: "opacity .25s, transform .25s",
-      marginBottom: 12,
-    }}>
+    <div className={`card-apple overflow-hidden border-l-4 ${cs.border} mb-3 transition-all duration-250 ${exiting ? "opacity-0 -translate-y-1" : "opacity-100 translate-y-0"}`}>
       {/* Two-column body */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1px 1fr", gap: 0 }}>
+      <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-apple-gray-100">
 
         {/* Left column */}
-        <div style={{ padding: "20px 24px", display: "flex", flexDirection: "column", gap: 14 }}>
-
+        <div className="p-6 flex flex-col gap-4">
           {/* Meta row */}
-          <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+          <div className="flex items-center gap-2 flex-wrap">
             {isNew && (
-              <span style={{ fontFamily: MONO, fontSize: 7.5, fontWeight: 600, letterSpacing: ".18em", textTransform: "uppercase", padding: "3px 9px", borderRadius: 4, background: "rgba(234,179,8,.15)", color: "#854d0e", border: "1px solid rgba(234,179,8,.4)" }}>
+              <span className="badge-apple bg-apple-amber/10 text-apple-amber border border-apple-amber/30 text-[10px]">
                 New
               </span>
             )}
-            <span style={{ fontFamily: MONO, fontSize: 8, fontWeight: 500, letterSpacing: ".18em", textTransform: "uppercase", padding: "3px 9px", borderRadius: 4, background: cs.bg, color: cs.txt, border: `1px solid ${cs.bd}` }}>
-              {c.category}
+            <span className={`badge-apple border capitalize ${cs.pill}`}>{c.category}</span>
+            <span className={`text-xs font-semibold tabular-nums ${scoreColor(c.score)}`}>
+              Score {c.score}/5
             </span>
-            <span style={{ fontFamily: MONO, fontSize: 8.5, fontWeight: 500, letterSpacing: ".08em", padding: "3px 8px", borderRadius: 4, background: ss.bg, color: ss.txt, border: `1px solid ${ss.txt}33` }}>
-              Score {c.score} / 5
-            </span>
-            <span style={{ fontFamily: MONO, fontSize: 8, color: "#6e6e80", letterSpacing: ".06em" }}>
-              {formatRange(c.startDate, c.endDate)}
-            </span>
+            <span className="text-xs text-apple-gray-400">{formatRange(c.startDate, c.endDate)}</span>
           </div>
 
           {/* Moment name */}
-          <div style={{ fontFamily: DISP, fontSize: 26, fontWeight: 800, lineHeight: 1, letterSpacing: "-.02em", color: "#111" }}>
+          <h2 className="text-2xl font-bold tracking-tight text-apple-black leading-tight">
             {c.name}
-          </div>
+          </h2>
 
           {/* Headline */}
-          <div style={{ fontFamily: SANS, fontSize: 13, fontWeight: 500, fontStyle: "italic", color: cs.txt, lineHeight: 1.4 }}>
-            {c.headline}
-          </div>
+          <p className="text-sm font-medium italic text-apple-gray-600 leading-snug">{c.headline}</p>
 
           {/* Body */}
-          <div style={{ fontFamily: SANS, fontSize: 12, color: "#6e6e80", lineHeight: 1.75 }}>
-            {c.body}
-          </div>
+          <p className="text-sm text-apple-gray-400 leading-relaxed">{c.body}</p>
 
           {/* Why this fits */}
-          <div style={{ background: "rgba(37,99,235,.06)", border: "1px solid rgba(37,99,235,.18)", borderRadius: 8, padding: "10px 14px" }}>
-            <div style={{ fontFamily: MONO, fontSize: 7.5, fontWeight: 500, letterSpacing: ".22em", textTransform: "uppercase", color: "#6e6e80", marginBottom: 5 }}>
-              Why this fits
-            </div>
-            <div style={{ fontFamily: SANS, fontSize: 12, color: "#1a3fa8", lineHeight: 1.6 }}>
-              {c.why}
-            </div>
+          <div className={`rounded-xl p-4 ${cs.why}`}>
+            <p className="eyebrow mb-1.5">Why this fits</p>
+            <p className="text-xs leading-relaxed">{c.why}</p>
           </div>
 
           {/* Hook pills */}
           {hooks.length > 0 && (
             <div>
-              <div style={{ fontFamily: MONO, fontSize: 7.5, fontWeight: 500, letterSpacing: ".22em", textTransform: "uppercase", color: "#b0b0ba", marginBottom: 6 }}>
-                Hook type
-              </div>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
+              <p className="eyebrow mb-2">Hook type</p>
+              <div className="flex flex-wrap gap-1.5">
                 {hooks.map(h => (
-                  <span key={h} style={{ fontFamily: MONO, fontSize: 8, letterSpacing: ".1em", textTransform: "uppercase", padding: "4px 9px", borderRadius: 20, border: "1px solid rgba(0,0,0,.1)", color: "#6e6e80", background: "#f5f5f7" }}>
+                  <span key={h} className="badge-apple border border-apple-gray-200 text-apple-gray-600 bg-white text-[10px]">
                     {h}
                   </span>
                 ))}
@@ -180,21 +150,15 @@ function FeedCard({
           )}
         </div>
 
-        {/* Divider */}
-        <div style={{ background: "rgba(0,0,0,.08)" }} />
-
         {/* Right column */}
-        <div style={{ padding: "20px 24px", display: "flex", flexDirection: "column", gap: 20 }}>
-
+        <div className="p-6 flex flex-col gap-5">
           {/* Partner Recommendations */}
           {partners.length > 0 && (
             <div>
-              <div style={{ fontFamily: MONO, fontSize: 7.5, fontWeight: 500, letterSpacing: ".22em", textTransform: "uppercase", color: "#b0b0ba", marginBottom: 8 }}>
-                Partner Recommendations
-              </div>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+              <p className="eyebrow mb-2">Partner Recommendations</p>
+              <div className="flex flex-wrap gap-1.5">
                 {partners.map(p => (
-                  <span key={p} style={{ fontFamily: SANS, fontSize: 11, fontWeight: 500, padding: "4px 10px", borderRadius: 6, border: "1px solid rgba(0,0,0,.1)", background: "#f5f5f7", color: "#333" }}>
+                  <span key={p} className="badge-apple border border-apple-gray-200 text-apple-gray-600 bg-apple-gray-50">
                     {p}
                   </span>
                 ))}
@@ -205,19 +169,17 @@ function FeedCard({
           {/* Influencer Personas */}
           {personas.length > 0 && (
             <div>
-              <div style={{ fontFamily: MONO, fontSize: 7.5, fontWeight: 500, letterSpacing: ".22em", textTransform: "uppercase", color: "#b0b0ba", marginBottom: 8 }}>
-                Influencer Personas
-              </div>
-              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              <p className="eyebrow mb-2">Influencer Personas</p>
+              <div className="flex flex-col gap-3">
                 {personas.map((p, i) => (
-                  <div key={i} style={{ display: "grid", gridTemplateColumns: "auto 1fr", gap: "0 10px" }}>
-                    <div style={{ width: 32, height: 32, borderRadius: "50%", background: "#f0f0f4", border: "1px solid rgba(0,0,0,.1)", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: MONO, fontSize: 9, fontWeight: 600, color: "#6e6e80", flexShrink: 0 }}>
+                  <div key={i} className="flex items-start gap-3">
+                    <div className="w-8 h-8 rounded-full bg-apple-gray-100 border border-apple-gray-200 flex items-center justify-center text-[9px] font-semibold text-apple-gray-400 shrink-0">
                       {(p.h || p.t || "?").slice(0, 2).toUpperCase()}
                     </div>
                     <div>
-                      <div style={{ fontFamily: MONO, fontSize: 7.5, fontWeight: 500, textTransform: "uppercase", letterSpacing: ".1em", color: "#b0b0ba", marginBottom: 2 }}>{p.t}</div>
-                      <div style={{ fontFamily: SANS, fontSize: 11, fontWeight: 600, color: "#111", marginBottom: 2 }}>@{p.h}</div>
-                      <div style={{ fontFamily: SANS, fontSize: 11, color: "#6e6e80", lineHeight: 1.5 }}>{p.d}</div>
+                      <p className="eyebrow mb-0.5">{p.t}</p>
+                      <p className="text-xs font-semibold text-apple-black">@{p.h}</p>
+                      <p className="text-xs text-apple-gray-400 leading-relaxed">{p.d}</p>
                     </div>
                   </div>
                 ))}
@@ -228,12 +190,10 @@ function FeedCard({
           {/* Hashtags */}
           {hashtags.length > 0 && (
             <div>
-              <div style={{ fontFamily: MONO, fontSize: 7.5, fontWeight: 500, letterSpacing: ".22em", textTransform: "uppercase", color: "#b0b0ba", marginBottom: 6 }}>
-                Hashtags
-              </div>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
+              <p className="eyebrow mb-2">Hashtags</p>
+              <div className="flex flex-wrap gap-x-3 gap-y-1">
                 {hashtags.map(h => (
-                  <span key={h} style={{ fontFamily: MONO, fontSize: 9.5, color: "#6e6e80", letterSpacing: ".02em" }}>{h}</span>
+                  <span key={h} className="text-xs text-apple-gray-400">{h}</span>
                 ))}
               </div>
             </div>
@@ -242,13 +202,11 @@ function FeedCard({
           {/* Competing Brands */}
           {competing.length > 0 && (
             <div>
-              <div style={{ fontFamily: MONO, fontSize: 7.5, fontWeight: 500, letterSpacing: ".22em", textTransform: "uppercase", color: "#b0b0ba", marginBottom: 6 }}>
-                Competing Payment Brands
-              </div>
-              <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+              <p className="eyebrow mb-2">Competing Payment Brands</p>
+              <div className="flex flex-col gap-1.5">
                 {competing.map(b => (
-                  <div key={b} style={{ display: "flex", alignItems: "center", gap: 7, fontFamily: SANS, fontSize: 11, color: "#6e6e80" }}>
-                    <span style={{ width: 4, height: 4, borderRadius: "50%", background: "#ef4444", opacity: .6, flexShrink: 0, display: "inline-block" }} />
+                  <div key={b} className="flex items-center gap-2 text-xs text-apple-gray-400">
+                    <span className="w-1.5 h-1.5 rounded-full bg-apple-red/60 shrink-0" />
                     {b}
                   </div>
                 ))}
@@ -259,33 +217,31 @@ function FeedCard({
       </div>
 
       {/* Footer */}
-      <div style={{ borderTop: "1px solid rgba(0,0,0,.08)", padding: "10px 20px", display: "flex", alignItems: "center", justifyContent: "space-between", background: "#fafafa" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
-            <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#3b82f6", display: "inline-block", flexShrink: 0 }} />
-            <span style={{ fontFamily: MONO, fontSize: 8, fontWeight: 500, letterSpacing: ".14em", textTransform: "uppercase", color: "#6e6e80" }}>
-              AI-identified · pending review
-            </span>
-          </div>
+      <div className="border-t border-apple-gray-100 px-6 py-3 bg-apple-gray-50 flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <span className="w-1.5 h-1.5 rounded-full bg-apple-blue" />
+          <span className="eyebrow">AI-identified · pending review</span>
           {(c.newMerchantCount ?? 0) > 0 && (
             <a
               href="/merchants?status=potential"
-              style={{ fontFamily: MONO, fontSize: 8, fontWeight: 600, letterSpacing: ".1em", textTransform: "uppercase", padding: "3px 9px", borderRadius: 20, background: "rgba(37,99,235,.08)", color: "#2563eb", border: "1px solid rgba(37,99,235,.25)", textDecoration: "none" }}
+              className="badge-apple bg-apple-blue/10 text-apple-blue border border-apple-blue/20 text-[10px] no-underline"
             >
               + {c.newMerchantCount} new potential partner{c.newMerchantCount! > 1 ? "s" : ""}
             </a>
           )}
         </div>
-        <div style={{ display: "flex", gap: 8 }}>
+        <div className="flex gap-2">
           <button
             onClick={handleDismiss}
             disabled={busy !== null}
-            style={{ fontFamily: MONO, fontSize: 8, fontWeight: 500, letterSpacing: ".12em", textTransform: "uppercase", padding: "6px 14px", borderRadius: 6, border: "1px solid rgba(0,0,0,.12)", background: "#fff", color: "#6e6e80", cursor: busy ? "default" : "pointer", opacity: busy === "dismiss" ? 0.5 : 1, transition: "all .15s" }}>
+            className="btn-outline-apple disabled:opacity-50 text-xs"
+          >
             {busy === "dismiss" ? "Dismissing…" : "Dismiss"}
           </button>
           <a
             href={`/feed/${c.id}/add-details`}
-            style={{ fontFamily: MONO, fontSize: 8, fontWeight: 500, letterSpacing: ".12em", textTransform: "uppercase", padding: "6px 14px", borderRadius: 6, border: "1px solid rgba(52,168,83,.4)", background: "rgba(52,168,83,.1)", color: "#1a6b2e", textDecoration: "none", transition: "all .15s", display: "inline-block" }}>
+            className="badge-apple bg-gather/10 text-gather border border-gather/30 no-underline hover:opacity-80 transition-opacity px-4 py-2 rounded-full text-xs font-medium"
+          >
             Add Details →
           </a>
         </div>
@@ -301,7 +257,6 @@ export function ProactiveFeed({ candidates, onApprove, onDismiss, onRestore, onD
   const [dismissedOpen, setDismissedOpen] = useState(false);
   const [restoringIds, setRestoringIds] = useState<Set<string>>(new Set());
 
-  // Discover UI state
   const [discoverQuery, setDiscoverQuery] = useState("");
   const [discovering, setDiscovering] = useState(false);
   const [discoverError, setDiscoverError] = useState<string | null>(null);
@@ -340,10 +295,10 @@ export function ProactiveFeed({ candidates, onApprove, onDismiss, onRestore, onD
     }
   }
 
-  const pending          = candidates.filter(c => c.status === "pending");
-  const inReviewCount    = candidates.filter(c => c.status === "in_review").length;
-  const added            = candidates.filter(c => c.status === "added").length;
-  const dismissedItems   = candidates.filter(c => c.status === "dismissed");
+  const pending        = candidates.filter(c => c.status === "pending");
+  const inReviewCount  = candidates.filter(c => c.status === "in_review").length;
+  const added          = candidates.filter(c => c.status === "added").length;
+  const dismissedItems = candidates.filter(c => c.status === "dismissed");
 
   async function handleRestore(id: string) {
     setRestoringIds(prev => new Set([...prev, id]));
@@ -352,7 +307,6 @@ export function ProactiveFeed({ candidates, onApprove, onDismiss, onRestore, onD
   }
 
   const sorted = [...pending].sort((a, b) => {
-    // New cards always float to top
     const aNew = newIds.has(a.id) ? 0 : 1;
     const bNew = newIds.has(b.id) ? 0 : 1;
     if (aNew !== bNew) return aNew - bNew;
@@ -373,42 +327,30 @@ export function ProactiveFeed({ candidates, onApprove, onDismiss, onRestore, onD
     setTimeout(() => setExitingIds(prev => { const s = new Set(prev); s.delete(c.id); return s; }), 300);
   }
 
-  const sortBtnStyle = (key: SortKey): React.CSSProperties => ({
-    fontFamily: MONO, fontSize: 8, fontWeight: 500, letterSpacing: ".14em", textTransform: "uppercase",
-    padding: "5px 12px", borderRadius: 20, cursor: "pointer", transition: "all .15s",
-    border: sortKey === key ? "1px solid #111" : "1px solid rgba(0,0,0,.1)",
-    background: sortKey === key ? "#111" : "#fff",
-    color: sortKey === key ? "#fff" : "#6e6e80",
-  });
-
   return (
     <div>
       {/* Section header */}
-      <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", marginBottom: 22, gap: 20, flexWrap: "wrap" }}>
+      <div className="flex items-end justify-between mb-6 gap-5 flex-wrap">
         <div>
-          <div style={{ fontFamily: MONO, fontSize: 8.5, fontWeight: 500, letterSpacing: ".22em", textTransform: "uppercase", color: "#b0b0ba", marginBottom: 4 }}>
-            Proactive Moment Feed · AI-Identified
-          </div>
-          <div style={{ fontFamily: DISP, fontSize: 38, fontWeight: 800, letterSpacing: "-.01em", color: "#111", lineHeight: 1 }}>
-            Suggested Moments
-          </div>
+          <p className="eyebrow mb-1">Proactive Moment Feed · AI-Identified</p>
+          <h1>Suggested Moments</h1>
         </div>
 
-        {/* Stats */}
-        <div style={{ display: "flex", gap: 24, alignItems: "center" }}>
+        {/* Stats strip */}
+        <div className="flex gap-6 items-center">
           {[
-            { label: "Pending",   value: pending.length,        color: "#1a3fa8", href: null },
-            { label: "In Review", value: inReviewCount,         color: "#b45309", href: "/review" },
-            { label: "Added",     value: added,                 color: "#1a6b2e", href: null },
-            { label: "Dismissed", value: dismissedItems.length, color: "#9c2050", href: null },
+            { label: "Pending",   value: pending.length,        color: "text-apple-blue",  href: null },
+            { label: "In Review", value: inReviewCount,         color: "text-apple-amber", href: "/review" },
+            { label: "Added",     value: added,                 color: "text-apple-green", href: null },
+            { label: "Dismissed", value: dismissedItems.length, color: "text-improve",     href: null },
           ].map(s => (
-            <div key={s.label} style={{ textAlign: "right" }}>
+            <div key={s.label} className="text-right">
               {s.href ? (
-                <a href={s.href} style={{ fontFamily: DISP, fontSize: 28, fontWeight: 800, color: s.color, lineHeight: 1, textDecoration: "none", display: "block" }}>{s.value}</a>
+                <a href={s.href} className={`text-3xl font-bold leading-none no-underline ${s.color}`}>{s.value}</a>
               ) : (
-                <div style={{ fontFamily: DISP, fontSize: 28, fontWeight: 800, color: s.color, lineHeight: 1 }}>{s.value}</div>
+                <span className={`text-3xl font-bold leading-none ${s.color}`}>{s.value}</span>
               )}
-              <div style={{ fontFamily: MONO, fontSize: 8, fontWeight: 500, letterSpacing: ".14em", textTransform: "uppercase", color: "#b0b0ba", marginTop: 3 }}>{s.label}</div>
+              <p className="eyebrow mt-1">{s.label}</p>
             </div>
           ))}
         </div>
@@ -417,9 +359,9 @@ export function ProactiveFeed({ candidates, onApprove, onDismiss, onRestore, onD
       {/* Feed settings panel */}
       <FeedSettingsPanel onDiscovered={markNewIds} />
 
-      {/* Discover input — free-text fallback */}
-      <div style={{ marginBottom: 20 }}>
-        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+      {/* Discover input */}
+      <div className="mb-5">
+        <div className="flex gap-2 items-center">
           <input
             ref={inputRef}
             type="text"
@@ -428,46 +370,16 @@ export function ProactiveFeed({ candidates, onApprove, onDismiss, onRestore, onD
             onKeyDown={e => e.key === "Enter" && !discovering && handleDiscover()}
             placeholder="Discover moments — try 'sports tentpoles Q3 2027' or 'wellness January 2028'"
             disabled={discovering}
-            style={{
-              flex: 1,
-              fontFamily: SANS,
-              fontSize: 13,
-              padding: "10px 14px",
-              borderRadius: 8,
-              border: "1px solid rgba(0,0,0,.12)",
-              background: "#fff",
-              color: "#111",
-              outline: "none",
-              opacity: discovering ? 0.6 : 1,
-            }}
+            className="flex-1 text-sm px-4 py-2.5 rounded-xl border border-apple-gray-200 bg-white text-apple-black placeholder:text-apple-gray-400 focus:outline-none focus:border-apple-blue disabled:opacity-60"
           />
           <button
             onClick={handleDiscover}
             disabled={discovering || !discoverQuery.trim()}
-            style={{
-              fontFamily: MONO,
-              fontSize: 8,
-              fontWeight: 500,
-              letterSpacing: ".12em",
-              textTransform: "uppercase",
-              padding: "10px 18px",
-              borderRadius: 8,
-              border: "1px solid rgba(37,99,235,.4)",
-              background: discovering ? "rgba(37,99,235,.08)" : "rgba(37,99,235,.1)",
-              color: "#1a3fa8",
-              cursor: (discovering || !discoverQuery.trim()) ? "default" : "pointer",
-              opacity: (discovering || !discoverQuery.trim()) ? 0.5 : 1,
-              transition: "all .15s",
-              display: "flex",
-              alignItems: "center",
-              gap: 7,
-              whiteSpace: "nowrap",
-            }}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-apple-blue/30 bg-apple-blue/10 text-apple-blue text-xs font-medium disabled:opacity-50 cursor-pointer hover:bg-apple-blue/15 transition-colors whitespace-nowrap"
           >
             {discovering ? (
               <>
-                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"
-                  style={{ animation: "spin .8s linear infinite" }}>
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="animate-spin">
                   <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
                 </svg>
                 Discovering…
@@ -483,25 +395,32 @@ export function ProactiveFeed({ candidates, onApprove, onDismiss, onRestore, onD
           </button>
         </div>
         {discoverError && (
-          <div style={{ fontFamily: SANS, fontSize: 12, color: "#dc2626", marginTop: 6 }}>
-            {discoverError}
-          </div>
+          <p className="text-xs text-apple-red mt-1.5">{discoverError}</p>
         )}
       </div>
-      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
 
       {/* Sort controls */}
-      <div style={{ display: "flex", gap: 6, marginBottom: 20 }}>
-        <button style={sortBtnStyle("date")}     onClick={() => setSortKey("date")}>Date</button>
-        <button style={sortBtnStyle("score")}    onClick={() => setSortKey("score")}>Fit Score</button>
-        <button style={sortBtnStyle("category")} onClick={() => setSortKey("category")}>Category</button>
+      <div className="flex gap-1.5 mb-5">
+        {(["date", "score", "category"] as SortKey[]).map(key => (
+          <button
+            key={key}
+            onClick={() => setSortKey(key)}
+            className={`px-3 py-1 rounded-full text-xs font-medium capitalize transition-colors cursor-pointer ${
+              sortKey === key
+                ? "bg-apple-black text-white"
+                : "border border-apple-gray-200 text-apple-gray-400 hover:text-apple-black"
+            }`}
+          >
+            {key === "score" ? "Fit Score" : key}
+          </button>
+        ))}
       </div>
 
       {/* Cards */}
       {sorted.length === 0 ? (
-        <div style={{ background: "#fff", border: "1px solid rgba(0,0,0,.1)", borderRadius: 12, padding: "48px 24px", textAlign: "center" }}>
-          <div style={{ fontFamily: DISP, fontSize: 18, fontWeight: 600, color: "#111", marginBottom: 6 }}>All caught up</div>
-          <div style={{ fontFamily: SANS, fontSize: 13, color: "#6e6e80" }}>No pending moments — check back soon for new AI-identified candidates.</div>
+        <div className="card-apple p-12 text-center">
+          <p className="text-base font-semibold text-apple-black mb-1">All caught up</p>
+          <p className="text-sm text-apple-gray-400">No pending moments — check back soon for new AI-identified candidates.</p>
         </div>
       ) : (
         sorted.map(c => (
@@ -519,46 +438,31 @@ export function ProactiveFeed({ candidates, onApprove, onDismiss, onRestore, onD
 
       {/* Dismissed section */}
       {dismissedItems.length > 0 && (
-        <div style={{ marginTop: 32 }}>
+        <div className="mt-8">
           <button
             onClick={() => setDismissedOpen(o => !o)}
-            style={{
-              display: "flex", alignItems: "center", gap: 8, width: "100%",
-              background: "none", border: "none", cursor: "pointer", padding: "8px 0",
-              borderTop: "1px solid rgba(0,0,0,.08)",
-            }}
+            className="flex items-center gap-2 w-full bg-transparent border-none cursor-pointer py-2 border-t border-apple-gray-100"
           >
-            <span style={{ fontFamily: MONO, fontSize: 8, fontWeight: 500, letterSpacing: ".2em", textTransform: "uppercase", color: "#b0b0ba" }}>
-              Dismissed ({dismissedItems.length})
-            </span>
-            <span style={{ fontFamily: MONO, fontSize: 10, color: "#b0b0ba", marginLeft: 2, transition: "transform .2s", display: "inline-block", transform: dismissedOpen ? "rotate(180deg)" : "none" }}>▾</span>
+            <span className="eyebrow">Dismissed ({dismissedItems.length})</span>
+            <span className={`text-apple-gray-400 text-xs transition-transform duration-200 ${dismissedOpen ? "rotate-180" : ""}`}>▾</span>
           </button>
 
           {dismissedOpen && (
-            <div style={{ marginTop: 8, display: "flex", flexDirection: "column", gap: 6 }}>
+            <div className="mt-2 flex flex-col gap-1.5">
               {dismissedItems.map(c => {
                 const cs = catStyle(c.category);
                 const isRestoring = restoringIds.has(c.id);
                 return (
-                  <div key={c.id} style={{
-                    background: "#fff", border: "1px solid rgba(0,0,0,.08)", borderLeft: `3px solid ${cs.solid}`,
-                    borderRadius: 8, padding: "12px 16px", display: "flex", alignItems: "center", gap: 12, opacity: isRestoring ? 0.5 : 1, transition: "opacity .2s",
-                  }}>
-                    <span style={{ fontFamily: MONO, fontSize: 7.5, fontWeight: 500, letterSpacing: ".18em", textTransform: "uppercase", padding: "2px 8px", borderRadius: 4, background: cs.bg, color: cs.txt, border: `1px solid ${cs.bd}`, flexShrink: 0 }}>
-                      {c.category}
-                    </span>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontFamily: SANS, fontSize: 13, fontWeight: 600, color: "#111", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{c.name}</div>
-                      <div style={{ fontFamily: MONO, fontSize: 8, color: "#b0b0ba", marginTop: 2 }}>{formatRange(c.startDate, c.endDate)}</div>
+                  <div key={c.id} className={`card-apple border-l-4 ${cs.border} px-4 py-3 flex items-center gap-3 transition-opacity ${isRestoring ? "opacity-50" : "opacity-100"}`}>
+                    <span className={`badge-apple border capitalize text-[10px] ${cs.pill} shrink-0`}>{c.category}</span>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-apple-black truncate">{c.name}</p>
+                      <p className="text-xs text-apple-gray-400 mt-0.5">{formatRange(c.startDate, c.endDate)}</p>
                     </div>
                     <button
                       onClick={() => handleRestore(c.id)}
                       disabled={isRestoring}
-                      style={{
-                        fontFamily: MONO, fontSize: 8, fontWeight: 500, letterSpacing: ".12em", textTransform: "uppercase",
-                        padding: "5px 12px", borderRadius: 6, border: "1px solid rgba(0,0,0,.12)", background: "#fff",
-                        color: "#6e6e80", cursor: isRestoring ? "default" : "pointer", flexShrink: 0, transition: "all .15s",
-                      }}
+                      className="btn-outline-apple text-xs shrink-0 disabled:opacity-50"
                     >
                       {isRestoring ? "Restoring…" : "Restore"}
                     </button>

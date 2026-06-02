@@ -29,22 +29,19 @@ function daysLabel(days: number): string {
   return `in ${months} month${months > 1 ? "s" : ""}`;
 }
 
-const CAT_COLORS: Record<string, string> = {
-  gather:  "bg-green-100 text-green-700",
-  improve: "bg-pink-100 text-pink-700",
-  excite:  "bg-blue-100 text-blue-700",
+const CAT_STYLES: Record<string, string> = {
+  gather:  "bg-gather/10 text-gather",
+  improve: "bg-improve/10 text-improve",
+  excite:  "bg-excite/10 text-excite",
 };
-
-const MONO = `"SF Pro Mono","SFMono-Regular",ui-monospace,monospace`;
 
 function ScorePill({ score }: { score: number }) {
   const color =
-    score >= 7 ? "bg-green-100 text-green-700 border-green-200"
-    : score >= 4 ? "bg-amber-100 text-amber-700 border-amber-200"
-    : "bg-red-100 text-red-700 border-red-200";
+    score >= 7 ? "text-apple-green"
+    : score >= 4 ? "text-apple-amber"
+    : "text-apple-red";
   return (
-    <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-semibold border ${color}`}
-      style={{ fontFamily: MONO }}>
+    <span className={`text-xs font-semibold tabular-nums ${color}`}>
       {score.toFixed(1)}
     </span>
   );
@@ -87,103 +84,88 @@ export default async function MerchantFitPage({ params }: { params: Promise<{ id
   const low    = opportunities.filter(o => o.relevanceScore < 4).length;
 
   return (
-    <div className="px-6 py-8 max-w-5xl mx-auto">
+    <div className="px-6 py-10 max-w-5xl mx-auto">
       {/* Breadcrumb */}
-      <div className="mb-6">
-        <Link href={`/merchants/${id}`}
-          className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+      <div className="mb-8">
+        <Link href={`/merchants/${id}`} className="text-sm text-apple-gray-400 hover:text-apple-black transition-colors no-underline">
           ← {merchant.name}
         </Link>
       </div>
 
       {/* Header */}
       <div className="mb-8">
-        <p className="text-xs font-medium tracking-widest uppercase text-muted-foreground mb-2"
-          style={{ fontFamily: MONO }}>
-          Campaign Opportunities
-        </p>
-        <h1 className="text-3xl font-bold tracking-tight mb-2">
-          {merchant.name} — Best Moments
-        </h1>
-        <p className="text-sm text-muted-foreground">
+        <p className="eyebrow mb-1">Campaign opportunities</p>
+        <h1>{merchant.name} — Best moments</h1>
+        <p className="text-sm text-apple-gray-400 mt-1">
           Upcoming cultural moments sorted by Apple Pay relevance score
         </p>
       </div>
 
       {opportunities.length === 0 ? (
-        <div className="rounded-xl border bg-white p-12 text-center">
-          <p className="text-base font-medium text-foreground mb-2">No scored opportunities yet</p>
-          <p className="text-sm text-muted-foreground max-w-md mx-auto">
+        <div className="card-apple p-12 text-center">
+          <p className="text-base font-semibold text-apple-black mb-2">No scored opportunities yet</p>
+          <p className="text-sm text-apple-gray-400 max-w-md mx-auto">
             Go to a moment detail page and click{" "}
-            <span className="font-medium text-foreground">"Score Against Merchants"</span>{" "}
+            <span className="font-medium text-apple-black">"Score Against Merchants"</span>{" "}
             to generate opportunities for this merchant.
           </p>
         </div>
       ) : (
         <>
           {/* Score distribution */}
-          <div className="flex gap-4 mb-6 flex-wrap">
+          <div className="flex gap-3 mb-6 flex-wrap">
             {[
-              { label: "High fit",   value: high,   desc: "Score ≥ 7", color: "border-green-200 bg-green-50 text-green-700" },
-              { label: "Medium fit", value: medium, desc: "Score 4–6",  color: "border-amber-200 bg-amber-50 text-amber-700" },
-              { label: "Low fit",    value: low,    desc: "Score < 4",  color: "border-red-200 bg-red-50 text-red-700" },
+              { label: "High fit",   value: high,   desc: "Score ≥ 7", color: "border-apple-green/30 bg-apple-green/5 text-apple-green" },
+              { label: "Medium fit", value: medium, desc: "Score 4–6",  color: "border-apple-amber/30 bg-apple-amber/5 text-apple-amber" },
+              { label: "Low fit",    value: low,    desc: "Score < 4",  color: "border-apple-red/30 bg-apple-red/5 text-apple-red"     },
             ].map(chip => (
-              <div key={chip.label}
-                className={`flex items-center gap-3 rounded-xl border px-5 py-3 ${chip.color}`}>
-                <span className="text-2xl font-bold" style={{ fontFamily: MONO }}>{chip.value}</span>
+              <div key={chip.label} className={`flex items-center gap-3 rounded-2xl border px-5 py-3 ${chip.color}`}>
+                <span className="text-2xl font-bold tabular-nums">{chip.value}</span>
                 <div>
-                  <div className="text-xs font-semibold uppercase tracking-wide">{chip.label}</div>
-                  <div className="text-xs opacity-70">{chip.desc}</div>
+                  <p className="text-xs font-semibold uppercase tracking-wide">{chip.label}</p>
+                  <p className="text-xs opacity-70">{chip.desc}</p>
                 </div>
               </div>
             ))}
           </div>
 
           {/* Opportunities table */}
-          <div className="rounded-xl border overflow-hidden">
+          <div className="card-apple overflow-hidden">
             <table className="w-full">
-              <thead className="bg-muted/50">
-                <tr>
-                  <th className="py-3 px-4 text-left text-xs font-medium text-muted-foreground uppercase tracking-wide">Moment</th>
-                  <th className="py-3 px-4 text-left text-xs font-medium text-muted-foreground uppercase tracking-wide">Category</th>
-                  <th className="py-3 px-4 text-left text-xs font-medium text-muted-foreground uppercase tracking-wide">Date</th>
-                  <th className="py-3 px-4 text-left text-xs font-medium text-muted-foreground uppercase tracking-wide">Days Away</th>
-                  <th className="py-3 px-4 text-left text-xs font-medium text-muted-foreground uppercase tracking-wide">Score</th>
-                  <th className="py-3 px-4 text-left text-xs font-medium text-muted-foreground uppercase tracking-wide">Campaign Angle</th>
+              <thead>
+                <tr className="border-b border-apple-gray-100 bg-apple-gray-50">
+                  <th className="py-3 px-4 text-left eyebrow">Moment</th>
+                  <th className="py-3 px-4 text-left eyebrow">Category</th>
+                  <th className="py-3 px-4 text-left eyebrow">Date</th>
+                  <th className="py-3 px-4 text-left eyebrow">Days away</th>
+                  <th className="py-3 px-4 text-left eyebrow">Score</th>
+                  <th className="py-3 px-4 text-left eyebrow">Campaign angle</th>
                 </tr>
               </thead>
               <tbody>
-                {opportunities.map((o, i) => {
-                  const catColor = CAT_COLORS[o.category] ?? "bg-gray-100 text-gray-700";
-                  const truncated = o.campaignAngle.length > 80
-                    ? o.campaignAngle.slice(0, 79) + "…"
-                    : o.campaignAngle;
+                {opportunities.map((o) => {
+                  const catStyle = CAT_STYLES[o.category] ?? "bg-apple-gray-100 text-apple-gray-600";
+                  const truncated = o.campaignAngle.length > 80 ? o.campaignAngle.slice(0, 79) + "…" : o.campaignAngle;
                   return (
-                    <tr key={o.momentId}
-                      className={`border-b last:border-0 hover:bg-muted/30 transition-colors cursor-pointer ${i % 2 === 0 ? "" : "bg-muted/10"}`}>
-                      <td className="py-3 px-4 text-sm font-semibold">
-                        <Link href={`/moments/${o.momentId}`}
-                          className="hover:text-blue-600 transition-colors">
+                    <tr key={o.momentId} className="border-b border-apple-gray-100 last:border-0 hover:bg-apple-gray-50 transition-colors cursor-pointer">
+                      <td className="py-3 px-4 text-sm font-semibold text-apple-black">
+                        <Link href={`/moments/${o.momentId}`} className="hover:text-apple-blue transition-colors no-underline">
                           {o.momentName}
                         </Link>
                       </td>
                       <td className="py-3 px-4">
-                        <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium capitalize ${catColor}`}>
-                          {o.category}
-                        </span>
+                        <span className={`badge-apple capitalize ${catStyle}`}>{o.category}</span>
                       </td>
-                      <td className="py-3 px-4 text-sm text-muted-foreground whitespace-nowrap">
+                      <td className="py-3 px-4 text-sm text-apple-gray-400 whitespace-nowrap">
                         {dateRange(o.startDate, o.endDate)}
                       </td>
-                      <td className="py-3 px-4 text-sm text-muted-foreground whitespace-nowrap"
-                        style={{ fontFamily: MONO, fontSize: 11 }}>
+                      <td className="py-3 px-4 text-xs text-apple-gray-400 tabular-nums whitespace-nowrap">
                         {daysLabel(o.daysUntil)}
                       </td>
                       <td className="py-3 px-4">
                         <ScorePill score={o.relevanceScore} />
                       </td>
-                      <td className="py-3 px-4 text-sm text-muted-foreground max-w-xs"
-                        title={o.campaignAngle}>
+                      <td className="py-3 px-4 text-sm text-apple-gray-600 max-w-xs" title={o.campaignAngle}>
                         {truncated}
                       </td>
                     </tr>

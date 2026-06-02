@@ -88,10 +88,10 @@ export function MerchantForm({ defaultValues = {}, mode }: MerchantFormProps) {
       </Field>
 
       <div className="flex items-center gap-3 pt-2">
-        <button type="submit" disabled={saving} className="rounded-lg bg-foreground text-background px-4 py-2 text-sm font-medium hover:bg-foreground/80 disabled:opacity-50 transition-colors">
+        <button type="submit" disabled={saving} className="btn-primary-apple disabled:opacity-50">
           {saving ? "Saving…" : mode === "create" ? "Create Merchant" : "Save Changes"}
         </button>
-        <button type="button" onClick={() => router.back()} className="rounded-lg border px-4 py-2 text-sm font-medium hover:bg-muted transition-colors">
+        <button type="button" onClick={() => router.back()} className="btn-outline-apple">
           Cancel
         </button>
         {mode === "edit" && (

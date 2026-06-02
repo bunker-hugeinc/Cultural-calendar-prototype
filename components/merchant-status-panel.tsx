@@ -72,7 +72,7 @@ export function MerchantStatusPanel({ merchantId, initialStatus, initialGroup }:
 
   return (
     <div className="rounded-xl border bg-white p-6 mb-6">
-      <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-4">Partner Status</p>
+      <p className="eyebrow mb-4">Partner Status</p>
       <div className="flex items-center gap-4 flex-wrap">
         <span className={`inline-flex items-center rounded-full px-3 py-1 text-sm font-medium ${display.pill}`}>
           {display.label}
@@ -82,7 +82,7 @@ export function MerchantStatusPanel({ merchantId, initialStatus, initialGroup }:
             disabled={saving}
             onChange={(e) => { if (e.target.value) changeStatus(e.target.value); e.target.value = ""; }}
             defaultValue=""
-            className="rounded-lg border bg-white px-3 py-1.5 text-sm font-medium text-foreground cursor-pointer disabled:opacity-50"
+            className="rounded-lg border bg-white px-3 py-1.5 text-sm font-medium text-apple-black cursor-pointer disabled:opacity-50"
           >
             <option value="" disabled>Change Status…</option>
             {STATUS_OPTIONS.map((opt) => (
@@ -93,7 +93,7 @@ export function MerchantStatusPanel({ merchantId, initialStatus, initialGroup }:
       </div>
 
       <div className="mt-4 flex items-center gap-3">
-        <span className="text-xs text-muted-foreground font-medium">Group:</span>
+        <span className="text-xs text-apple-gray-400 font-medium">Group:</span>
         {editingGroup ? (
           <div className="flex items-center gap-2">
             <select
@@ -108,17 +108,17 @@ export function MerchantStatusPanel({ merchantId, initialStatus, initialGroup }:
             <button
               onClick={() => saveGroup(group)}
               disabled={saving}
-              className="rounded px-2 py-1 text-xs bg-foreground text-background hover:bg-foreground/80 disabled:opacity-50"
+              className="btn-primary-apple text-xs disabled:opacity-50"
             >
               Save
             </button>
-            <button onClick={() => { setEditingGroup(false); setGroup(initialGroup ?? ""); }} className="text-xs text-muted-foreground hover:text-foreground">
+            <button onClick={() => { setEditingGroup(false); setGroup(initialGroup ?? ""); }} className="text-xs text-apple-gray-400 hover:text-apple-black">
               Cancel
             </button>
           </div>
         ) : (
           <div className="flex items-center gap-2">
-            <span className="text-sm">{group || <span className="text-muted-foreground italic">None</span>}</span>
+            <span className="text-sm">{group || <span className="text-apple-gray-400 italic">None</span>}</span>
             <button onClick={() => setEditingGroup(true)} className="text-xs text-blue-600 hover:text-blue-700">Edit</button>
           </div>
         )}

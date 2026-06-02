@@ -118,7 +118,7 @@ export default function AddDetailsPage() {
   if (loading) {
     return (
       <div className="px-6 py-8 max-w-3xl mx-auto">
-        <p className="text-sm text-muted-foreground">Loading…</p>
+        <p className="text-sm text-apple-gray-400">Loading…</p>
       </div>
     );
   }
@@ -126,7 +126,7 @@ export default function AddDetailsPage() {
   if (!candidate) {
     return (
       <div className="px-6 py-8 max-w-3xl mx-auto">
-        <p className="text-sm text-muted-foreground">Candidate not found.</p>
+        <p className="text-sm text-apple-gray-400">Candidate not found.</p>
         <Link href="/calendar" className="text-sm text-blue-600 hover:underline mt-2 block">← Back to Feed</Link>
       </div>
     );
@@ -142,22 +142,22 @@ export default function AddDetailsPage() {
   return (
     <div className="px-6 py-8 max-w-3xl mx-auto">
       {/* Back */}
-      <Link href="/calendar" className="text-sm text-muted-foreground hover:text-foreground transition-colors mb-6 block">
+      <Link href="/calendar" className="text-sm text-apple-gray-400 hover:text-apple-black transition-colors mb-6 block">
         ← Back to Feed
       </Link>
 
       {/* Eyebrow + Header */}
       <div className="mb-8">
-        <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-2">Submit for Review</p>
+        <p className="eyebrow mb-2">Submit for Review</p>
         <div className="flex items-start gap-3 flex-wrap">
           <h1 className="text-3xl font-bold tracking-tight">{candidate.name}</h1>
           <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium capitalize mt-1.5 ${catColor}`}>
             {candidate.category}
           </span>
         </div>
-        <p className="text-sm text-muted-foreground mt-1">{dateRange} · Score {candidate.score}/5</p>
+        <p className="text-sm text-apple-gray-400 mt-1">{dateRange} · Score {candidate.score}/5</p>
         {candidate.headline && (
-          <p className="text-sm text-foreground/70 italic mt-2">{candidate.headline}</p>
+          <p className="text-sm text-apple-gray-600 italic mt-2">{candidate.headline}</p>
         )}
       </div>
 
@@ -204,7 +204,7 @@ export default function AddDetailsPage() {
                   className="flex-1 rounded-lg border bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-foreground/20"
                 />
                 {inspirationUrls.length > 1 && (
-                  <button type="button" onClick={() => removeInspirationUrl(i)} className="text-muted-foreground hover:text-red-500 text-xs px-2">✕</button>
+                  <button type="button" onClick={() => removeInspirationUrl(i)} className="text-apple-gray-400 hover:text-red-500 text-xs px-2">✕</button>
                 )}
               </div>
             ))}
@@ -227,7 +227,7 @@ export default function AddDetailsPage() {
             <option value="">— Select —</option>
             {QUARTERS.map(q => <option key={q} value={q}>{q}</option>)}
           </select>
-          <p className="text-xs text-muted-foreground mt-1">Apple FQ: Q1 = Oct–Dec, Q2 = Jan–Mar, Q3 = Apr–Jun, Q4 = Jul–Sep</p>
+          <p className="text-xs text-apple-gray-400 mt-1">Apple FQ: Q1 = Oct–Dec, Q2 = Jan–Mar, Q3 = Apr–Jun, Q4 = Jul–Sep</p>
         </div>
 
         {/* Priority Merchants */}
@@ -238,7 +238,7 @@ export default function AddDetailsPage() {
           {selectedMerchantObjects.length > 0 && (
             <div className="flex flex-wrap gap-1.5 mb-2">
               {selectedMerchantObjects.map(m => (
-                <span key={m.id} className="inline-flex items-center gap-1 rounded-full bg-foreground/10 px-2.5 py-0.5 text-xs font-medium">
+                <span key={m.id} className="inline-flex items-center gap-1 rounded-full bg-apple-gray-100 px-2.5 py-0.5 text-xs font-medium">
                   {m.name}
                   <button type="button" onClick={() => toggleMerchant(m.id)} className="hover:text-red-500 ml-0.5">✕</button>
                 </span>
@@ -248,7 +248,7 @@ export default function AddDetailsPage() {
 
           <div className="max-h-40 overflow-y-auto rounded-lg border bg-white divide-y text-sm">
             {merchants.map(m => (
-              <label key={m.id} className="flex items-center gap-2.5 px-3 py-2 hover:bg-muted/40 cursor-pointer">
+              <label key={m.id} className="flex items-center gap-2.5 px-3 py-2 hover:bg-apple-gray-50 cursor-pointer">
                 <input
                   type="checkbox"
                   checked={selectedMerchants.includes(m.id)}
@@ -256,7 +256,7 @@ export default function AddDetailsPage() {
                   className="rounded"
                 />
                 <span className="font-medium">{m.name}</span>
-                <span className="text-muted-foreground text-xs">{m.category}</span>
+                <span className="text-apple-gray-400 text-xs">{m.category}</span>
               </label>
             ))}
           </div>
@@ -284,11 +284,11 @@ export default function AddDetailsPage() {
           <button
             type="submit"
             disabled={submitting}
-            className="rounded-lg bg-foreground text-background px-5 py-2.5 text-sm font-medium hover:bg-foreground/80 disabled:opacity-50 transition-colors"
+            className="btn-primary-apple disabled:opacity-50"
           >
             {submitting ? "Submitting…" : "Submit for Review"}
           </button>
-          <Link href="/calendar" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+          <Link href="/calendar" className="text-sm text-apple-gray-400 hover:text-apple-black transition-colors">
             Cancel
           </Link>
         </div>

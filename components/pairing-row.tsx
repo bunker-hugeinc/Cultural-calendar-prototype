@@ -7,10 +7,10 @@ import { ScoreBadge } from "@/components/score-badge";
 type PairingStatus = "draft" | "in_review" | "approved" | "live";
 
 const STATUS_META: Record<PairingStatus, { label: string; bg: string; txt: string; border: string }> = {
-  draft:     { label: "Draft",     bg: "#f4f4f5", txt: "#52525b", border: "#e4e4e7" },
-  in_review: { label: "In Review", bg: "#fef9c3", txt: "#854d0e", border: "#fde047" },
-  approved:  { label: "Approved",  bg: "#dbeafe", txt: "#1e40af", border: "#93c5fd" },
-  live:      { label: "Live ✓",    bg: "#dcfce7", txt: "#15803d", border: "#86efac" },
+  draft:     { label: "Draft",     bg: "#f5f5f7", txt: "#6e6e73", border: "#d2d2d7" },
+  in_review: { label: "In Review", bg: "#fff8ec", txt: "#c47c00", border: "#ff9f0a55" },
+  approved:  { label: "Approved",  bg: "#e8f4ff", txt: "#0058b3", border: "#0071e355" },
+  live:      { label: "Live ✓",    bg: "#edfaf2", txt: "#1e8a44", border: "#34c75955" },
 };
 
 const ALL_STATUSES: PairingStatus[] = ["draft", "in_review", "approved", "live"];
@@ -173,33 +173,33 @@ export function PairingRow({
   return (
     <>
       <tr
-        className="border-b hover:bg-muted/40 cursor-pointer transition-colors"
+        className="border-b border-apple-gray-100 hover:bg-apple-gray-50 cursor-pointer transition-colors"
         onClick={() => setExpanded((v) => !v)}
       >
-        <td className="py-3 px-4 font-medium text-sm">
-          <Link href={`/merchants/${merchantId}`} onClick={(e) => e.stopPropagation()} className="hover:text-blue-600 transition-colors">
+        <td className="py-3 px-4 font-medium text-sm text-apple-black">
+          <Link href={`/merchants/${merchantId}`} onClick={(e) => e.stopPropagation()} className="hover:text-apple-blue transition-colors no-underline">
             {merchantName}
           </Link>
         </td>
-        <td className="py-3 px-4 text-sm text-muted-foreground">{merchantCategory}</td>
+        <td className="py-3 px-4 text-sm text-apple-gray-400">{merchantCategory}</td>
         <td className="py-3 px-4">
           <ScoreBadge score={relevanceScore} />
         </td>
-        <td className="py-3 px-4 text-sm text-muted-foreground max-w-xs truncate">
+        <td className="py-3 px-4 text-sm text-apple-gray-600 max-w-xs truncate">
           {campaignAngle}
         </td>
         <td className="py-3 px-4" onClick={e => e.stopPropagation()}>
           <StatusPill pairingId={id} initial={status as PairingStatus} />
         </td>
-        <td className="py-3 px-4 text-sm text-muted-foreground text-right">
+        <td className="py-3 px-4 text-sm text-apple-gray-400 text-right">
           <span className="text-xs">{expanded ? "▲" : "▼"}</span>
         </td>
       </tr>
       {expanded && (
-        <tr className="border-b bg-muted/20">
+        <tr className="border-b border-apple-gray-100 bg-apple-gray-50">
           <td colSpan={6} className="px-4 py-4">
-            <p className="text-sm font-medium mb-1">{campaignAngle}</p>
-            {rationale && <p className="text-sm text-muted-foreground">{rationale}</p>}
+            <p className="text-sm font-semibold text-apple-black mb-1">{campaignAngle}</p>
+            {rationale && <p className="text-sm text-apple-gray-600">{rationale}</p>}
           </td>
         </tr>
       )}

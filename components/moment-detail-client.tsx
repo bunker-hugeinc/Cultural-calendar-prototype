@@ -40,14 +40,13 @@ export function MomentDetailClient({ momentId, initialPairings }: Props) {
 
   return (
     <>
-      {/* Pairings section */}
-      <div>
-        <h2 className="text-lg font-semibold mb-4">
-          Merchant Pairings
-          <span className="ml-2 text-sm font-normal text-muted-foreground">({pairings.length})</span>
-        </h2>
-
-        <div className="mb-4">
+      {/* Merchant Pairings */}
+      <div className="mb-8">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <p className="eyebrow mb-0.5">Merchant Pairings</p>
+            <p className="text-xs text-apple-gray-400">{pairings.length} partner{pairings.length !== 1 ? "s" : ""} scored</p>
+          </div>
           <ScoreButton
             momentId={momentId}
             hasPairings={pairings.length > 0}
@@ -56,17 +55,19 @@ export function MomentDetailClient({ momentId, initialPairings }: Props) {
         </div>
 
         {pairings.length === 0 ? (
-          <p className="text-sm text-muted-foreground">No pairings yet — click "Score Against Merchants" to generate them.</p>
+          <div className="card-apple p-8 text-center">
+            <p className="text-sm text-apple-gray-400">No pairings yet — click "Score Against Merchants" to generate them.</p>
+          </div>
         ) : (
-          <div className="rounded-xl border overflow-hidden">
+          <div className="card-apple overflow-hidden">
             <table className="w-full">
-              <thead className="bg-muted/50">
-                <tr>
-                  <th className="py-3 px-4 text-left text-xs font-medium text-muted-foreground uppercase tracking-wide">Merchant</th>
-                  <th className="py-3 px-4 text-left text-xs font-medium text-muted-foreground uppercase tracking-wide">Category</th>
-                  <th className="py-3 px-4 text-left text-xs font-medium text-muted-foreground uppercase tracking-wide">Score</th>
-                  <th className="py-3 px-4 text-left text-xs font-medium text-muted-foreground uppercase tracking-wide">Campaign Angle</th>
-                  <th className="py-3 px-4 text-left text-xs font-medium text-muted-foreground uppercase tracking-wide">Status</th>
+              <thead>
+                <tr className="border-b border-apple-gray-100 bg-apple-gray-50">
+                  <th className="py-3 px-4 text-left eyebrow">Merchant</th>
+                  <th className="py-3 px-4 text-left eyebrow">Category</th>
+                  <th className="py-3 px-4 text-left eyebrow">Score</th>
+                  <th className="py-3 px-4 text-left eyebrow">Campaign Angle</th>
+                  <th className="py-3 px-4 text-left eyebrow">Status</th>
                   <th className="py-3 px-4" />
                 </tr>
               </thead>
@@ -91,7 +92,7 @@ export function MomentDetailClient({ momentId, initialPairings }: Props) {
       </div>
 
       {/* Influencer personas */}
-      <div className="rounded-xl border bg-white p-6 mt-8">
+      <div className="card-apple p-6">
         <InfluencerPanel momentId={momentId} hasPairings={pairings.length > 0} />
       </div>
     </>

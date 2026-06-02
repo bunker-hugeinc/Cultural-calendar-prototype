@@ -18,17 +18,13 @@ function formatDate(dateStr: string) {
   return new Date(y, m - 1, d).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
 }
 
-const CATEGORY_COLORS: Record<string, string> = {
-  gather: "bg-blue-100 text-blue-700",
-  improve: "bg-purple-100 text-purple-700",
-  excite: "bg-orange-100 text-orange-700",
+const CATEGORY_STYLES: Record<string, string> = {
+  gather:  "bg-gather/10 text-gather",
+  improve: "bg-improve/10 text-improve",
+  excite:  "bg-excite/10 text-excite",
 };
 
-export default async function MerchantDetailPage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
+export default async function MerchantDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
 
   const merchant = await db.query.merchants.findFirst({ where: eq(merchants.id, id) });
@@ -50,39 +46,31 @@ export default async function MerchantDetailPage({
     .orderBy(desc(pairingScores.relevanceScore));
 
   return (
-    <div className="px-6 py-8 max-w-5xl mx-auto">
-      <div className="mb-6">
-        <Link href="/merchants" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-          ← Merchant Catalog
+    <div className="px-6 py-10 max-w-5xl mx-auto">
+      <div className="mb-8">
+        <Link href="/merchants" className="text-sm text-apple-gray-400 hover:text-apple-black transition-colors no-underline">
+          ← Merchant catalog
         </Link>
       </div>
 
       {/* Header */}
-      <div className="flex items-start justify-between gap-4 mb-6">
+      <div className="flex items-start justify-between gap-4 mb-8">
         <div className="flex flex-col gap-2">
-          <h1 className="text-2xl font-semibold tracking-tight">{merchant.name}</h1>
+          <p className="eyebrow mb-0.5">Partner Network</p>
+          <h1>{merchant.name}</h1>
           <div className="flex items-center gap-3">
-            <span className="text-sm text-muted-foreground">{merchant.category}</span>
-            <Link
-              href={`/merchants/${id}/fit`}
-              className="text-sm font-medium text-blue-600 hover:text-blue-700 transition-colors"
-            >
+            <span className="text-sm text-apple-gray-400">{merchant.category}</span>
+            <Link href={`/merchants/${id}/fit`} className="text-sm font-medium text-apple-blue no-underline hover:opacity-80">
               Opportunities →
             </Link>
           </div>
         </div>
         <div className="flex items-center gap-2 shrink-0">
-          <Link
-            href={`/merchants/${id}/fit`}
-            className="shrink-0 rounded-lg border px-4 py-2 text-sm font-medium hover:bg-muted transition-colors"
-          >
-            View Opportunities
+          <Link href={`/merchants/${id}/fit`} className="btn-outline-apple no-underline">
+            Opportunities
           </Link>
-          <Link
-            href={`/merchants/${id}/edit`}
-            className="shrink-0 rounded-lg border px-4 py-2 text-sm font-medium hover:bg-muted transition-colors"
-          >
-            Edit Merchant
+          <Link href={`/merchants/${id}/edit`} className="btn-outline-apple no-underline">
+            Edit
           </Link>
         </div>
       </div>
@@ -96,17 +84,17 @@ export default async function MerchantDetailPage({
 
       {/* Details card */}
       {(merchant.seasonalNotes || merchant.notes) && (
-        <div className="rounded-xl border bg-white p-6 mb-8 space-y-4">
+        <div className="card-apple p-6 mb-8 space-y-4">
           {merchant.seasonalNotes && (
             <div>
-              <p className="text-sm font-medium text-muted-foreground mb-1">Seasonal Notes</p>
-              <p className="text-sm">{merchant.seasonalNotes}</p>
+              <p className="eyebrow mb-1">Seasonal notes</p>
+              <p className="text-sm text-apple-black">{merchant.seasonalNotes}</p>
             </div>
           )}
           {merchant.notes && (
-            <div>
-              <p className="text-sm font-medium text-muted-foreground mb-1">Notes</p>
-              <p className="text-sm text-muted-foreground">{merchant.notes}</p>
+            <div className={merchant.seasonalNotes ? "section-rule" : ""}>
+              <p className="eyebrow mb-1">Notes</p>
+              <p className="text-sm text-apple-gray-600">{merchant.notes}</p>
             </div>
           )}
         </div>
@@ -114,47 +102,47 @@ export default async function MerchantDetailPage({
 
       {/* Top moments table */}
       <div>
-        <h2 className="text-lg font-semibold mb-4">
-          Top Moments
-          <span className="ml-2 text-sm font-normal text-muted-foreground">({pairings.length})</span>
-        </h2>
+        <div className="flex items-baseline gap-2 mb-4">
+          <p className="eyebrow">Top moments</p>
+          <span className="text-xs text-apple-gray-400">({pairings.length})</span>
+        </div>
 
         {pairings.length === 0 ? (
-          <p className="text-sm text-muted-foreground">No moments paired with this merchant yet.</p>
+          <div className="card-apple p-8 text-center">
+            <p className="text-sm text-apple-gray-400">No moments paired with this merchant yet.</p>
+          </div>
         ) : (
-          <div className="rounded-xl border overflow-hidden">
+          <div className="card-apple overflow-hidden">
             <table className="w-full">
-              <thead className="bg-muted/50">
-                <tr>
-                  <th className="py-3 px-4 text-left text-xs font-medium text-muted-foreground uppercase tracking-wide">Moment</th>
-                  <th className="py-3 px-4 text-left text-xs font-medium text-muted-foreground uppercase tracking-wide">Date</th>
-                  <th className="py-3 px-4 text-left text-xs font-medium text-muted-foreground uppercase tracking-wide">Category</th>
-                  <th className="py-3 px-4 text-left text-xs font-medium text-muted-foreground uppercase tracking-wide">Score</th>
-                  <th className="py-3 px-4 text-left text-xs font-medium text-muted-foreground uppercase tracking-wide">Campaign Angle</th>
+              <thead>
+                <tr className="border-b border-apple-gray-100 bg-apple-gray-50">
+                  <th className="py-3 px-4 text-left eyebrow">Moment</th>
+                  <th className="py-3 px-4 text-left eyebrow">Date</th>
+                  <th className="py-3 px-4 text-left eyebrow">Category</th>
+                  <th className="py-3 px-4 text-left eyebrow">Score</th>
+                  <th className="py-3 px-4 text-left eyebrow">Campaign angle</th>
                 </tr>
               </thead>
               <tbody>
                 {pairings.map((p) => {
-                  const catColor = CATEGORY_COLORS[p.momentCategory] ?? "bg-gray-100 text-gray-700";
+                  const catStyle = CATEGORY_STYLES[p.momentCategory] ?? "bg-apple-gray-100 text-apple-gray-600";
                   return (
-                    <tr key={p.id} className="border-b last:border-0 hover:bg-muted/30 transition-colors">
-                      <td className="py-3 px-4 text-sm font-medium">
-                        <Link href={`/moments/${p.momentId}`} className="hover:text-blue-600 transition-colors">
+                    <tr key={p.id} className="border-b border-apple-gray-100 last:border-0 hover:bg-apple-gray-50 transition-colors">
+                      <td className="py-3 px-4 text-sm font-medium text-apple-black">
+                        <Link href={`/moments/${p.momentId}`} className="hover:text-apple-blue transition-colors no-underline">
                           {p.momentName}
                         </Link>
                       </td>
-                      <td className="py-3 px-4 text-sm text-muted-foreground whitespace-nowrap">
+                      <td className="py-3 px-4 text-sm text-apple-gray-400 whitespace-nowrap">
                         {formatDate(p.momentStartDate)}
                       </td>
                       <td className="py-3 px-4">
-                        <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium capitalize ${catColor}`}>
-                          {p.momentCategory}
-                        </span>
+                        <span className={`badge-apple capitalize ${catStyle}`}>{p.momentCategory}</span>
                       </td>
                       <td className="py-3 px-4">
                         <ScoreBadge score={p.relevanceScore} />
                       </td>
-                      <td className="py-3 px-4 text-sm text-muted-foreground max-w-xs truncate">
+                      <td className="py-3 px-4 text-sm text-apple-gray-600 max-w-xs truncate">
                         {p.campaignAngle}
                       </td>
                     </tr>

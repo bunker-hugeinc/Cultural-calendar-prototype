@@ -4,6 +4,8 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* ─── shadcn variable aliases (must be inline) ────────────────────────────── */
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -48,6 +50,38 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
+/* ─── Apple Design Tokens (plain @theme so utilities + CSS vars are generated) */
+
+@theme {
+  /* ── Core palette ─────────────────────────────────────────────────────── */
+  --color-apple-black:    #1d1d1f;
+  --color-apple-white:    #ffffff;
+
+  --color-apple-gray-50:  #f5f5f7;
+  --color-apple-gray-100: #e8e8ed;
+  --color-apple-gray-200: #d2d2d7;
+  --color-apple-gray-400: #86868b;
+  --color-apple-gray-600: #6e6e73;
+  --color-apple-gray-900: #1d1d1f;
+
+  --color-apple-blue:  #0071e3;
+  --color-apple-green: #34c759;
+  --color-apple-amber: #ff9f0a;
+  --color-apple-red:   #ff3b30;
+
+  /* ── Category colors ──────────────────────────────────────────────────── */
+  --color-gather:  #34a853;
+  --color-improve: #dc5078;
+  --color-excite:  #0071e3;
+
+  /* ── Font stacks ──────────────────────────────────────────────────────── */
+  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text",
+               "Helvetica Neue", Arial, sans-serif;
+  --font-mono: "SF Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+/* ─── shadcn variable mapping ─────────────────────────────────────────────── */
+
 :root {
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
@@ -83,48 +117,75 @@
   --sidebar-ring: oklch(0.708 0 0);
 }
 
-.dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
-}
+/* ─── Base styles ─────────────────────────────────────────────────────────── */
 
 @layer base {
   * {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
     @apply border-border outline-ring/50;
   }
-  body {
-    @apply bg-background text-foreground;
-  }
+
   html {
+    font-size: 16px;
     @apply font-sans;
+  }
+
+  body {
+    @apply bg-apple-gray-50 text-apple-black font-sans;
+    letter-spacing: -0.01em;
+  }
+
+  h1 { @apply text-4xl font-semibold tracking-tight text-apple-black; }
+  h2 { @apply text-2xl font-semibold tracking-tight text-apple-black; }
+  h3 { @apply text-xl font-medium text-apple-black; }
+  h4 { @apply text-base font-medium text-apple-black; }
+
+  p  { @apply leading-relaxed text-apple-gray-900; }
+
+  a  { @apply text-apple-blue no-underline hover:underline; }
+
+  hr { @apply border-apple-gray-100; }
+}
+
+/* ─── Component utilities ─────────────────────────────────────────────────── */
+
+@layer components {
+  /* Apple-style eyebrow label */
+  .eyebrow {
+    @apply text-xs font-medium tracking-widest uppercase text-apple-gray-400;
+  }
+
+  /* Apple-style card */
+  .card-apple {
+    @apply bg-white rounded-2xl border border-apple-gray-100 overflow-hidden;
+  }
+
+  /* Apple-style badge/pill */
+  .badge-apple {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+  }
+
+  /* Section rule */
+  .section-rule {
+    @apply border-t border-apple-gray-100 pt-6 mt-6;
+  }
+
+  /* Outlined action button — used in moment detail header */
+  .btn-outline-apple {
+    @apply border border-apple-gray-200 rounded-full px-5 py-2 text-sm font-medium
+           text-apple-black hover:bg-apple-gray-50 transition-colors cursor-pointer;
+  }
+
+  /* Filled primary button */
+  .btn-primary-apple {
+    @apply bg-apple-black text-white rounded-full px-5 py-2 text-sm font-medium
+           hover:bg-apple-gray-900 transition-colors cursor-pointer;
+  }
+
+  /* Apple blue CTA */
+  .btn-blue-apple {
+    @apply bg-apple-blue text-white rounded-full px-5 py-2 text-sm font-medium
+           hover:opacity-90 transition-opacity cursor-pointer;
   }
 }

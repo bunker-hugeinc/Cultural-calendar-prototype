@@ -5,13 +5,11 @@ import { useRouter, useSearchParams } from "next/navigation";
 
 type FilterStatus = "in_review" | "approved" | "live";
 
-const CHIPS: { key: FilterStatus; label: string; bg: string; txt: string; border: string }[] = [
-  { key: "in_review", label: "In Review", bg: "#fef9c3", txt: "#854d0e", border: "#fde047" },
-  { key: "approved",  label: "Approved",  bg: "#dbeafe", txt: "#1e40af", border: "#93c5fd" },
-  { key: "live",      label: "Live ✓",    bg: "#dcfce7", txt: "#15803d", border: "#86efac" },
+const CHIPS: { key: FilterStatus; label: string; activeClass: string }[] = [
+  { key: "in_review", label: "In Review", activeClass: "bg-apple-amber/10 text-apple-amber border-apple-amber/30" },
+  { key: "approved",  label: "Approved",  activeClass: "bg-apple-blue/10 text-apple-blue border-apple-blue/30"   },
+  { key: "live",      label: "Live ✓",    activeClass: "bg-apple-green/10 text-apple-green border-apple-green/30" },
 ];
-
-const MONO = `"SF Pro Mono","SFMono-Regular",ui-monospace,monospace`;
 
 interface Counts {
   total: number;
@@ -46,20 +44,9 @@ export function PairingStatsStrip() {
   if (!counts) return null;
 
   return (
-    <div style={{ marginBottom: 20 }}>
-      {/* Eyebrow */}
-      <div style={{
-        fontFamily: MONO,
-        fontSize: 8,
-        fontWeight: 500,
-        letterSpacing: ".2em",
-        textTransform: "uppercase",
-        color: "#b0b0ba",
-        marginBottom: 6,
-      }}>
-        Moments by Pairing Status — {counts.total} total
-      </div>
-      <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+    <div className="mb-5">
+      <p className="eyebrow mb-2">Moments by Pairing Status — {counts.total} total</p>
+      <div className="flex gap-2 flex-wrap">
         {CHIPS.map(chip => {
           const active = activeStatus === chip.key;
           const count = counts[chip.key];
@@ -67,38 +54,14 @@ export function PairingStatsStrip() {
             <button
               key={chip.key}
               onClick={() => handleClick(chip.key)}
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 5,
-                padding: "4px 10px",
-                borderRadius: 6,
-                border: `1px solid ${active ? chip.txt + "55" : chip.border}`,
-                background: active ? chip.bg : "transparent",
-                cursor: "pointer",
-                transition: "all .15s",
-                boxShadow: active ? `0 0 0 2px ${chip.txt}18` : "none",
-              }}
+              className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full border text-xs font-medium transition-colors cursor-pointer ${
+                active
+                  ? chip.activeClass
+                  : "border-apple-gray-200 text-apple-gray-400 hover:border-apple-gray-400 hover:text-apple-gray-600"
+              }`}
             >
-              <span style={{
-                fontFamily: MONO,
-                fontSize: 11,
-                fontWeight: 600,
-                color: active ? chip.txt : "#71717a",
-                lineHeight: 1,
-              }}>
-                {count}
-              </span>
-              <span style={{
-                fontFamily: MONO,
-                fontSize: 8,
-                fontWeight: 500,
-                letterSpacing: ".1em",
-                textTransform: "uppercase",
-                color: active ? chip.txt : "#a1a1aa",
-              }}>
-                {chip.label}
-              </span>
+              <span className="font-semibold tabular-nums">{count}</span>
+              <span className="uppercase tracking-wide text-[10px]">{chip.label}</span>
             </button>
           );
         })}

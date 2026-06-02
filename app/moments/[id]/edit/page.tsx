@@ -17,7 +17,7 @@ export default async function EditMomentPage({
   return (
     <div className="px-6 py-8 max-w-2xl mx-auto">
       <div className="mb-6">
-        <Link href={`/moments/${id}`} className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+        <Link href={`/moments/${id}`} className="text-sm text-apple-gray-400 hover:text-apple-black transition-colors">
           ← {moment.name}
         </Link>
       </div>

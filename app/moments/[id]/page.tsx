@@ -4,7 +4,6 @@ import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
 import { moments, pairingScores, merchants } from "@/lib/db/schema";
 import { eq, desc } from "drizzle-orm";
-import { ScoreBadge } from "@/components/score-badge";
 import { MomentDetailClient } from "@/components/moment-detail-client";
 import { BriefExport } from "@/components/brief-export";
 import { SubScoreCard } from "@/components/sub-score-card";
@@ -20,10 +19,10 @@ function formatDate(dateStr: string) {
   return new Date(y, m - 1, d).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
 }
 
-const CATEGORY_COLORS: Record<string, string> = {
-  gather: "bg-blue-100 text-blue-700",
-  improve: "bg-purple-100 text-purple-700",
-  excite: "bg-orange-100 text-orange-700",
+const CATEGORY_STYLES: Record<string, string> = {
+  gather:  "bg-gather/10 text-gather",
+  improve: "bg-improve/10 text-improve",
+  excite:  "bg-excite/10 text-excite",
 };
 
 export default async function MomentDetailPage({
@@ -52,71 +51,70 @@ export default async function MomentDetailPage({
     .where(eq(pairingScores.momentId, id))
     .orderBy(desc(pairingScores.relevanceScore));
 
-  const categoryColor = CATEGORY_COLORS[moment.category] ?? "bg-gray-100 text-gray-700";
+  const categoryStyle = CATEGORY_STYLES[moment.category] ?? "bg-apple-gray-100 text-apple-gray-600";
   const dateRange = moment.endDate && moment.endDate !== moment.startDate
     ? `${formatDate(moment.startDate)} – ${formatDate(moment.endDate)}`
     : formatDate(moment.startDate);
 
   return (
-    <div className="px-6 py-8 max-w-5xl mx-auto">
+    <div className="px-6 py-10 max-w-5xl mx-auto">
       {/* Breadcrumb */}
-      <div className="mb-6">
-        <Link href="/" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+      <div className="mb-8">
+        <Link href="/" className="text-sm text-apple-gray-400 hover:text-apple-black transition-colors no-underline">
           ← Dashboard
         </Link>
       </div>
 
       {/* Header */}
-      <div className="flex items-start justify-between gap-4 mb-6">
+      <div className="flex items-start justify-between gap-4 mb-8">
         <div className="flex flex-col gap-2">
+          <p className="eyebrow">{moment.category}</p>
           <div className="flex items-center gap-3 flex-wrap">
-            <h1 className="text-2xl font-semibold tracking-tight">{moment.name}</h1>
-            <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium capitalize ${categoryColor}`}>
+            <h1>{moment.name}</h1>
+            <span className={`badge-apple capitalize ${categoryStyle}`}>
               {moment.category}
             </span>
           </div>
-          <p className="text-sm text-muted-foreground">{dateRange}</p>
+          <p className="text-sm text-apple-gray-400">{dateRange}</p>
         </div>
         <div className="flex items-center gap-2 shrink-0 flex-wrap justify-end">
           <BriefExport momentId={id} />
-          <Link
-            href={`/moments/${id}/edit`}
-            className="shrink-0 rounded-lg border px-4 py-2 text-sm font-medium hover:bg-muted transition-colors"
-          >
-            Edit Moment
+          <Link href={`/moments/${id}/edit`} className="btn-outline-apple no-underline">
+            Edit
           </Link>
         </div>
       </div>
 
-      {/* Details */}
-      <div className="rounded-xl border bg-white p-6 mb-8 space-y-4">
-        <div>
-          <p className="text-sm font-medium text-muted-foreground mb-1">Description</p>
-          <p className="text-sm">{moment.description}</p>
-        </div>
-        <div className="flex flex-wrap gap-6">
-          {moment.hook && (
-            <div>
-              <p className="text-sm font-medium text-muted-foreground mb-1">Hook Type</p>
-              <p className="text-sm">{moment.hook}</p>
-            </div>
-          )}
-          {moment.score != null && (
-            <div>
-              <p className="text-sm font-medium text-muted-foreground mb-1">V1 Signal Score</p>
-              <div className="flex items-center gap-2">
-                <span className="text-sm font-semibold">{moment.score}/5</span>
-                <ScoreBadge score={moment.score * 2} />
-              </div>
-            </div>
-          )}
-        </div>
-        {moment.notes && (
+      {/* Details card */}
+      <div className="card-apple p-6 mb-6">
+        <div className="grid grid-cols-1 gap-5">
           <div>
-            <p className="text-sm font-medium text-muted-foreground mb-1">Notes</p>
-            <p className="text-sm text-muted-foreground">{moment.notes}</p>
+            <p className="eyebrow mb-1">Description</p>
+            <p className="text-sm text-apple-black leading-relaxed">{moment.description}</p>
           </div>
-        )}
+
+          <div className="flex flex-wrap gap-8 section-rule">
+            {moment.hook && (
+              <div>
+                <p className="eyebrow mb-1">Hook Type</p>
+                <p className="text-sm text-apple-black">{moment.hook}</p>
+              </div>
+            )}
+            {moment.score != null && (
+              <div>
+                <p className="eyebrow mb-1">Signal Score</p>
+                <p className="text-sm font-semibold text-apple-black">{moment.score}/5</p>
+              </div>
+            )}
+          </div>
+
+          {moment.notes && (
+            <div className="section-rule">
+              <p className="eyebrow mb-1">Notes</p>
+              <p className="text-sm text-apple-gray-600">{moment.notes}</p>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Sub-scores */}
@@ -127,7 +125,7 @@ export default async function MomentDetailPage({
         partnerAlignment={moment.partnerAlignment ?? null}
       />
 
-      {/* Pairings — client component handles Score button + refresh */}
+      {/* Pairings + Influencer — client component */}
       <MomentDetailClient momentId={id} initialPairings={pairings} />
     </div>
   );

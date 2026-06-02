@@ -337,7 +337,7 @@ export function BriefExport({ momentId }: { momentId: string }) {
       <button
         onClick={handleGenerate}
         disabled={status === "loading"}
-        className="shrink-0 rounded-lg border px-4 py-2 text-sm font-medium hover:bg-muted transition-colors"
+        className="btn-outline-apple shrink-0"
         style={{
           fontFamily: MONO,
           fontSize: 11,

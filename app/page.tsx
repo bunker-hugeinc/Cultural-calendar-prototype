@@ -87,17 +87,17 @@ export default async function DashboardPage({
   }
 
   return (
-    <div className="px-6 py-8 max-w-7xl mx-auto">
+    <div className="px-6 py-10 max-w-7xl mx-auto">
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-start justify-between mb-8">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Upcoming Moments</h1>
-          <p className="text-sm text-muted-foreground mt-1">{rows.length} moment{rows.length !== 1 ? "s" : ""} in range</p>
+          <p className="eyebrow mb-1">Campaign Planning</p>
+          <h1>Upcoming Moments</h1>
+          <p className="text-sm text-apple-gray-400 mt-1">
+            {rows.length} moment{rows.length !== 1 ? "s" : ""} in range
+          </p>
         </div>
-        <Link
-          href="/moments/new"
-          className="inline-flex items-center rounded-lg bg-foreground text-background px-4 py-2 text-sm font-medium hover:bg-foreground/80 transition-colors"
-        >
+        <Link href="/moments/new" className="btn-primary-apple">
           + Add Moment
         </Link>
       </div>
@@ -108,7 +108,7 @@ export default async function DashboardPage({
       </Suspense>
 
       {/* Filters */}
-      <div className="mb-6">
+      <div className="mb-8">
         <Suspense>
           <FilterBar />
         </Suspense>
@@ -117,8 +117,8 @@ export default async function DashboardPage({
       {/* Grid */}
       {rows.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-24 text-center">
-          <p className="text-lg font-medium">No moments in this range</p>
-          <p className="text-sm text-muted-foreground mt-1">
+          <p className="text-lg font-semibold text-apple-black">No moments in this range</p>
+          <p className="text-sm text-apple-gray-400 mt-2">
             {pairingStatusFilter
               ? `No moments have pairings with status "${pairingStatusFilter.replace("_", " ")}".`
               : "Try expanding the date range or changing the category filter."}

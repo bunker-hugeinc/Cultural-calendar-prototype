@@ -46,25 +46,24 @@ export default async function MerchantsPage({
   }
 
   return (
-    <div className="px-6 py-8 max-w-7xl mx-auto">
-      <div className="flex items-center justify-between mb-6">
+    <div className="px-6 py-10 max-w-7xl mx-auto">
+      {/* Header */}
+      <div className="flex items-start justify-between mb-8">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Merchant Catalog</h1>
-          <p className="text-sm text-muted-foreground mt-1">
+          <p className="eyebrow mb-1">Partner Network</p>
+          <h1>Merchant Catalog</h1>
+          <p className="text-sm text-apple-gray-400 mt-1">
             {filtered.length} merchant{filtered.length !== 1 ? "s" : ""}
             {statusFilter !== "All" ? ` · ${statusFilter}` : ""}
             {groupFilter !== "All Groups" ? ` · ${groupFilter}` : ""}
           </p>
         </div>
-        <Link
-          href="/merchants/new"
-          className="inline-flex items-center rounded-lg bg-foreground text-background px-4 py-2 text-sm font-medium hover:bg-foreground/80 transition-colors"
-        >
+        <Link href="/merchants/new" className="btn-primary-apple no-underline">
           + Add Merchant
         </Link>
       </div>
 
-      <div className="mb-6">
+      <div className="mb-8">
         <Suspense>
           <MerchantFilterBar statusCounts={statusCounts} />
         </Suspense>
@@ -72,8 +71,8 @@ export default async function MerchantsPage({
 
       {filtered.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-24 text-center">
-          <p className="text-lg font-medium">No merchants found</p>
-          <p className="text-sm text-muted-foreground mt-1">Try a different filter combination.</p>
+          <p className="text-lg font-semibold text-apple-black">No merchants found</p>
+          <p className="text-sm text-apple-gray-400 mt-2">Try a different filter combination.</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">

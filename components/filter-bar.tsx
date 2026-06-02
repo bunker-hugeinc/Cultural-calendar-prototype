@@ -23,15 +23,16 @@ export function FilterBar() {
 
   return (
     <div className="flex flex-wrap gap-3 items-center">
-      <div className="flex gap-1 rounded-lg border bg-white p-1">
+      {/* Category pills */}
+      <div className="flex gap-1 rounded-full border border-apple-gray-200 bg-white p-1">
         {CATEGORIES.map((cat) => (
           <button
             key={cat}
             onClick={() => update("category", cat)}
-            className={`px-3 py-1 rounded-md text-sm font-medium transition-colors capitalize ${
+            className={`px-4 py-1 rounded-full text-sm font-medium transition-colors capitalize cursor-pointer ${
               category === cat
-                ? "bg-foreground text-background"
-                : "text-muted-foreground hover:text-foreground"
+                ? "bg-apple-black text-white"
+                : "text-apple-gray-400 hover:text-apple-black"
             }`}
           >
             {cat}
@@ -39,10 +40,11 @@ export function FilterBar() {
         ))}
       </div>
 
+      {/* Date range select */}
       <select
         value={days}
         onChange={(e) => update("days", e.target.value)}
-        className="rounded-lg border bg-white px-3 py-1.5 text-sm text-foreground"
+        className="rounded-full border border-apple-gray-200 bg-white px-4 py-1.5 text-sm text-apple-black appearance-none cursor-pointer"
       >
         {DATE_RANGES.map((r) => (
           <option key={r.value} value={r.value}>
