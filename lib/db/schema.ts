@@ -15,6 +15,7 @@ export const moments = pgTable("moments", {
   audienceRelevance: real("audience_relevance"),
   productConnection: real("product_connection"),
   partnerAlignment:  real("partner_alignment"),
+  feedCandidateId:   text("feed_candidate_id"),  // nullable — set when approved from feed
   createdAt:   timestamp("created_at").defaultNow(),
   updatedAt:   timestamp("updated_at").defaultNow(),
 });

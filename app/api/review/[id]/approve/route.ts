@@ -24,13 +24,14 @@ export async function POST(
   const [moment] = await db
     .insert(moments)
     .values({
-      name:        candidate.name,
-      startDate:   candidate.startDate,
-      endDate:     candidate.endDate ?? undefined,
-      category:    candidate.category,
-      description: candidate.body,
-      hook:        candidate.hook,
-      score:       candidate.score,
+      name:            candidate.name,
+      startDate:       candidate.startDate,
+      endDate:         candidate.endDate ?? undefined,
+      category:        candidate.category,
+      description:     candidate.body,
+      hook:            candidate.hook,
+      score:           candidate.score,
+      feedCandidateId: id,
     })
     .returning();
 
