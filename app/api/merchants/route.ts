@@ -17,6 +17,8 @@ export async function POST(req: Request) {
       category: body.category,
       seasonalNotes: body.seasonalNotes ?? null,
       notes: body.notes ?? null,
+      partnerStatus: body.partnerStatus ?? "existing",
+      partnerGroup: body.partnerGroup ?? null,
     })
     .returning();
   return NextResponse.json(created, { status: 201 });

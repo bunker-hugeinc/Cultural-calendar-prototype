@@ -136,6 +136,9 @@ export default async function DashboardPage({
               category={m.category}
               daysAway={daysDiff(m.startDate, today)}
               topPairings={pairingsByMoment[m.id] ?? []}
+              audienceRelevance={m.audienceRelevance}
+              productConnection={m.productConnection}
+              partnerAlignment={m.partnerAlignment}
             />
           ))}
         </div>

@@ -14,6 +14,9 @@ interface MomentCardProps {
   category: string;
   daysAway: number;
   topPairings: Pairing[];
+  audienceRelevance?: number | null;
+  productConnection?: number | null;
+  partnerAlignment?: number | null;
 }
 
 const CATEGORY_COLORS: Record<string, string> = {
@@ -21,6 +24,12 @@ const CATEGORY_COLORS: Record<string, string> = {
   improve: "bg-purple-100 text-purple-700",
   excite: "bg-orange-100 text-orange-700",
 };
+
+function scorePillColor(score: number): string {
+  if (score >= 7) return "bg-green-100 text-green-700";
+  if (score >= 4) return "bg-amber-100 text-amber-700";
+  return "bg-red-100 text-red-500";
+}
 
 function formatDate(dateStr: string) {
   const [year, month, day] = dateStr.split("-").map(Number);
@@ -31,7 +40,7 @@ function formatDate(dateStr: string) {
   });
 }
 
-export function MomentCard({ id, name, startDate, endDate, category, daysAway, topPairings }: MomentCardProps) {
+export function MomentCard({ id, name, startDate, endDate, category, daysAway, topPairings, audienceRelevance, productConnection, partnerAlignment }: MomentCardProps) {
   const categoryColor = CATEGORY_COLORS[category] ?? "bg-gray-100 text-gray-700";
   const daysLabel =
     daysAway === 0
@@ -41,6 +50,8 @@ export function MomentCard({ id, name, startDate, endDate, category, daysAway, t
       : daysAway < 0
       ? `${Math.abs(daysAway)}d ago`
       : `${daysAway}d away`;
+
+  const hasSubScores = audienceRelevance != null && productConnection != null && partnerAlignment != null;
 
   return (
     <Link href={`/moments/${id}`} className="block group">
@@ -58,6 +69,21 @@ export function MomentCard({ id, name, startDate, endDate, category, daysAway, t
           <span>{formatDate(startDate)}{endDate && endDate !== startDate ? ` – ${formatDate(endDate)}` : ""}</span>
           <span className="font-medium text-foreground/70">{daysLabel}</span>
         </div>
+
+        {/* Sub-score mini pills */}
+        {hasSubScores && (
+          <div className="flex items-center gap-1.5">
+            {([
+              { abbr: "AR", score: audienceRelevance! },
+              { abbr: "PC", score: productConnection! },
+              { abbr: "PA", score: partnerAlignment! },
+            ] as const).map(({ abbr, score }) => (
+              <span key={abbr} className={`inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-xs font-medium ${scorePillColor(score)}`}>
+                <span className="opacity-60">{abbr}:</span> {score.toFixed(1)}
+              </span>
+            ))}
+          </div>
+        )}
 
         {/* Pairings */}
         <div className="mt-auto pt-2 border-t flex flex-col gap-1.5">

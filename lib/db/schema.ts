@@ -12,6 +12,9 @@ export const moments = pgTable("moments", {
   hook:        text("hook"),
   score:       real("score"),
   notes:       text("notes"),
+  audienceRelevance: real("audience_relevance"),
+  productConnection: real("product_connection"),
+  partnerAlignment:  real("partner_alignment"),
   createdAt:   timestamp("created_at").defaultNow(),
   updatedAt:   timestamp("updated_at").defaultNow(),
 });
@@ -23,6 +26,12 @@ export const merchants = pgTable("merchants", {
   category:      text("category").notNull(),
   seasonalNotes: text("seasonal_notes"),
   notes:         text("notes"),
+  partnerStatus: text("partner_status").notNull().default("existing"),
+  // "existing" | "potential" | "in_review" | "approved" | "dismissed"
+  partnerGroup:  text("partner_group"),
+  // "Travel & Staying" | "Clothing" | "Delivery & Rides" | "Big Stores" |
+  // "Sports & Entertainment" | "Food" | "Misc" | "Kids"
+  updatedAt:     timestamp("updated_at").defaultNow(),
   createdAt:     timestamp("created_at").defaultNow(),
 });
 

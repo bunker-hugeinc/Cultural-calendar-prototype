@@ -3,6 +3,8 @@ import { db } from "@/lib/db";
 import { merchants, moments, feedCandidates } from "@/lib/db/schema";
 import { groq, parseJSON } from "@/lib/ai";
 import { DISCOVER_SYSTEM_PROMPT } from "@/lib/prompts";
+import { createId } from "@paralleldrive/cuid2";
+import { sql } from "drizzle-orm";
 
 export const maxDuration = 60;
 
@@ -144,6 +146,7 @@ Only suggest moments that start AFTER ${latestExistingDate} or that are clearly 
   // Always filter out candidates that start within 30 days
   candidates = candidates.filter(c => c.startDate > cutoff);
 
+  // ── Insert feed candidates ──────────────────────────────────────────────────
   const inserted = [];
   for (const c of candidates) {
     const [row] = await db
@@ -168,5 +171,37 @@ Only suggest moments that start AFTER ${latestExistingDate} or that are clearly 
     inserted.push(row);
   }
 
-  return NextResponse.json({ candidates: inserted });
+  // ── Reconcile partner names → create unknown ones as "potential" ─────────────
+  const newMerchantsByCandidate: Record<string, number> = {};
+  for (const c of candidates) {
+    if (!Array.isArray(c.partners) || c.partners.length === 0) continue;
+    let newCount = 0;
+    for (const partnerName of c.partners) {
+      const trimmed = partnerName.trim();
+      if (!trimmed) continue;
+      const existing = await db.query.merchants.findFirst({
+        where: sql`lower(${merchants.name}) = lower(${trimmed})`,
+      });
+      if (!existing) {
+        await db.insert(merchants).values({
+          id: createId(),
+          name: trimmed,
+          category: "Unknown",
+          partnerStatus: "potential",
+          partnerGroup: null,
+          seasonalNotes: `Auto-suggested by feed discovery for: ${c.name}`,
+        }).onConflictDoNothing();
+        newCount++;
+      }
+    }
+    newMerchantsByCandidate[c.name] = newCount;
+  }
+
+  // Attach newMerchantCount to each returned candidate row
+  const enriched = inserted.map(row => ({
+    ...row,
+    newMerchantCount: newMerchantsByCandidate[row.name] ?? 0,
+  }));
+
+  return NextResponse.json({ candidates: enriched });
 }

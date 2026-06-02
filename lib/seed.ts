@@ -122,6 +122,64 @@ const MERCHANTS_DATA = [
   { name: "TikTok", category: "Social/Media", seasonalNotes: "Peak: Summer Travel", notes: "Platform partner; content amplification" },
 ] as const;
 
+// ─── MERCHANT GROUP MAP ───────────────────────────────────────────────────────
+
+const MERCHANT_GROUPS: Record<string, string> = {
+  // Travel & Staying
+  "Expedia": "Travel & Staying",
+  "Airbnb": "Travel & Staying",
+  "Booking.com": "Travel & Staying",
+  "American Airlines": "Travel & Staying",
+  "Hotel Tonight": "Travel & Staying",
+  "JetBlue": "Travel & Staying",
+  "United Airlines": "Travel & Staying",
+  // Clothing
+  "Adidas": "Clothing",
+  "Nike": "Clothing",
+  "Lululemon": "Clothing",
+  "Alo Yoga": "Clothing",
+  "GOAT": "Clothing",
+  "UGG": "Clothing",
+  "Fanatics": "Clothing",
+  "H&M": "Clothing",
+  "Nordstrom": "Clothing",
+  // Delivery & Rides
+  "Lyft": "Delivery & Rides",
+  "Uber": "Delivery & Rides",
+  "DoorDash": "Delivery & Rides",
+  "Instacart": "Delivery & Rides",
+  "Uber Eats": "Delivery & Rides",
+  // Big Stores
+  "Target": "Big Stores",
+  "Wayfair": "Big Stores",
+  "Best Buy": "Big Stores",
+  "Macy's": "Big Stores",
+  "Home Depot": "Big Stores",
+  "Lowe's": "Big Stores",
+  "Etsy": "Big Stores",
+  // Sports & Entertainment
+  "DraftKings": "Sports & Entertainment",
+  "FanDuel": "Sports & Entertainment",
+  "Fandango": "Sports & Entertainment",
+  "Ticketmaster": "Sports & Entertainment",
+  // Food
+  "McDonald's": "Food",
+  "Starbucks": "Food",
+  "Chipotle": "Food",
+  "Domino's": "Food",
+  "Dunkin'": "Food",
+  "Wingstop": "Food",
+  "Taco Bell": "Food",
+  "Crumbl": "Food",
+  // Misc
+  "1-800 Flowers": "Misc",
+  "Sephora": "Misc",
+  "Ulta Salon": "Misc",
+  "TikTok": "Misc",
+  // Kids
+  "Mattel": "Kids",
+};
+
 // ─── PAIRING MAP ──────────────────────────────────────────────────────────────
 // merchantName → array of moment names to pair with
 
@@ -207,11 +265,13 @@ async function seed() {
   console.log("Seeding merchants...");
   const merchantMap: Record<string, string> = {};
   for (const m of MERCHANTS_DATA) {
+    const partnerGroup = MERCHANT_GROUPS[m.name] ?? "Misc";
     const existing = await db.query.merchants.findFirst({ where: eq(merchants.name, m.name) });
     if (existing) {
+      await db.update(merchants).set({ partnerStatus: "existing", partnerGroup, updatedAt: new Date() }).where(eq(merchants.id, existing.id));
       merchantMap[m.name] = existing.id;
     } else {
-      const [inserted] = await db.insert(merchants).values({ name: m.name, category: m.category, seasonalNotes: m.seasonalNotes, notes: m.notes }).returning({ id: merchants.id });
+      const [inserted] = await db.insert(merchants).values({ name: m.name, category: m.category, seasonalNotes: m.seasonalNotes, notes: m.notes, partnerStatus: "existing", partnerGroup }).returning({ id: merchants.id });
       merchantMap[m.name] = inserted.id;
     }
   }

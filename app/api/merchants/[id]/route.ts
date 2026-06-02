@@ -42,9 +42,26 @@ export async function PUT(
       category: body.category,
       seasonalNotes: body.seasonalNotes ?? null,
       notes: body.notes ?? null,
+      partnerGroup: body.partnerGroup ?? null,
+      updatedAt: new Date(),
     })
     .where(eq(merchants.id, id))
     .returning();
+  if (!updated) return NextResponse.json({ error: "Not found" }, { status: 404 });
+  return NextResponse.json(updated);
+}
+
+export async function PATCH(
+  req: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { id } = await params;
+  const body = await req.json();
+  const updates: Record<string, unknown> = { updatedAt: new Date() };
+  if (body.partnerGroup !== undefined) updates.partnerGroup = body.partnerGroup;
+  if (body.name !== undefined) updates.name = body.name;
+  if (body.seasonalNotes !== undefined) updates.seasonalNotes = body.seasonalNotes;
+  const [updated] = await db.update(merchants).set(updates).where(eq(merchants.id, id)).returning();
   if (!updated) return NextResponse.json({ error: "Not found" }, { status: 404 });
   return NextResponse.json(updated);
 }

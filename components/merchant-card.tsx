@@ -5,6 +5,8 @@ interface MerchantCardProps {
   name: string;
   category: string;
   highRelevanceCount: number;
+  partnerStatus?: string;
+  partnerGroup?: string | null;
 }
 
 const CATEGORY_COLORS: Record<string, string> = {
@@ -34,17 +36,30 @@ const CATEGORY_COLORS: Record<string, string> = {
   "Gifts & Marketplace": "bg-pink-100 text-pink-700",
 };
 
-export function MerchantCard({ id, name, category, highRelevanceCount }: MerchantCardProps) {
+const STATUS_STYLES: Record<string, { pill: string; label: string }> = {
+  existing:  { pill: "bg-gray-100 text-gray-600 border border-gray-200",           label: "Existing Partner" },
+  potential: { pill: "bg-blue-50 text-blue-600 border border-blue-200",             label: "Potential" },
+  in_review: { pill: "bg-amber-100 text-amber-700 border border-amber-200",         label: "In Review" },
+  approved:  { pill: "bg-green-100 text-green-700 border border-green-200",         label: "Approved ✓" },
+  dismissed: { pill: "bg-red-50 text-red-500 border border-red-100",                label: "Dismissed" },
+};
+
+export function MerchantCard({ id, name, category, highRelevanceCount, partnerStatus, partnerGroup }: MerchantCardProps) {
   const color = CATEGORY_COLORS[category] ?? "bg-gray-100 text-gray-700";
+  const status = partnerStatus ?? "existing";
+  const statusStyle = STATUS_STYLES[status] ?? STATUS_STYLES.existing;
 
   return (
     <Link href={`/merchants/${id}`} className="block group">
       <div className="rounded-xl border bg-white p-5 shadow-sm hover:shadow-md transition-shadow h-full flex flex-col gap-3">
         <div className="flex items-start justify-between gap-2">
           <h3 className="font-semibold text-sm leading-snug group-hover:text-blue-600 transition-colors">{name}</h3>
-          <span className={`shrink-0 inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${color}`}>
-            {category}
+          <span className={`shrink-0 inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${statusStyle.pill}`}>
+            {statusStyle.label}
           </span>
+        </div>
+        <div className="text-xs text-muted-foreground">
+          {partnerGroup ? `${partnerGroup} · ${category}` : category}
         </div>
         <div className="mt-auto pt-2 border-t text-xs text-muted-foreground">
           {highRelevanceCount > 0 ? (

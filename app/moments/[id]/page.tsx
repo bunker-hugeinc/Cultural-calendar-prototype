@@ -7,6 +7,7 @@ import { eq, desc } from "drizzle-orm";
 import { ScoreBadge } from "@/components/score-badge";
 import { MomentDetailClient } from "@/components/moment-detail-client";
 import { BriefExport } from "@/components/brief-export";
+import { SubScoreCard } from "@/components/sub-score-card";
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const { id } = await params;
@@ -117,6 +118,14 @@ export default async function MomentDetailPage({
           </div>
         )}
       </div>
+
+      {/* Sub-scores */}
+      <SubScoreCard
+        momentId={id}
+        audienceRelevance={moment.audienceRelevance ?? null}
+        productConnection={moment.productConnection ?? null}
+        partnerAlignment={moment.partnerAlignment ?? null}
+      />
 
       {/* Pairings — client component handles Score button + refresh */}
       <MomentDetailClient momentId={id} initialPairings={pairings} />

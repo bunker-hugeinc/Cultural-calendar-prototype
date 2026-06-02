@@ -20,6 +20,7 @@ export interface FeedCandidate {
   hashtags: string;  // JSON
   competing: string; // JSON
   status: string;
+  newMerchantCount?: number;
 }
 
 interface Persona { t: string; h: string; d: string; }
@@ -76,6 +77,7 @@ function FeedCard({
   c: FeedCandidate;
   exiting: boolean;
   isNew: boolean;
+  newMerchantCount?: number;
   onApprove: () => void;
   onDismiss: () => void;
 }) {
@@ -257,11 +259,21 @@ function FeedCard({
 
       {/* Footer */}
       <div style={{ borderTop: "1px solid rgba(0,0,0,.08)", padding: "10px 20px", display: "flex", alignItems: "center", justifyContent: "space-between", background: "#fafafa" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
-          <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#3b82f6", display: "inline-block", flexShrink: 0 }} />
-          <span style={{ fontFamily: MONO, fontSize: 8, fontWeight: 500, letterSpacing: ".14em", textTransform: "uppercase", color: "#6e6e80" }}>
-            AI-identified · pending review
-          </span>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
+            <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#3b82f6", display: "inline-block", flexShrink: 0 }} />
+            <span style={{ fontFamily: MONO, fontSize: 8, fontWeight: 500, letterSpacing: ".14em", textTransform: "uppercase", color: "#6e6e80" }}>
+              AI-identified · pending review
+            </span>
+          </div>
+          {(c.newMerchantCount ?? 0) > 0 && (
+            <a
+              href="/merchants?status=potential"
+              style={{ fontFamily: MONO, fontSize: 8, fontWeight: 600, letterSpacing: ".1em", textTransform: "uppercase", padding: "3px 9px", borderRadius: 20, background: "rgba(37,99,235,.08)", color: "#2563eb", border: "1px solid rgba(37,99,235,.25)", textDecoration: "none" }}
+            >
+              + {c.newMerchantCount} new potential partner{c.newMerchantCount! > 1 ? "s" : ""}
+            </a>
+          )}
         </div>
         <div style={{ display: "flex", gap: 8 }}>
           <button
@@ -484,6 +496,7 @@ export function ProactiveFeed({ candidates, onApprove, onDismiss, onDiscovered }
             c={c}
             exiting={exitingIds.has(c.id)}
             isNew={newIds.has(c.id)}
+            newMerchantCount={c.newMerchantCount ?? 0}
             onApprove={() => handleApprove(c)}
             onDismiss={() => handleDismiss(c)}
           />

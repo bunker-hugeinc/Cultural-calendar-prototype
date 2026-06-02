@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import { merchants, pairingScores, moments } from "@/lib/db/schema";
 import { eq, desc } from "drizzle-orm";
 import { ScoreBadge } from "@/components/score-badge";
+import { MerchantStatusPanel } from "@/components/merchant-status-panel";
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const { id } = await params;
@@ -85,6 +86,13 @@ export default async function MerchantDetailPage({
           </Link>
         </div>
       </div>
+
+      {/* Partner Status Panel */}
+      <MerchantStatusPanel
+        merchantId={id}
+        initialStatus={merchant.partnerStatus ?? "existing"}
+        initialGroup={merchant.partnerGroup ?? null}
+      />
 
       {/* Details card */}
       {(merchant.seasonalNotes || merchant.notes) && (
