@@ -1,34 +1,211 @@
-import type { Metadata } from "next";
-import { db } from "@/lib/db";
-import { moments, feedCandidates } from "@/lib/db/schema";
-import { asc } from "drizzle-orm";
-import { CalendarView } from "@/components/calendar-view";
+"use client";
 
-export const metadata: Metadata = { title: "Calendar" };
+import { useState, useEffect } from "react";
+import { CalendarTimeline } from "@/components/calendar-timeline";
+import { CalendarGrid } from "@/components/calendar-grid";
 
-export default async function CalendarPage() {
-  const [rows, feed] = await Promise.all([
-    db
-      .select({
-        id: moments.id,
-        name: moments.name,
-        startDate: moments.startDate,
-        endDate: moments.endDate,
-        category: moments.category,
+// ─── Types ────────────────────────────────────────────────────────────────────
+export interface CalendarMoment {
+  id: string;
+  name: string;
+  startDate: string;
+  endDate: string | null;
+  category: string;
+  score: number | null;
+  audienceRelevance: number | null;
+  productConnection: number | null;
+  partnerAlignment: number | null;
+  description: string;
+  hook: string | null;
+}
+
+// ─── Icons ────────────────────────────────────────────────────────────────────
+function TimelineIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+      <line x1="1" y1="4"  x2="13" y2="4" />
+      <line x1="1" y1="7"  x2="10" y2="7" />
+      <line x1="1" y1="10" x2="7"  y2="10" />
+    </svg>
+  );
+}
+
+function GridIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="1" y="1" width="5" height="5" rx="1" />
+      <rect x="8" y="1" width="5" height="5" rx="1" />
+      <rect x="1" y="8" width="5" height="5" rx="1" />
+      <rect x="8" y="8" width="5" height="5" rx="1" />
+    </svg>
+  );
+}
+
+// ─── Category filter ──────────────────────────────────────────────────────────
+const CATEGORY_DOT: Record<string, string> = {
+  gather:  "#34a853",
+  improve: "#dc5078",
+  excite:  "#0071e3",
+};
+
+const CATEGORIES = ["gather", "improve", "excite"] as const;
+
+// ─── Page ─────────────────────────────────────────────────────────────────────
+export default function CalendarPage() {
+  const [moments, setMoments] = useState<CalendarMoment[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [view, setView] = useState<"timeline" | "grid">("timeline");
+  const [categoryFilter, setCategoryFilter] = useState<string | null>(null);
+
+  // Restore view preference from localStorage
+  useEffect(() => {
+    const saved = localStorage.getItem("cultural-calendar-view") as "timeline" | "grid" | null;
+    if (saved === "timeline" || saved === "grid") setView(saved);
+  }, []);
+
+  // Persist view preference
+  useEffect(() => {
+    localStorage.setItem("cultural-calendar-view", view);
+  }, [view]);
+
+  // Fetch moments
+  useEffect(() => {
+    fetch("/api/moments")
+      .then(r => r.json())
+      .then((data: CalendarMoment[]) => {
+        setMoments(Array.isArray(data) ? data : []);
+        setLoading(false);
       })
-      .from(moments)
-      .orderBy(asc(moments.startDate)),
-    db
-      .select()
-      .from(feedCandidates)
-      .orderBy(asc(feedCandidates.startDate)),
-  ]);
+      .catch(() => setLoading(false));
+  }, []);
+
+  const filteredMoments = categoryFilter
+    ? moments.filter(m => m.category === categoryFilter)
+    : moments;
+
+  // Date range label
+  const dateRangeLabel = (() => {
+    if (moments.length === 0) return "";
+    const sorted = [...moments].sort((a, b) => a.startDate.localeCompare(b.startDate));
+    const first = sorted[0].startDate;
+    const last = sorted[sorted.length - 1].endDate ?? sorted[sorted.length - 1].startDate;
+    const fmt = (d: string) => {
+      const [y, m] = d.split("-").map(Number);
+      return new Date(y, m - 1, 1).toLocaleDateString("en-US", { month: "short", year: "numeric" });
+    };
+    return `${fmt(first)} – ${fmt(last)}`;
+  })();
 
   return (
-    <div style={{ background: "#eeeef0", minHeight: "100vh" }}>
-      <div style={{ maxWidth: 1600, margin: "0 auto", padding: "28px 28px 80px" }}>
-        <CalendarView initialMoments={rows} initialFeed={feed} />
+    <div className="max-w-[1400px] mx-auto px-6">
+      {/* ── Page header ──────────────────────────────────────────────────── */}
+      <div className="pt-10 pb-6 border-b border-apple-gray-100">
+        <div className="flex items-end justify-between">
+          <div>
+            <p className="eyebrow mb-2">Partner Marketing</p>
+            <h1 className="text-4xl font-semibold tracking-tight">Cultural Calendar</h1>
+            <p className="text-apple-gray-400 mt-1 text-[15px]">
+              {loading ? "Loading…" : `${moments.length} moments${dateRangeLabel ? ` · ${dateRangeLabel}` : ""}`}
+            </p>
+          </div>
+
+          {/* View toggle */}
+          <div className="flex items-center gap-1 bg-apple-gray-100 rounded-lg p-1">
+            <button
+              onClick={() => setView("timeline")}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors cursor-pointer ${
+                view === "timeline"
+                  ? "bg-white text-apple-black shadow-sm"
+                  : "text-apple-gray-400 hover:text-apple-black"
+              }`}
+            >
+              <TimelineIcon className="w-3.5 h-3.5" />
+              Timeline
+            </button>
+            <button
+              onClick={() => setView("grid")}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors cursor-pointer ${
+                view === "grid"
+                  ? "bg-white text-apple-black shadow-sm"
+                  : "text-apple-gray-400 hover:text-apple-black"
+              }`}
+            >
+              <GridIcon className="w-3.5 h-3.5" />
+              Monthly
+            </button>
+          </div>
+        </div>
       </div>
+
+      {/* ── Filter bar ───────────────────────────────────────────────────── */}
+      <div className="flex items-center justify-between gap-4 py-4 flex-wrap">
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setCategoryFilter(null)}
+            className={`rounded-full px-4 py-1.5 text-sm font-medium transition-colors cursor-pointer ${
+              categoryFilter === null
+                ? "bg-apple-black text-white"
+                : "bg-white border border-apple-gray-200 text-apple-black hover:border-apple-gray-400"
+            }`}
+          >
+            All
+          </button>
+          {CATEGORIES.map(cat => (
+            <button
+              key={cat}
+              onClick={() => setCategoryFilter(categoryFilter === cat ? null : cat)}
+              className={`flex items-center gap-1.5 rounded-full px-4 py-1.5 text-sm font-medium capitalize transition-colors cursor-pointer ${
+                categoryFilter === cat
+                  ? "bg-apple-black text-white"
+                  : "bg-white border border-apple-gray-200 text-apple-black hover:border-apple-gray-400"
+              }`}
+            >
+              <span
+                className="w-2 h-2 rounded-full flex-shrink-0"
+                style={{ backgroundColor: categoryFilter === cat ? "white" : CATEGORY_DOT[cat] }}
+              />
+              {cat}
+            </button>
+          ))}
+        </div>
+
+        {/* Score legend */}
+        {!loading && moments.length > 0 && (
+          <div className="flex items-center gap-3">
+            <span className="text-[11px] text-apple-gray-400 font-medium tracking-wide uppercase">Score</span>
+            {[
+              { color: "#34c759", label: "≥ 7" },
+              { color: "#ff9f0a", label: "4 – 6" },
+              { color: "#ff3b30", label: "< 4" },
+            ].map(s => (
+              <span key={s.label} className="flex items-center gap-1">
+                <span className="w-2 h-2 rounded-full" style={{ backgroundColor: s.color }} />
+                <span className="text-[11px] text-apple-gray-400">{s.label}</span>
+              </span>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* ── View content ─────────────────────────────────────────────────── */}
+      {loading ? (
+        <div className="py-24 text-center">
+          <p className="text-sm text-apple-gray-400">Loading calendar…</p>
+        </div>
+      ) : filteredMoments.length === 0 ? (
+        <div className="py-24 text-center">
+          <p className="text-base font-semibold text-apple-black mb-1">No moments match this filter.</p>
+          <p className="text-sm text-apple-gray-400">Try selecting a different category.</p>
+        </div>
+      ) : view === "timeline" ? (
+        <div className="py-6">
+          <CalendarTimeline moments={filteredMoments} />
+        </div>
+      ) : (
+        <div className="py-6">
+          <CalendarGrid moments={filteredMoments} />
+        </div>
+      )}
     </div>
   );
 }
