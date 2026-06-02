@@ -49,6 +49,12 @@ export function CalendarView({ initialMoments, initialFeed }: CalendarViewProps)
     setFeed(prev => prev.map(c => c.id === candidateId ? { ...c, status: "dismissed" } : c));
   }, []);
 
+  const handleRestore = useCallback(async (candidateId: string) => {
+    const res = await fetch(`/api/feed/${candidateId}/restore`, { method: "POST" });
+    if (!res.ok) return;
+    setFeed(prev => prev.map(c => c.id === candidateId ? { ...c, status: "pending" } : c));
+  }, []);
+
   const handleDiscovered = useCallback((newCandidates: FeedCandidate[]) => {
     setFeed(prev => [...newCandidates, ...prev]);
   }, []);
@@ -63,6 +69,7 @@ export function CalendarView({ initialMoments, initialFeed }: CalendarViewProps)
         candidates={feed}
         onApprove={handleApprove}
         onDismiss={handleDismiss}
+        onRestore={handleRestore}
         onDiscovered={handleDiscovered}
       />
 

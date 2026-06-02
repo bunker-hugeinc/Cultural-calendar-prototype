@@ -29,6 +29,7 @@ interface ProactiveFeedProps {
   candidates: FeedCandidate[];
   onApprove: (id: string, name: string) => Promise<void>;
   onDismiss: (id: string) => Promise<void>;
+  onRestore: (id: string) => Promise<void>;
   onDiscovered: (newCandidates: FeedCandidate[]) => void;
 }
 
@@ -282,12 +283,11 @@ function FeedCard({
             style={{ fontFamily: MONO, fontSize: 8, fontWeight: 500, letterSpacing: ".12em", textTransform: "uppercase", padding: "6px 14px", borderRadius: 6, border: "1px solid rgba(0,0,0,.12)", background: "#fff", color: "#6e6e80", cursor: busy ? "default" : "pointer", opacity: busy === "dismiss" ? 0.5 : 1, transition: "all .15s" }}>
             {busy === "dismiss" ? "Dismissing…" : "Dismiss"}
           </button>
-          <button
-            onClick={handleApprove}
-            disabled={busy !== null}
-            style={{ fontFamily: MONO, fontSize: 8, fontWeight: 500, letterSpacing: ".12em", textTransform: "uppercase", padding: "6px 14px", borderRadius: 6, border: "1px solid rgba(52,168,83,.4)", background: "rgba(52,168,83,.1)", color: "#1a6b2e", cursor: busy ? "default" : "pointer", opacity: busy === "approve" ? 0.5 : 1, transition: "all .15s" }}>
-            {busy === "approve" ? "Adding…" : "+ Add to Calendar"}
-          </button>
+          <a
+            href={`/feed/${c.id}/add-details`}
+            style={{ fontFamily: MONO, fontSize: 8, fontWeight: 500, letterSpacing: ".12em", textTransform: "uppercase", padding: "6px 14px", borderRadius: 6, border: "1px solid rgba(52,168,83,.4)", background: "rgba(52,168,83,.1)", color: "#1a6b2e", textDecoration: "none", transition: "all .15s", display: "inline-block" }}>
+            Add Details →
+          </a>
         </div>
       </div>
     </div>
@@ -295,9 +295,11 @@ function FeedCard({
 }
 
 // ─── MAIN COMPONENT ──────────────────────────────────────────────────────────
-export function ProactiveFeed({ candidates, onApprove, onDismiss, onDiscovered }: ProactiveFeedProps) {
+export function ProactiveFeed({ candidates, onApprove, onDismiss, onRestore, onDiscovered }: ProactiveFeedProps) {
   const [sortKey, setSortKey] = useState<SortKey>("date");
   const [exitingIds, setExitingIds] = useState<Set<string>>(new Set());
+  const [dismissedOpen, setDismissedOpen] = useState(false);
+  const [restoringIds, setRestoringIds] = useState<Set<string>>(new Set());
 
   // Discover UI state
   const [discoverQuery, setDiscoverQuery] = useState("");
@@ -338,9 +340,16 @@ export function ProactiveFeed({ candidates, onApprove, onDismiss, onDiscovered }
     }
   }
 
-  const pending   = candidates.filter(c => c.status === "pending");
-  const added     = candidates.filter(c => c.status === "added").length;
-  const dismissed = candidates.filter(c => c.status === "dismissed").length;
+  const pending          = candidates.filter(c => c.status === "pending");
+  const inReviewCount    = candidates.filter(c => c.status === "in_review").length;
+  const added            = candidates.filter(c => c.status === "added").length;
+  const dismissedItems   = candidates.filter(c => c.status === "dismissed");
+
+  async function handleRestore(id: string) {
+    setRestoringIds(prev => new Set([...prev, id]));
+    await onRestore(id);
+    setRestoringIds(prev => { const s = new Set(prev); s.delete(id); return s; });
+  }
 
   const sorted = [...pending].sort((a, b) => {
     // New cards always float to top
@@ -388,12 +397,17 @@ export function ProactiveFeed({ candidates, onApprove, onDismiss, onDiscovered }
         {/* Stats */}
         <div style={{ display: "flex", gap: 24, alignItems: "center" }}>
           {[
-            { label: "Pending",   value: pending.length,   color: "#1a3fa8" },
-            { label: "Added",     value: added,            color: "#1a6b2e" },
-            { label: "Dismissed", value: dismissed,        color: "#9c2050" },
+            { label: "Pending",   value: pending.length,        color: "#1a3fa8", href: null },
+            { label: "In Review", value: inReviewCount,         color: "#b45309", href: "/review" },
+            { label: "Added",     value: added,                 color: "#1a6b2e", href: null },
+            { label: "Dismissed", value: dismissedItems.length, color: "#9c2050", href: null },
           ].map(s => (
             <div key={s.label} style={{ textAlign: "right" }}>
-              <div style={{ fontFamily: DISP, fontSize: 28, fontWeight: 800, color: s.color, lineHeight: 1 }}>{s.value}</div>
+              {s.href ? (
+                <a href={s.href} style={{ fontFamily: DISP, fontSize: 28, fontWeight: 800, color: s.color, lineHeight: 1, textDecoration: "none", display: "block" }}>{s.value}</a>
+              ) : (
+                <div style={{ fontFamily: DISP, fontSize: 28, fontWeight: 800, color: s.color, lineHeight: 1 }}>{s.value}</div>
+              )}
               <div style={{ fontFamily: MONO, fontSize: 8, fontWeight: 500, letterSpacing: ".14em", textTransform: "uppercase", color: "#b0b0ba", marginTop: 3 }}>{s.label}</div>
             </div>
           ))}
@@ -501,6 +515,59 @@ export function ProactiveFeed({ candidates, onApprove, onDismiss, onDiscovered }
             onDismiss={() => handleDismiss(c)}
           />
         ))
+      )}
+
+      {/* Dismissed section */}
+      {dismissedItems.length > 0 && (
+        <div style={{ marginTop: 32 }}>
+          <button
+            onClick={() => setDismissedOpen(o => !o)}
+            style={{
+              display: "flex", alignItems: "center", gap: 8, width: "100%",
+              background: "none", border: "none", cursor: "pointer", padding: "8px 0",
+              borderTop: "1px solid rgba(0,0,0,.08)",
+            }}
+          >
+            <span style={{ fontFamily: MONO, fontSize: 8, fontWeight: 500, letterSpacing: ".2em", textTransform: "uppercase", color: "#b0b0ba" }}>
+              Dismissed ({dismissedItems.length})
+            </span>
+            <span style={{ fontFamily: MONO, fontSize: 10, color: "#b0b0ba", marginLeft: 2, transition: "transform .2s", display: "inline-block", transform: dismissedOpen ? "rotate(180deg)" : "none" }}>▾</span>
+          </button>
+
+          {dismissedOpen && (
+            <div style={{ marginTop: 8, display: "flex", flexDirection: "column", gap: 6 }}>
+              {dismissedItems.map(c => {
+                const cs = catStyle(c.category);
+                const isRestoring = restoringIds.has(c.id);
+                return (
+                  <div key={c.id} style={{
+                    background: "#fff", border: "1px solid rgba(0,0,0,.08)", borderLeft: `3px solid ${cs.solid}`,
+                    borderRadius: 8, padding: "12px 16px", display: "flex", alignItems: "center", gap: 12, opacity: isRestoring ? 0.5 : 1, transition: "opacity .2s",
+                  }}>
+                    <span style={{ fontFamily: MONO, fontSize: 7.5, fontWeight: 500, letterSpacing: ".18em", textTransform: "uppercase", padding: "2px 8px", borderRadius: 4, background: cs.bg, color: cs.txt, border: `1px solid ${cs.bd}`, flexShrink: 0 }}>
+                      {c.category}
+                    </span>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontFamily: SANS, fontSize: 13, fontWeight: 600, color: "#111", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{c.name}</div>
+                      <div style={{ fontFamily: MONO, fontSize: 8, color: "#b0b0ba", marginTop: 2 }}>{formatRange(c.startDate, c.endDate)}</div>
+                    </div>
+                    <button
+                      onClick={() => handleRestore(c.id)}
+                      disabled={isRestoring}
+                      style={{
+                        fontFamily: MONO, fontSize: 8, fontWeight: 500, letterSpacing: ".12em", textTransform: "uppercase",
+                        padding: "5px 12px", borderRadius: 6, border: "1px solid rgba(0,0,0,.12)", background: "#fff",
+                        color: "#6e6e80", cursor: isRestoring ? "default" : "pointer", flexShrink: 0, transition: "all .15s",
+                      }}
+                    >
+                      {isRestoring ? "Restoring…" : "Restore"}
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
       )}
     </div>
   );

@@ -67,6 +67,24 @@ export const feedCandidates = pgTable("feed_candidates", {
   personas:  text("personas").notNull(),     // JSON array of {t, h, d} objects
   hashtags:  text("hashtags").notNull(),     // JSON array of hashtag strings
   competing: text("competing").notNull(),    // JSON array of competing brand strings
-  status:    text("status").notNull().default("pending"), // "pending" | "added" | "dismissed"
+  status:    text("status").notNull().default("pending"), // "pending" | "in_review" | "added" | "dismissed"
   createdAt: timestamp("created_at").defaultNow(),
+});
+
+// ─── MOMENT REVIEW ────────────────────────────────────────
+export const momentReviews = pgTable("moment_reviews", {
+  id:                  text("id").primaryKey().$defaultFn(() => createId()),
+  feedCandidateId:     text("feed_candidate_id").notNull().references(() => feedCandidates.id),
+  campaignName:        text("campaign_name"),
+  lastYearCampaignUrl: text("last_year_campaign_url"),
+  inspirationUrls:     text("inspiration_urls"),    // JSON array of strings
+  notes:               text("notes"),
+  targetQuarter:       text("target_quarter"),       // e.g. "FQ2 2027"
+  priorityMerchants:   text("priority_merchants"),   // JSON array of merchant IDs
+  submittedAt:         timestamp("submitted_at").defaultNow(),
+  reviewedAt:          timestamp("reviewed_at"),
+  reviewedBy:          text("reviewed_by"),          // free text, no auth
+  reviewNotes:         text("review_notes"),         // feedback from reviewer
+  status:              text("status").notNull().default("in_review"),
+  // "in_review" | "approved" | "rejected"
 });
