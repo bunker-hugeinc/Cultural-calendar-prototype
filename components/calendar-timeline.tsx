@@ -2,54 +2,73 @@
 
 import { useMemo } from "react";
 import Link from "next/link";
-import {
-  differenceInDays,
-  addMonths,
-  subMonths,
-  startOfMonth,
-  endOfMonth,
-  format,
-  parseISO,
-  eachMonthOfInterval,
-} from "date-fns";
+import { CATEGORY_BG, CATEGORY_TEXT, CATEGORY_BORDER } from "@/lib/category-colors";
 import type { CalendarMoment } from "@/app/calendar/page";
 
 // ─── Apple fiscal quarters ────────────────────────────────────────────────────
-// Q1 = Oct–Dec  Q2 = Jan–Mar  Q3 = Apr–Jun  Q4 = Jul–Sep
 function fiscalQLabel(d: Date): string {
   const mo = d.getMonth();
   const yr = d.getFullYear();
   if (mo >= 9) return `Q1 FY${yr + 1}`;
-  if (mo <= 2)  return `Q2 FY${yr}`;
-  if (mo <= 5)  return `Q3 FY${yr}`;
-  return          `Q4 FY${yr}`;
+  if (mo <= 2) return `Q2 FY${yr}`;
+  if (mo <= 5) return `Q3 FY${yr}`;
+  return `Q4 FY${yr}`;
 }
 
-// ─── Category colours ─────────────────────────────────────────────────────────
-const CAT_COLOR: Record<string, string> = {
-  gather:  "#34a853",
-  improve: "#dc5078",
-  excite:  "#0071e3",
-};
-const CAT_BG: Record<string, string> = {
-  gather:  "rgba(52,168,83,0.10)",
-  improve: "rgba(220,80,120,0.10)",
-  excite:  "rgba(0,113,227,0.10)",
-};
-
-// Score → colour dot on bar
-function scoreDotColor(score: number | null): string {
-  if (score === null) return "rgba(134,134,139,0.4)";
-  if (score >= 7)     return "#34c759";
-  if (score >= 4)     return "#ff9f0a";
-  return                     "#ff3b30";
+function toYMD(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
-// ─── Layout constants ─────────────────────────────────────────────────────────
-const LABEL_W = 196; // px — sticky left column width
-const ROW_H   = 44;  // px — moment row height
-const HEAD_Q  = 26;  // px — quarter header height
-const HEAD_M  = 30;  // px — month header height
+function addMonths(d: Date, n: number): Date {
+  return new Date(d.getFullYear(), d.getMonth() + n, 1);
+}
+
+function monthStart(d: Date): Date {
+  return new Date(d.getFullYear(), d.getMonth(), 1);
+}
+
+function diffDays(a: Date, b: Date): number {
+  return Math.round((a.getTime() - b.getTime()) / 86400000);
+}
+
+// ─── EMEIA smart row-packing ───────────────────────────────────────────────────
+const PX_PER_DAY = 5;
+const BAR_MIN_W  = 80;
+const ROW_H      = 34;
+const ROW_GAP    = 5;
+
+interface BarLayout {
+  moment: CalendarMoment;
+  row: number;
+  leftPx: number;
+  widthPx: number;
+}
+
+function layoutBars(moments: CalendarMoment[], calStart: Date): BarLayout[] {
+  const layouts: BarLayout[] = [];
+  const rowEnds: number[] = [];
+
+  const sorted = [...moments].sort((a, b) => a.startDate.localeCompare(b.startDate));
+
+  for (const moment of sorted) {
+    const startD = new Date(moment.startDate + "T00:00:00");
+    const endD   = moment.endDate
+      ? new Date(moment.endDate + "T00:00:00")
+      : new Date(startD.getTime() + 86400000);
+
+    const startOff = Math.max(0, diffDays(startD, calStart));
+    const durDays  = Math.max(1, diffDays(endD, startD));
+    const leftPx   = startOff * PX_PER_DAY;
+    const widthPx  = Math.max(durDays * PX_PER_DAY, BAR_MIN_W);
+
+    let row = 0;
+    while (rowEnds[row] !== undefined && rowEnds[row] > leftPx - 8) row++;
+    rowEnds[row] = leftPx + widthPx;
+
+    layouts.push({ moment, row, leftPx, widthPx });
+  }
+  return layouts;
+}
 
 // ─── Component ───────────────────────────────────────────────────────────────
 export function CalendarTimeline({ moments }: { moments: CalendarMoment[] }) {
@@ -57,223 +76,142 @@ export function CalendarTimeline({ moments }: { moments: CalendarMoment[] }) {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    // ── Compute visible date range ──
-    const allDates = moments.flatMap(m => [
-      parseISO(m.startDate),
-      parseISO(m.endDate ?? m.startDate),
-    ]);
-    const minDate   = allDates.length ? allDates.reduce((a, b) => (a < b ? a : b)) : subMonths(today, 1);
-    const maxDate   = allDates.length ? allDates.reduce((a, b) => (a > b ? a : b)) : addMonths(today, 6);
-    const rangeStart = startOfMonth(subMonths(minDate, 1));
-    const rangeEnd   = endOfMonth(addMonths(maxDate, 1));
-    const totalDays  = differenceInDays(rangeEnd, rangeStart) + 1;
+    const allStarts = moments.map(m => new Date(m.startDate + "T00:00:00"));
+    const allEnds   = moments.map(m => new Date((m.endDate ?? m.startDate) + "T00:00:00"));
+    const minDate   = allStarts.length ? allStarts.reduce((a, b) => a < b ? a : b) : addMonths(today, -1);
+    const maxDate   = allEnds.length   ? allEnds.reduce((a, b)   => a > b ? a : b) : addMonths(today, 6);
 
-    // Convert a date → % of total track width
-    const pct = (d: Date) => (differenceInDays(d, rangeStart) / totalDays) * 100;
+    const calStart = monthStart(addMonths(minDate, -1));
+    const calEnd   = monthStart(addMonths(maxDate, 2));
 
-    // ── Months ──
-    const months = eachMonthOfInterval({ start: rangeStart, end: rangeEnd });
+    // Build month list
+    const monthList: Date[] = [];
+    let cur = new Date(calStart);
+    while (cur < calEnd) {
+      monthList.push(new Date(cur));
+      cur = new Date(cur.getFullYear(), cur.getMonth() + 1, 1);
+    }
 
-    // ── Quarter segments ──
-    const quarters: { label: string; leftPct: number; widthPct: number }[] = [];
+    // Month marks (px offset from calStart)
+    const monthMarks = monthList.map(m => ({
+      label: m.toLocaleDateString("en-US", { month: "short" }).toUpperCase(),
+      leftPx: diffDays(m, calStart) * PX_PER_DAY,
+    }));
+
+    // Quarter bands
+    const quarters: { label: string; leftPx: number; widthPx: number }[] = [];
     let qCur: { label: string; start: Date } | null = null;
-    for (const m of months) {
+    for (const m of monthList) {
       const lbl = fiscalQLabel(m);
       if (!qCur) { qCur = { label: lbl, start: m }; continue; }
       if (lbl !== qCur.label) {
-        quarters.push({ label: qCur.label, leftPct: pct(qCur.start), widthPct: pct(m) - pct(qCur.start) });
+        quarters.push({ label: qCur.label, leftPx: diffDays(qCur.start, calStart) * PX_PER_DAY, widthPx: diffDays(m, qCur.start) * PX_PER_DAY });
         qCur = { label: lbl, start: m };
       }
     }
-    if (qCur) quarters.push({ label: qCur.label, leftPct: pct(qCur.start), widthPct: 100 - pct(qCur.start) });
+    if (qCur) {
+      quarters.push({ label: qCur.label, leftPx: diffDays(qCur.start, calStart) * PX_PER_DAY, widthPx: diffDays(calEnd, qCur.start) * PX_PER_DAY });
+    }
 
-    // ── Month markers (for dividers + labels) ──
-    const monthMarks = months.map(m => ({
-      label:   format(m, "MMM"),
-      leftPct: pct(startOfMonth(m)),
-    }));
+    // Today line
+    const todayPx = today >= calStart && today <= calEnd ? diffDays(today, calStart) * PX_PER_DAY : null;
 
-    // ── Today line ──
-    const todayPct = today >= rangeStart && today <= rangeEnd ? pct(today) : null;
+    // Total canvas width
+    const totalDays  = diffDays(calEnd, calStart);
+    const canvasW    = totalDays * PX_PER_DAY;
 
-    // ── Bars ──
-    const bars = moments.map(m => {
-      const s = parseISO(m.startDate);
-      const e = parseISO(m.endDate ?? m.startDate);
-      const leftPct  = Math.max(0, pct(s));
-      // +1 day inclusive; clamp to 100; min 2 days so single-day bars are visible
-      const widthPct = Math.min(100 - leftPct, Math.max((differenceInDays(e, s) + 1) / totalDays * 100, 2 / totalDays * 100));
-      return {
-        leftPct,
-        widthPct,
-        showLabel: widthPct > 5,
-      };
-    });
+    // Bar layout
+    const layouts = layoutBars(moments, calStart);
+    const maxRow  = layouts.length ? Math.max(...layouts.map(l => l.row)) : 0;
+    const canvasH = (maxRow + 1) * (ROW_H + ROW_GAP) + 16;
 
-    return { months, monthMarks, quarters, todayPct, bars };
+    return { monthMarks, quarters, todayPx, canvasW, canvasH, layouts, calStart, today };
   }, [moments]);
 
-  const { monthMarks, quarters, todayPct, bars } = derived;
+  const { monthMarks, quarters, todayPx, canvasW, canvasH, layouts } = derived;
 
-  // ── Render ──────────────────────────────────────────────────────────────────
+  const HEADER_H = 52;
+
   return (
-    <div className="rounded-2xl border border-apple-gray-100 overflow-hidden bg-white">
-      <div className="overflow-x-auto">
-        <div style={{ minWidth: 820 }}>
+    <div style={{ overflowX: "auto", background: "white", borderRadius: 16, border: "1px solid #e8e8ed", padding: 20 }}>
+      <div style={{ minWidth: Math.max(canvasW, 600), position: "relative" }}>
 
-          {/* ── Quarter header ───────────────────────────────────────── */}
-          <div className="flex" style={{ height: HEAD_Q, borderBottom: "1px solid #e8e8ed" }}>
-            {/* Corner cell */}
-            <div
-              className="shrink-0 sticky left-0 z-20 bg-[#f5f5f7]"
-              style={{ width: LABEL_W, borderRight: "1px solid #e8e8ed" }}
-            />
-            {/* Quarter track */}
-            <div className="relative flex-1 bg-[#f5f5f7]">
-              {quarters.map((q, i) => (
-                <div
-                  key={i}
-                  className="absolute inset-y-0 flex items-center px-3 overflow-hidden"
-                  style={{ left: `${q.leftPct}%`, width: `${q.widthPct}%`, borderRight: "1px solid #e8e8ed" }}
-                >
-                  <span className="text-[10px] font-semibold tracking-wider uppercase text-[#86868b] truncate whitespace-nowrap">
-                    {q.label}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* ── Month header ─────────────────────────────────────────── */}
-          <div className="flex" style={{ height: HEAD_M, borderBottom: "1px solid #e8e8ed" }}>
-            {/* "Moment" label */}
-            <div
-              className="shrink-0 sticky left-0 z-20 bg-[#f5f5f7] flex items-center px-4"
-              style={{ width: LABEL_W, borderRight: "1px solid #e8e8ed" }}
-            >
-              <span className="text-[10px] font-semibold tracking-widest uppercase text-[#86868b]">
-                Moment
+        {/* ── Month + quarter header ─────────────────────────────────── */}
+        <div style={{ position: "relative", height: HEADER_H, marginBottom: 8 }}>
+          {/* Quarter labels */}
+          {quarters.map((q, i) => (
+            <div key={i} style={{ position: "absolute", left: q.leftPx, width: q.widthPx, top: 0, height: 22, overflow: "hidden", borderLeft: i > 0 ? "1px solid #f5f5f7" : undefined }}>
+              <span style={{ fontSize: "0.6rem", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "#86868b", paddingLeft: 4 }}>
+                {q.label}
               </span>
             </div>
-            {/* Month labels */}
-            <div className="relative flex-1 bg-[#f5f5f7]">
-              {monthMarks.map((mm, i) => (
-                <div
-                  key={i}
-                  className="absolute inset-y-0 flex items-center pl-2 overflow-hidden"
-                  style={{
-                    left: `${mm.leftPct}%`,
-                    borderLeft: i > 0 ? "1px solid #e8e8ed" : undefined,
-                  }}
-                >
-                  <span className="text-[11px] font-medium text-[#6e6e73] whitespace-nowrap">
-                    {mm.label}
-                  </span>
-                </div>
-              ))}
+          ))}
+          {/* Month labels + grid lines */}
+          {monthMarks.map((mm, i) => (
+            <div key={i} style={{ position: "absolute", left: mm.leftPx, top: 26, bottom: 0 }}>
+              <div style={{ position: "absolute", top: 0, bottom: 0, left: 0, width: 1, background: "#f5f5f7" }} />
+              <span style={{ position: "absolute", top: 4, left: 4, fontSize: "0.63rem", fontWeight: 700, letterSpacing: "0.07em", textTransform: "uppercase", color: "#86868b", whiteSpace: "nowrap" }}>
+                {mm.label}
+              </span>
             </div>
-          </div>
+          ))}
+        </div>
 
-          {/* ── Moment rows ──────────────────────────────────────────── */}
-          {moments.map((m, idx) => {
-            const bar      = bars[idx];
-            const color    = CAT_COLOR[m.category] ?? "#86868b";
-            const bg       = CAT_BG[m.category]    ?? "rgba(134,134,139,0.10)";
-            const dotColor = scoreDotColor(m.score);
-            const rowBg    = idx % 2 === 1 ? "#fafafa" : "#ffffff";
+        {/* ── Bar canvas ────────────────────────────────────────────── */}
+        <div style={{ position: "relative", height: canvasH }}>
+          {/* Grid lines */}
+          {monthMarks.map((mm, i) => (
+            <div key={i} style={{ position: "absolute", left: mm.leftPx, top: 0, bottom: 0, width: 1, background: "#f5f5f7" }} />
+          ))}
 
-            return (
-              <div
-                key={m.id}
-                className="flex group"
-                style={{ height: ROW_H, borderBottom: "1px solid #f5f5f7", backgroundColor: rowBg }}
-              >
-                {/* Sticky label column */}
-                <div
-                  className="shrink-0 sticky left-0 z-20 flex items-center px-3 gap-2"
-                  style={{ width: LABEL_W, borderRight: "1px solid #f0f0f2", backgroundColor: rowBg }}
-                >
-                  <span
-                    className="w-1.5 h-1.5 rounded-full shrink-0"
-                    style={{ backgroundColor: color }}
-                  />
-                  <Link
-                    href={`/moments/${m.id}`}
-                    className="text-[13px] font-medium text-[#1d1d1f] hover:text-[#0071e3] transition-colors no-underline truncate leading-snug"
-                    title={m.name}
-                  >
-                    {m.name}
-                  </Link>
-                </div>
-
-                {/* Scrollable track */}
-                <div className="relative flex-1 min-w-0">
-                  {/* Month grid lines */}
-                  {monthMarks.slice(1).map((mm, i) => (
-                    <div
-                      key={i}
-                      className="absolute inset-y-0"
-                      style={{ left: `${mm.leftPct}%`, borderLeft: "1px solid #f0f0f2" }}
-                    />
-                  ))}
-
-                  {/* Today line */}
-                  {todayPct !== null && (
-                    <div
-                      className="absolute inset-y-0 z-10 pointer-events-none"
-                      style={{ left: `${todayPct}%`, borderLeft: "2px solid #0071e3", opacity: 0.55 }}
-                    />
-                  )}
-
-                  {/* Bar */}
-                  <div
-                    className="absolute top-1/2 -translate-y-1/2 rounded-full flex items-center overflow-hidden"
-                    style={{
-                      left:            `${bar.leftPct}%`,
-                      width:           `${bar.widthPct}%`,
-                      height:          22,
-                      backgroundColor: bg,
-                      border:          `1.5px solid ${color}66`,
-                    }}
-                  >
-                    {bar.showLabel && (
-                      <span
-                        className="pl-2 pr-6 text-[11px] font-medium truncate whitespace-nowrap leading-none"
-                        style={{ color }}
-                      >
-                        {m.name}
-                      </span>
-                    )}
-
-                    {/* Score dot — pinned to right end of bar */}
-                    <span
-                      className="absolute right-1.5 w-2 h-2 rounded-full shrink-0"
-                      style={{ backgroundColor: dotColor }}
-                      title={m.score !== null ? `Score: ${m.score}` : "Not scored"}
-                    />
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-
-          {/* ── Today label footer ───────────────────────────────────── */}
-          {todayPct !== null && moments.length > 0 && (
-            <div className="flex" style={{ height: 22 }}>
-              <div className="shrink-0" style={{ width: LABEL_W }} />
-              <div className="relative flex-1">
-                <div
-                  className="absolute flex items-center"
-                  style={{ left: `${todayPct}%`, transform: "translateX(-50%)", top: 4 }}
-                >
-                  <span className="text-[10px] font-semibold" style={{ color: "#0071e3" }}>
-                    Today
-                  </span>
-                </div>
-              </div>
+          {/* Today line */}
+          {todayPx !== null && (
+            <div style={{ position: "absolute", left: todayPx, top: 0, bottom: 0, width: 1.5, background: "#0071e3", zIndex: 10 }}>
+              <span style={{ position: "absolute", top: -18, left: "50%", transform: "translateX(-50%)", fontSize: "0.6rem", fontWeight: 700, color: "#0071e3", whiteSpace: "nowrap" }}>
+                Today
+              </span>
             </div>
           )}
 
+          {/* Bars */}
+          {layouts.map(({ moment: m, row, leftPx, widthPx }) => {
+            const top = row * (ROW_H + ROW_GAP);
+            const bg     = CATEGORY_BG[m.category]     ?? "rgba(134,134,139,0.12)";
+            const color  = CATEGORY_TEXT[m.category]   ?? "#86868b";
+            const border = CATEGORY_BORDER[m.category] ?? "rgba(134,134,139,0.35)";
+            return (
+              <Link
+                key={m.id}
+                href={`/moments/${m.id}`}
+                title={m.name}
+                style={{ textDecoration: "none" }}
+              >
+                <div
+                  style={{
+                    position: "absolute",
+                    left: leftPx,
+                    top,
+                    width: widthPx,
+                    height: ROW_H,
+                    background: bg,
+                    border: `1.5px solid ${border}`,
+                    borderRadius: 8,
+                    display: "flex",
+                    alignItems: "center",
+                    paddingLeft: 10,
+                    paddingRight: 10,
+                    overflow: "hidden",
+                    cursor: "pointer",
+                    transition: "opacity 0.15s",
+                  }}
+                >
+                  <span style={{ fontSize: "0.65rem", fontWeight: 700, color, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                    {m.name}
+                  </span>
+                </div>
+              </Link>
+            );
+          })}
         </div>
       </div>
     </div>

@@ -1,15 +1,15 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { merchants, moments, feedCandidates } from "@/lib/db/schema";
-import { groq, parseJSON } from "@/lib/ai";
+import { callClaude, parseJSON } from "@/lib/ai";
 import { DISCOVER_SYSTEM_PROMPT } from "@/lib/prompts";
 import { createId } from "@paralleldrive/cuid2";
 import { sql } from "drizzle-orm";
 
 export const maxDuration = 60;
 
-if (!process.env.GROQ_API_KEY) {
-  console.warn("[discover] GROQ_API_KEY is not set");
+if (!process.env.ANTHROPIC_API_KEY) {
+  console.warn("[discover] ANTHROPIC_API_KEY is not set");
 }
 
 interface DiscoverCandidate {
@@ -74,25 +74,40 @@ Requirements:
 }
 
 export async function POST(req: Request) {
-  if (!process.env.GROQ_API_KEY) {
+  if (!process.env.ANTHROPIC_API_KEY) {
     return NextResponse.json(
-      { error: "API key not configured. Add GROQ_API_KEY to .env.local." },
+      { error: "API key not configured. Add ANTHROPIC_API_KEY to .env.local." },
       { status: 503 }
     );
   }
 
   const body = await req.json();
   const isStructured = !!body.settings;
+  const settings = body.settings as FeedSettings | undefined;
 
-  let queryLine: string;
-  if (isStructured) {
-    queryLine = buildStructuredQuery(body.settings as FeedSettings);
+  const today = new Date();
+  const todayStr = toYMD(today);
+  const systemPrompt = DISCOVER_SYSTEM_PROMPT.replace("{TODAY}", todayStr);
+
+  // Compute time window
+  let windowStart: string;
+  let windowEnd: string;
+  if (isStructured && settings?.timeWindow === "custom" && settings.customStart && settings.customEnd) {
+    windowStart = settings.customStart;
+    windowEnd   = settings.customEnd;
   } else {
+    const months = isStructured
+      ? (settings?.timeWindow === "3m" ? 3 : settings?.timeWindow === "6m" ? 6 : 12)
+      : 12;
+    windowStart = todayStr;
+    windowEnd   = toYMD(addMonths(today, months));
+  }
+
+  if (!isStructured) {
     const query: string = (body.query ?? "").trim();
     if (!query) {
       return NextResponse.json({ error: "query is required" }, { status: 400 });
     }
-    queryLine = `Query: ${query}`;
   }
 
   const [allMerchants, allMoments] = await Promise.all([
@@ -100,33 +115,32 @@ export async function POST(req: Request) {
     db.select({ name: moments.name, startDate: moments.startDate }).from(moments),
   ]);
 
-  // Build richer existing-moments context with dates so the model avoids overlapping windows
-  const latestExistingDate = allMoments.reduce((max, m) => m.startDate > max ? m.startDate : max, "2000-01-01");
   const existingMomentsList = allMoments
-    .map(m => `${m.name} (${m.startDate})`)
-    .join(", ");
+    .map(m => `- ${m.name} (${m.startDate})`)
+    .join("\n");
 
-  const userMessage = `${queryLine}
+  const userMessage = `Generate cultural moment recommendations for Apple Pay Partner Marketing.
+
+Time window: ${windowStart} to ${windowEnd}
+Categories wanted: ${settings?.categories?.join(", ") ?? "gather, improve, excite"}
+Priority merchant partners: ${settings?.priorityMerchants?.join(", ") || "any from catalog"}
+Minimum fit score: ${settings?.minScore ?? 3.5}/5.0
 
 Available merchant partners:
 ${allMerchants.map(m => `- ${m.name} (${m.category})`).join("\n")}
 
-Existing moments already on the calendar (do NOT suggest anything that overlaps with these dates or duplicates these events):
+Existing moments already on the calendar (do NOT duplicate):
 ${existingMomentsList}
 
-Only suggest moments that start AFTER ${latestExistingDate} or that are clearly distinct from anything above.`;
+Focus on real, specific events that will actually occur in the time window above. Be specific about names and dates.`;
 
-  const completion = await groq.chat.completions.create({
-    model: "llama-3.3-70b-versatile",
-    messages: [
-      { role: "system", content: DISCOVER_SYSTEM_PROMPT },
-      { role: "user", content: userMessage },
-    ],
-    max_tokens: 4096,
+  const raw = await callClaude({
+    system: systemPrompt,
+    user: userMessage,
+    model: "claude-sonnet-4-6",
+    maxTokens: 4096,
     temperature: 0.4,
   });
-
-  const raw = completion.choices[0].message.content ?? "";
   let candidates: DiscoverCandidate[];
   try {
     candidates = parseJSON<DiscoverCandidate[]>(raw);
@@ -136,7 +150,6 @@ Only suggest moments that start AFTER ${latestExistingDate} or that are clearly 
   }
 
   // Filter: minScore (structured mode) + must start after today + 30 days
-  const today = new Date();
   const cutoff = toYMD(new Date(today.getFullYear(), today.getMonth(), today.getDate() + 30));
 
   if (isStructured) {

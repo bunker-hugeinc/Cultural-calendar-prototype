@@ -20,47 +20,57 @@ export function Nav() {
     return pathname.startsWith(href);
   }
 
-  const navLink = (href: string, label: React.ReactNode) => (
-    <Link
-      href={href}
-      className={`relative text-sm font-medium transition-colors flex items-center gap-1.5 ${
-        isActive(href)
-          ? "text-apple-black"
-          : "text-apple-gray-400 hover:text-apple-black"
-      }`}
-    >
-      {label}
-    </Link>
-  );
+  const navLinks = [
+    { href: "/",          label: "Dashboard" },
+    { href: "/calendar",  label: "Calendar"  },
+    { href: "/merchants", label: "Merchants" },
+    { href: "/review",    label: "Review", badge: reviewCount },
+  ];
 
   return (
-    <nav className="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-apple-gray-100">
-      <div className="max-w-7xl mx-auto px-6 h-12 flex items-center gap-8">
-        {/* Brand */}
-        <Link href="/" className="flex items-center gap-2 mr-4 no-underline">
-          <span className="text-sm font-semibold text-apple-black tracking-tight">
-            Apple Pay
-          </span>
-          <span className="text-apple-gray-200 select-none">·</span>
-          <span className="text-sm text-apple-gray-400 tracking-tight">
-            Partner Marketing
-          </span>
+    <nav style={{
+      background: "rgba(255,255,255,0.85)",
+      backdropFilter: "blur(20px)",
+      borderBottom: "1px solid #e8e8ed",
+      position: "sticky", top: 0, zIndex: 100,
+    }}>
+      <div style={{ maxWidth: 1400, margin: "0 auto", padding: "0 24px", height: 52, display: "flex", alignItems: "center", gap: 0 }}>
+        {/* Wordmark */}
+        <Link href="/" style={{ textDecoration: "none", display: "flex", alignItems: "baseline", gap: 6, marginRight: 40 }}>
+          <span style={{ fontSize: "0.95rem", fontWeight: 700, color: "#1d1d1f", letterSpacing: "-0.01em" }}>Apple Pay</span>
+          <span style={{ fontSize: "0.85rem", color: "#86868b", fontWeight: 400 }}>Partner Marketing</span>
         </Link>
 
         {/* Nav links */}
-        {navLink("/", "Dashboard")}
-        {navLink("/calendar", "Calendar")}
-        {navLink("/merchants", "Merchants")}
-        {navLink("/review",
-          <>
-            Review
-            {reviewCount > 0 && (
-              <span className="inline-flex items-center justify-center rounded-full bg-apple-amber text-white text-[10px] font-bold min-w-[16px] h-4 px-1 leading-none">
-                {reviewCount}
-              </span>
-            )}
-          </>
-        )}
+        {navLinks.map(({ href, label, badge }) => {
+          const active = isActive(href);
+          return (
+            <Link
+              key={href}
+              href={href}
+              style={{
+                fontSize: "0.85rem", fontWeight: 500,
+                color: active ? "#1d1d1f" : "#86868b",
+                padding: "0 12px", height: 52,
+                display: "flex", alignItems: "center", gap: 5,
+                borderBottom: active ? "2px solid #1d1d1f" : "2px solid transparent",
+                transition: "all 0.15s",
+                textDecoration: "none",
+              }}
+            >
+              {label}
+              {badge != null && badge > 0 && (
+                <span style={{
+                  background: "#ff9f0a", color: "white",
+                  borderRadius: 10, fontSize: "0.65rem", fontWeight: 700,
+                  padding: "1px 6px",
+                }}>
+                  {badge}
+                </span>
+              )}
+            </Link>
+          );
+        })}
       </div>
     </nav>
   );

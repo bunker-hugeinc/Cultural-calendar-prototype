@@ -2,13 +2,13 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { moments, merchants, pairingScores } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
-import { groq, parseJSON } from "@/lib/ai";
+import { callClaude, parseJSON } from "@/lib/ai";
 import { SCORE_SYSTEM_PROMPT } from "@/lib/prompts";
 
 export const maxDuration = 60;
 
-if (!process.env.GROQ_API_KEY) {
-  console.warn("[score] GROQ_API_KEY is not set");
+if (!process.env.ANTHROPIC_API_KEY) {
+  console.warn("[score] ANTHROPIC_API_KEY is not set");
 }
 
 interface ScoringResult {
@@ -22,9 +22,9 @@ export async function POST(
   _req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  if (!process.env.GROQ_API_KEY) {
+  if (!process.env.ANTHROPIC_API_KEY) {
     return NextResponse.json(
-      { error: "API key not configured. Add GROQ_API_KEY to .env.local." },
+      { error: "API key not configured. Add ANTHROPIC_API_KEY to .env.local." },
       { status: 503 }
     );
   }
@@ -45,17 +45,13 @@ Hook type: ${moment.hook ?? "unspecified"}
 Merchants:
 ${allMerchants.map(m => `- ${m.name} (${m.category}): ${m.seasonalNotes ?? ""}`).join("\n")}`;
 
-  const completion = await groq.chat.completions.create({
-    model: "llama-3.1-8b-instant",
-    messages: [
-      { role: "system", content: SCORE_SYSTEM_PROMPT },
-      { role: "user", content: userMessage },
-    ],
-    max_tokens: 4096,
+  const raw = await callClaude({
+    system: SCORE_SYSTEM_PROMPT,
+    user: userMessage,
+    model: "claude-haiku-4-5-20251001",
+    maxTokens: 4096,
     temperature: 0.2,
   });
-
-  const raw = completion.choices[0].message.content ?? "";
   let pairings: ScoringResult[];
   try {
     pairings = parseJSON<ScoringResult[]>(raw);

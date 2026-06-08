@@ -2,14 +2,14 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { moments, pairingScores, merchants } from "@/lib/db/schema";
 import { eq, desc } from "drizzle-orm";
-import { groq, parseJSON } from "@/lib/ai";
+import { callClaude, parseJSON } from "@/lib/ai";
 import { PERSONAS_SYSTEM_PROMPT } from "@/lib/prompts";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
-if (!process.env.GROQ_API_KEY) {
-  console.warn("[personas] GROQ_API_KEY is not set");
+if (!process.env.ANTHROPIC_API_KEY) {
+  console.warn("[personas] ANTHROPIC_API_KEY is not set");
 }
 
 export interface InfluencerPersona {
@@ -25,9 +25,9 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    if (!process.env.GROQ_API_KEY) {
+    if (!process.env.ANTHROPIC_API_KEY) {
       return NextResponse.json(
-        { error: "API key not configured. Add GROQ_API_KEY to .env.local." },
+        { error: "API key not configured. Add ANTHROPIC_API_KEY to .env.local." },
         { status: 503 }
       );
     }
@@ -61,17 +61,13 @@ Hook type: ${moment.hook ?? "not specified"}
 
 Generate 2–3 specific influencer personas for this exact moment and these specific merchants.`;
 
-    const completion = await groq.chat.completions.create({
-      model: "llama-3.1-8b-instant",
-      messages: [
-        { role: "system", content: PERSONAS_SYSTEM_PROMPT },
-        { role: "user", content: userMessage },
-      ],
-      max_tokens: 1024,
+    const raw = await callClaude({
+      system: PERSONAS_SYSTEM_PROMPT,
+      user: userMessage,
+      model: "claude-haiku-4-5-20251001",
+      maxTokens: 1024,
       temperature: 0.3,
     });
-
-    const raw = completion.choices[0].message.content ?? "";
     let personas: InfluencerPersona[];
     try {
       personas = parseJSON<InfluencerPersona[]>(raw);

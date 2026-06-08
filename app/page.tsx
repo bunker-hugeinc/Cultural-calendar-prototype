@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Suspense } from "react";
 import { db } from "@/lib/db";
-import { moments, pairingScores, merchants } from "@/lib/db/schema";
+import { moments, pairingScores } from "@/lib/db/schema";
 import { eq, and, gte, lte, asc, inArray } from "drizzle-orm";
 import { MomentCard } from "@/components/moment-card";
 import { FilterBar } from "@/components/filter-bar";
@@ -62,42 +62,18 @@ export default async function DashboardPage({
           .where(and(...conditions))
           .orderBy(asc(moments.startDate));
 
-  // Fetch top 3 pairings per moment
-  const allPairings =
-    rows.length > 0
-      ? await db
-          .select({
-            momentId: pairingScores.momentId,
-            merchantName: merchants.name,
-            relevanceScore: pairingScores.relevanceScore,
-          })
-          .from(pairingScores)
-          .innerJoin(merchants, eq(pairingScores.merchantId, merchants.id))
-          .orderBy(asc(pairingScores.relevanceScore))
-      : [];
-
-  const pairingsByMoment: Record<string, { merchantName: string; relevanceScore: number }[]> = {};
-  for (const p of allPairings) {
-    if (!pairingsByMoment[p.momentId]) pairingsByMoment[p.momentId] = [];
-    pairingsByMoment[p.momentId].push({ merchantName: p.merchantName, relevanceScore: p.relevanceScore });
-  }
-  for (const id of Object.keys(pairingsByMoment)) {
-    pairingsByMoment[id].sort((a, b) => b.relevanceScore - a.relevanceScore);
-    pairingsByMoment[id] = pairingsByMoment[id].slice(0, 3);
-  }
-
   return (
-    <div className="px-6 py-10 max-w-7xl mx-auto">
+    <div style={{ padding: "40px 24px", maxWidth: 1400, margin: "0 auto" }}>
       {/* Header */}
-      <div className="flex items-start justify-between mb-8">
+      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 32 }}>
         <div>
-          <p className="eyebrow mb-1">Campaign Planning</p>
+          <p className="eyebrow" style={{ marginBottom: 4 }}>Campaign Planning</p>
           <h1>Upcoming Moments</h1>
-          <p className="text-sm text-apple-gray-400 mt-1">
+          <p style={{ fontSize: "0.85rem", color: "#86868b", marginTop: 4 }}>
             {rows.length} moment{rows.length !== 1 ? "s" : ""} in range
           </p>
         </div>
-        <Link href="/moments/new" className="btn-primary-apple">
+        <Link href="/moments/new" className="btn btn-primary">
           + Add Moment
         </Link>
       </div>
@@ -108,7 +84,7 @@ export default async function DashboardPage({
       </Suspense>
 
       {/* Filters */}
-      <div className="mb-8">
+      <div style={{ marginBottom: 32 }}>
         <Suspense>
           <FilterBar />
         </Suspense>
@@ -116,16 +92,16 @@ export default async function DashboardPage({
 
       {/* Grid */}
       {rows.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-24 text-center">
-          <p className="text-lg font-semibold text-apple-black">No moments in this range</p>
-          <p className="text-sm text-apple-gray-400 mt-2">
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "96px 0", textAlign: "center" }}>
+          <h3 style={{ color: "#1d1d1f" }}>No moments in this range</h3>
+          <p style={{ fontSize: "0.85rem", color: "#86868b", marginTop: 8 }}>
             {pairingStatusFilter
               ? `No moments have pairings with status "${pairingStatusFilter.replace("_", " ")}".`
               : "Try expanding the date range or changing the category filter."}
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 16 }}>
           {rows.map((m) => (
             <MomentCard
               key={m.id}
@@ -135,7 +111,7 @@ export default async function DashboardPage({
               endDate={m.endDate}
               category={m.category}
               daysAway={daysDiff(m.startDate, today)}
-              topPairings={pairingsByMoment[m.id] ?? []}
+              score={m.score}
               audienceRelevance={m.audienceRelevance}
               productConnection={m.productConnection}
               partnerAlignment={m.partnerAlignment}

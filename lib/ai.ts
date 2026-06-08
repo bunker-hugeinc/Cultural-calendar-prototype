@@ -1,13 +1,33 @@
-import Groq from "groq-sdk";
+import { createAnthropic } from "@ai-sdk/anthropic";
+import { generateText } from "ai";
 
-export const groq = new Groq({
-  apiKey: process.env.GROQ_API_KEY,
+const anthropic = createAnthropic({
+  apiKey: process.env.ANTHROPIC_API_KEY,
 });
 
-/**
- * Strips markdown code fences that open-source models sometimes wrap around JSON,
- * then parses and returns typed output.
- */
+export async function callClaude({
+  system,
+  user,
+  model = "claude-haiku-4-5-20251001",
+  maxTokens = 4096,
+  temperature = 0.3,
+}: {
+  system: string;
+  user: string;
+  model?: string;
+  maxTokens?: number;
+  temperature?: number;
+}): Promise<string> {
+  const { text } = await generateText({
+    model: anthropic(model),
+    system,
+    prompt: user,
+    maxOutputTokens: maxTokens,
+    temperature,
+  });
+  return text;
+}
+
 export function parseJSON<T>(raw: string): T {
   const cleaned = raw
     .replace(/^```(?:json)?\n?/i, "")

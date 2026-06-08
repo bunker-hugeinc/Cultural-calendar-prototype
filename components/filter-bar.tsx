@@ -21,37 +21,39 @@ export function FilterBar() {
     router.push(`/?${params.toString()}`);
   }
 
-  return (
-    <div className="flex flex-wrap gap-3 items-center">
-      {/* Category pills */}
-      <div className="flex gap-1 rounded-full border border-apple-gray-200 bg-white p-1">
-        {CATEGORIES.map((cat) => (
-          <button
-            key={cat}
-            onClick={() => update("category", cat)}
-            className={`px-4 py-1 rounded-full text-sm font-medium transition-colors capitalize cursor-pointer ${
-              category === cat
-                ? "bg-apple-black text-white"
-                : "text-apple-gray-400 hover:text-apple-black"
-            }`}
-          >
-            {cat}
-          </button>
-        ))}
-      </div>
+  const CAT_COLORS: Record<string, string> = {
+    gather: "#248a3d", improve: "#b03060", excite: "#0071e3",
+  };
 
-      {/* Date range select */}
-      <select
-        value={days}
-        onChange={(e) => update("days", e.target.value)}
-        className="rounded-full border border-apple-gray-200 bg-white px-4 py-1.5 text-sm text-apple-black appearance-none cursor-pointer"
-      >
-        {DATE_RANGES.map((r) => (
-          <option key={r.value} value={r.value}>
-            {r.label}
-          </option>
-        ))}
-      </select>
+  return (
+    <div style={{ display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center" }}>
+      {/* Category chips */}
+      {CATEGORIES.map((cat) => (
+        <button
+          key={cat}
+          onClick={() => update("category", cat)}
+          className={`chip${category === cat ? " chip-on" : ""}`}
+        >
+          {cat !== "All" && (
+            <span style={{
+              width: 7, height: 7, borderRadius: "50%", flexShrink: 0, display: "inline-block",
+              background: category === cat ? "white" : (CAT_COLORS[cat] ?? "#86868b"),
+            }} />
+          )}
+          {cat === "All" ? "All" : cat.charAt(0).toUpperCase() + cat.slice(1)}
+        </button>
+      ))}
+
+      {/* Date range chips */}
+      {DATE_RANGES.map((r) => (
+        <button
+          key={r.value}
+          onClick={() => update("days", r.value)}
+          className={`chip${days === r.value ? " chip-on" : ""}`}
+        >
+          {r.label}
+        </button>
+      ))}
     </div>
   );
 }

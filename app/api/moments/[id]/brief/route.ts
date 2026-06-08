@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { moments, pairingScores, merchants, feedCandidates, momentReviews } from "@/lib/db/schema";
 import { eq, desc, sql } from "drizzle-orm";
-import { groq, parseJSON } from "@/lib/ai";
+import { callClaude, parseJSON } from "@/lib/ai";
 import { BRIEF_SYSTEM_PROMPT } from "@/lib/prompts";
 
 export const dynamic = "force-dynamic";
@@ -29,9 +29,9 @@ export async function GET(
   const moment = await db.query.moments.findFirst({ where: eq(moments.id, id) });
   if (!moment) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-  if (!process.env.GROQ_API_KEY) {
+  if (!process.env.ANTHROPIC_API_KEY) {
     return NextResponse.json(
-      { error: "GROQ_API_KEY is not configured." },
+      { error: "ANTHROPIC_API_KEY is not configured." },
       { status: 503 }
     );
   }
@@ -95,7 +95,6 @@ export async function GET(
     }
   }
 
-  // Build Groq user message
   const userMessage = `
 Moment: ${moment.name}
 Dates: ${moment.startDate}${moment.endDate ? ` to ${moment.endDate}` : ""}
@@ -119,17 +118,13 @@ ${reviewContext?.inspirationUrls?.length ? `Inspiration Campaign References: ${r
 ${reviewContext?.notes ? `Strategist Notes: ${reviewContext.notes}` : ""}
 `.trim();
 
-  const completion = await groq.chat.completions.create({
-    model: "llama-3.3-70b-versatile",
-    messages: [
-      { role: "system", content: BRIEF_SYSTEM_PROMPT },
-      { role: "user",   content: userMessage },
-    ],
-    max_tokens: 2048,
+  const raw = await callClaude({
+    system: BRIEF_SYSTEM_PROMPT,
+    user: userMessage,
+    model: "claude-sonnet-4-6",
+    maxTokens: 2048,
     temperature: 0.3,
   });
-
-  const raw = completion.choices[0].message.content ?? "";
   let briefContent: BriefContent;
   try {
     briefContent = parseJSON<BriefContent>(raw);

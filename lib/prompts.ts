@@ -14,7 +14,7 @@ Sort by relevanceScore descending.
 Return valid JSON only — no markdown, no commentary.`;
 
 // ─── STEP 2: Feed candidate discovery ────────────────────────────────────────
-export const DISCOVER_SYSTEM_PROMPT = `You are a cultural moment analyst for Apple Pay Partner Marketing.
+export const DISCOVER_SYSTEM_PROMPT = `You are a cultural moment analyst for Apple Pay Partner Marketing. Today's date is {TODAY}.
 
 Apple Pay's merchant partners span: Floral, Beauty, Apparel, Activewear, Sneakers, Travel, Dining, Food Delivery, Grocery, Retail, Electronics, Sports Betting, Sports Merch, Home, Rides, Entertainment.
 
@@ -23,19 +23,23 @@ Apple Pay uses three campaign categories:
 - improve: moments focused on self-improvement, wellness, or personal finance
 - excite: high-energy, culturally significant tentpole moments
 
-You will be given a search query and a list of existing moments to avoid duplicating.
+You will be given a time window, category preferences, and priority merchants. Generate real, specific upcoming cultural moments that will actually occur in that time window — not generic placeholders.
 
-Return a JSON array of 3–5 new cultural moment candidates that match the query. Each must have:
-- name: string — the moment name (e.g. "US Open Tennis 2027")
-- startDate: string — YYYY-MM-DD
-- endDate: string — YYYY-MM-DD (or null if single day)
+Base your recommendations on real events: actual sports seasons and tournaments, real holidays and cultural observances, genuine retail moments (back to school, tax season, etc.), and known entertainment releases or recurring annual events.
+
+For each moment, be specific: use real event names, actual dates, genuine merchant fit rationale.
+
+Return a JSON array of 4–6 cultural moment candidates. Each must have:
+- name: string — the specific moment name (e.g. "US Open Tennis 2027", not "Major Tennis Event")
+- startDate: string — YYYY-MM-DD (actual date)
+- endDate: string | null — YYYY-MM-DD or null if single day
 - category: "gather" | "improve" | "excite"
 - score: number 0.0–5.0 — how strong a fit for Apple Pay
 - headline: string — short campaign angle (under 12 words)
 - body: string — campaign concept paragraph (2–3 sentences)
-- why: string — 1–2 sentences explaining WHY this specific moment is a strong Apple Pay activation opportunity. Be specific: mention the spending behavior this moment drives, which merchant categories benefit most, and what makes Apple Pay's tap-to-pay or rewards specifically relevant here. Vary the sentence structure — do not use "This moment fits Apple Pay as it combines..." as a template. Each rationale should start differently and feel written for this specific moment.
+- why: string — specific reason this moment drives Apple Pay spending, mentioning which merchant categories benefit and why tap-to-pay is relevant. Do not use the template "This moment fits Apple Pay as it combines...". Write freshly for each moment.
 - hook: string — comma-separated hook types from: Bundle, Values Highlight, Exclusive Access, Gifting, Experiential, Cultural Moment, Product Drop
-- partners: array of strings — merchant names from the provided catalog that fit best (3–5)
+- partners: array of strings — 3–5 merchant names from the provided catalog that fit best
 - personas: array of objects — each with t (type), h (handle style), d (description) — 1–2 personas
 - hashtags: array of strings — 3–5 relevant hashtags
 - competing: array of strings — competing payment brands active in this moment (or empty array)

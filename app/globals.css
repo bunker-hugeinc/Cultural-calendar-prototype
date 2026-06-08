@@ -1,191 +1,121 @@
 @import "tailwindcss";
-@import "tw-animate-css";
-@import "shadcn/tailwind.css";
-
-@custom-variant dark (&:is(.dark *));
-
-/* ─── shadcn variable aliases (must be inline) ────────────────────────────── */
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-sans);
-  --font-mono: var(--font-geist-mono);
-  --font-heading: var(--font-sans);
-  --color-sidebar-ring: var(--sidebar-ring);
-  --color-sidebar-border: var(--sidebar-border);
-  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-  --color-sidebar-accent: var(--sidebar-accent);
-  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-  --color-sidebar-primary: var(--sidebar-primary);
-  --color-sidebar-foreground: var(--sidebar-foreground);
-  --color-sidebar: var(--sidebar);
-  --color-chart-5: var(--chart-5);
-  --color-chart-4: var(--chart-4);
-  --color-chart-3: var(--chart-3);
-  --color-chart-2: var(--chart-2);
-  --color-chart-1: var(--chart-1);
-  --color-ring: var(--ring);
-  --color-input: var(--input);
-  --color-border: var(--border);
-  --color-destructive: var(--destructive);
-  --color-accent-foreground: var(--accent-foreground);
-  --color-accent: var(--accent);
-  --color-muted-foreground: var(--muted-foreground);
-  --color-muted: var(--muted);
-  --color-secondary-foreground: var(--secondary-foreground);
-  --color-secondary: var(--secondary);
-  --color-primary-foreground: var(--primary-foreground);
-  --color-primary: var(--primary);
-  --color-popover-foreground: var(--popover-foreground);
-  --color-popover: var(--popover);
-  --color-card-foreground: var(--card-foreground);
-  --color-card: var(--card);
-  --radius-sm: calc(var(--radius) * 0.6);
-  --radius-md: calc(var(--radius) * 0.8);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) * 1.4);
-  --radius-2xl: calc(var(--radius) * 1.8);
-  --radius-3xl: calc(var(--radius) * 2.2);
-  --radius-4xl: calc(var(--radius) * 2.6);
-}
-
-/* ─── Apple Design Tokens (plain @theme so utilities + CSS vars are generated) */
 
 @theme {
-  /* ── Core palette ─────────────────────────────────────────────────────── */
+  --color-ap-black:    #1d1d1f;
+  --color-ap-gray-50:  #f5f5f7;
+  --color-ap-gray-100: #e8e8ed;
+  --color-ap-gray-200: #d2d2d7;
+  --color-ap-gray-400: #86868b;
+  --color-ap-gray-600: #6e6e73;
+  --color-ap-blue:     #0071e3;
+  --color-ap-green:    #34c759;
+  --color-ap-amber:    #ff9f0a;
+  --color-ap-red:      #ff3b30;
+  --color-ap-purple:   #af52de;
+  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", Arial, sans-serif;
+
+  /* Legacy aliases kept for existing Tailwind class references */
   --color-apple-black:    #1d1d1f;
   --color-apple-white:    #ffffff;
-
   --color-apple-gray-50:  #f5f5f7;
   --color-apple-gray-100: #e8e8ed;
   --color-apple-gray-200: #d2d2d7;
   --color-apple-gray-400: #86868b;
   --color-apple-gray-600: #6e6e73;
   --color-apple-gray-900: #1d1d1f;
-
-  --color-apple-blue:  #0071e3;
-  --color-apple-green: #34c759;
-  --color-apple-amber: #ff9f0a;
-  --color-apple-red:   #ff3b30;
-
-  /* ── Category colors ──────────────────────────────────────────────────── */
-  --color-gather:  #34a853;
-  --color-improve: #dc5078;
-  --color-excite:  #0071e3;
-
-  /* ── Font stacks ──────────────────────────────────────────────────────── */
-  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text",
-               "Helvetica Neue", Arial, sans-serif;
-  --font-mono: "SF Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --color-apple-blue:     #0071e3;
+  --color-apple-green:    #34c759;
+  --color-apple-amber:    #ff9f0a;
+  --color-apple-red:      #ff3b30;
+  --color-gather:         #34a853;
+  --color-improve:        #dc5078;
+  --color-excite:         #0071e3;
 }
-
-/* ─── shadcn variable mapping ─────────────────────────────────────────────── */
-
-:root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
-}
-
-/* ─── Base styles ─────────────────────────────────────────────────────────── */
 
 @layer base {
-  * {
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-    @apply border-border outline-ring/50;
-  }
-
-  html {
-    font-size: 16px;
-    @apply font-sans;
-  }
-
-  body {
-    @apply bg-apple-gray-50 text-apple-black font-sans;
-    letter-spacing: -0.01em;
-  }
-
-  h1 { @apply text-4xl font-semibold tracking-tight text-apple-black; }
-  h2 { @apply text-2xl font-semibold tracking-tight text-apple-black; }
-  h3 { @apply text-xl font-medium text-apple-black; }
-  h4 { @apply text-base font-medium text-apple-black; }
-
-  p  { @apply leading-relaxed text-apple-gray-900; }
-
-  a  { @apply text-apple-blue no-underline hover:underline; }
-
-  hr { @apply border-apple-gray-100; }
+  * { -webkit-font-smoothing: antialiased; box-sizing: border-box; }
+  html { font-size: 16px; }
+  body { background: #f5f5f7; color: #1d1d1f; font-family: var(--font-sans); letter-spacing: -0.01em; margin: 0; }
+  h1 { font-size: 1.9rem; font-weight: 700; letter-spacing: -0.03em; line-height: 1.15; margin: 0; }
+  h2 { font-size: 1.4rem; font-weight: 600; letter-spacing: -0.02em; margin: 0; }
+  h3 { font-size: 1.05rem; font-weight: 600; margin: 0; }
+  a  { color: #0071e3; text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  p { margin: 0; }
 }
 
-/* ─── Component utilities ─────────────────────────────────────────────────── */
-
 @layer components {
-  /* Apple-style eyebrow label */
   .eyebrow {
-    @apply text-xs font-medium tracking-widest uppercase text-apple-gray-400;
+    font-size: 0.67rem; font-weight: 600; letter-spacing: 0.1em;
+    text-transform: uppercase; color: #86868b;
   }
-
-  /* Apple-style card */
+  .card {
+    background: white; border-radius: 16px;
+    border: 1px solid #e8e8ed; overflow: hidden;
+  }
+  .card-p {
+    background: white; border-radius: 16px;
+    border: 1px solid #e8e8ed; overflow: hidden; padding: 20px;
+  }
+  /* Legacy alias */
   .card-apple {
-    @apply bg-white rounded-2xl border border-apple-gray-100 overflow-hidden;
+    background: white; border-radius: 16px;
+    border: 1px solid #e8e8ed; overflow: hidden;
   }
-
-  /* Apple-style badge/pill */
+  .pill {
+    display: inline-flex; align-items: center;
+    padding: 2px 9px; border-radius: 20px;
+    font-size: 0.67rem; font-weight: 700;
+    letter-spacing: 0.05em; text-transform: uppercase; white-space: nowrap;
+  }
+  /* Legacy alias */
   .badge-apple {
-    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+    display: inline-flex; align-items: center;
+    padding: 2px 9px; border-radius: 20px;
+    font-size: 0.67rem; font-weight: 700;
+    letter-spacing: 0.05em; text-transform: uppercase; white-space: nowrap;
   }
-
-  /* Section rule */
-  .section-rule {
-    @apply border-t border-apple-gray-100 pt-6 mt-6;
+  .pill-gather  { background: rgba(52,199,89,0.12);   color: #248a3d; }
+  .pill-improve { background: rgba(220,80,120,0.12);  color: #b03060; }
+  .pill-excite  { background: rgba(0,113,227,0.12);   color: #0071e3; }
+  .pill-draft     { background: #f5f5f7; color: #6e6e73; }
+  .pill-review    { background: rgba(255,159,10,0.12); color: #a05c00; }
+  .pill-approved  { background: rgba(0,113,227,0.12);  color: #0071e3; }
+  .pill-live      { background: rgba(52,199,89,0.12);  color: #248a3d; }
+  .pill-existing  { background: #f5f5f7; color: #6e6e73; }
+  .pill-potential { background: rgba(0,113,227,0.10); color: #0071e3; border: 1px solid rgba(0,113,227,0.2); }
+  .pill-dismissed { background: rgba(255,59,48,0.10); color: #d63b30; }
+  .btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    border-radius: 980px; font-size: 0.875rem; font-weight: 500;
+    padding: 8px 20px; cursor: pointer; transition: all 0.15s;
+    border: none; font-family: inherit; text-decoration: none;
   }
-
-  /* Outlined action button — used in moment detail header */
-  .btn-outline-apple {
-    @apply border border-apple-gray-200 rounded-full px-5 py-2 text-sm font-medium
-           text-apple-black hover:bg-apple-gray-50 transition-colors cursor-pointer;
+  .btn-primary { background: #1d1d1f; color: white; }
+  .btn-primary:hover { background: #333; text-decoration: none; }
+  /* Legacy aliases */
+  .btn-primary-apple { background: #1d1d1f; color: white; border-radius: 980px; font-size: 0.875rem; font-weight: 500; padding: 8px 20px; cursor: pointer; transition: all 0.15s; border: none; font-family: inherit; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; }
+  .btn-primary-apple:hover { background: #333; text-decoration: none; }
+  .btn-blue { background: #0071e3; color: white; }
+  .btn-blue:hover { background: #0077ed; text-decoration: none; }
+  .btn-blue-apple { background: #0071e3; color: white; border-radius: 980px; font-size: 0.875rem; font-weight: 500; padding: 8px 20px; cursor: pointer; border: none; font-family: inherit; text-decoration: none; display: inline-flex; align-items: center; }
+  .btn-blue-apple:hover { background: #0077ed; text-decoration: none; }
+  .btn-outline { background: white; color: #1d1d1f; border: 1px solid #d2d2d7; }
+  .btn-outline:hover { background: #f5f5f7; text-decoration: none; }
+  .btn-outline-apple { background: white; color: #1d1d1f; border: 1px solid #d2d2d7; border-radius: 980px; font-size: 0.875rem; font-weight: 500; padding: 8px 20px; cursor: pointer; transition: all 0.15s; font-family: inherit; text-decoration: none; display: inline-flex; align-items: center; }
+  .btn-outline-apple:hover { background: #f5f5f7; text-decoration: none; }
+  .btn-sm { padding: 5px 13px; font-size: 0.78rem; }
+  .btn-danger { background: white; color: #ff3b30; border: 1px solid #ffc7c5; }
+  .btn-danger:hover { background: #fff5f5; text-decoration: none; }
+  .chip {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 5px 13px; border-radius: 20px;
+    font-size: 0.78rem; font-weight: 500;
+    cursor: pointer; border: 1px solid #d2d2d7;
+    background: white; color: #1d1d1f;
+    transition: all 0.15s; user-select: none; white-space: nowrap;
+    font-family: inherit;
   }
-
-  /* Filled primary button */
-  .btn-primary-apple {
-    @apply bg-apple-black text-white rounded-full px-5 py-2 text-sm font-medium
-           hover:bg-apple-gray-900 transition-colors cursor-pointer;
-  }
-
-  /* Apple blue CTA */
-  .btn-blue-apple {
-    @apply bg-apple-blue text-white rounded-full px-5 py-2 text-sm font-medium
-           hover:opacity-90 transition-opacity cursor-pointer;
-  }
+  .chip:hover { border-color: #86868b; }
+  .chip-on { background: #1d1d1f !important; color: white !important; border-color: #1d1d1f !important; }
 }
