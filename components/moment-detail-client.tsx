@@ -4,6 +4,7 @@ import { useState } from "react";
 import { ScoreButton } from "./score-button";
 import { InfluencerPanel } from "./influencer-panel";
 import { PairingRow } from "./pairing-row";
+import { BriefExport } from "./brief-export";
 
 interface Pairing {
   id: string;
@@ -25,10 +26,11 @@ interface AIPairing {
 
 interface Props {
   momentId: string;
+  merchantCount: number;
   initialPairings: Pairing[];
 }
 
-export function MomentDetailClient({ momentId, initialPairings }: Props) {
+export function MomentDetailClient({ momentId, merchantCount, initialPairings }: Props) {
   const [pairings, setPairings] = useState<Pairing[]>(initialPairings);
 
   function handleScored(_aiPairings: AIPairing[]) {
@@ -40,6 +42,25 @@ export function MomentDetailClient({ momentId, initialPairings }: Props) {
 
   return (
     <>
+      {/* AI Actions CTA — shown when moment has not been scored yet */}
+      {pairings.length === 0 && (
+        <div style={{
+          background: "rgba(0,113,227,0.04)", border: "1px solid rgba(0,113,227,0.15)",
+          borderRadius: 16, padding: 20, marginBottom: 20,
+        }}>
+          <p className="eyebrow" style={{ marginBottom: 8, color: "#0071e3" }}>AI READY</p>
+          <h3 style={{ marginBottom: 6 }}>Score this moment against the merchant catalog</h3>
+          <p style={{ fontSize: "0.85rem", color: "#86868b", marginBottom: 16 }}>
+            Claude will evaluate all {merchantCount} merchants and score their fit for this moment — giving you differentiated campaign angles for each.
+          </p>
+          <ScoreButton
+            momentId={momentId}
+            hasPairings={false}
+            onScored={(ap, _count) => handleScored(ap)}
+          />
+        </div>
+      )}
+
       {/* Merchant Pairings */}
       <div className="mb-8">
         <div className="flex items-center justify-between mb-4">
@@ -47,18 +68,16 @@ export function MomentDetailClient({ momentId, initialPairings }: Props) {
             <p className="eyebrow mb-0.5">Merchant Pairings</p>
             <p className="text-xs text-apple-gray-400">{pairings.length} partner{pairings.length !== 1 ? "s" : ""} scored</p>
           </div>
-          <ScoreButton
-            momentId={momentId}
-            hasPairings={pairings.length > 0}
-            onScored={(ap, _count) => handleScored(ap)}
-          />
+          {pairings.length > 0 && (
+            <ScoreButton
+              momentId={momentId}
+              hasPairings={true}
+              onScored={(ap, _count) => handleScored(ap)}
+            />
+          )}
         </div>
 
-        {pairings.length === 0 ? (
-          <div className="card-apple p-8 text-center">
-            <p className="text-sm text-apple-gray-400">No pairings yet — click "Score Against Merchants" to generate them.</p>
-          </div>
-        ) : (
+        {pairings.length > 0 && (
           <div className="card-apple overflow-hidden">
             <table className="w-full">
               <thead>
@@ -87,6 +106,17 @@ export function MomentDetailClient({ momentId, initialPairings }: Props) {
                 ))}
               </tbody>
             </table>
+          </div>
+        )}
+
+        {/* Generate Brief nudge — shown after scoring */}
+        {pairings.length > 0 && (
+          <div style={{ marginTop: 16, padding: "14px 16px", background: "#f5f5f7", borderRadius: 12, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16 }}>
+            <div>
+              <p style={{ fontSize: "0.85rem", fontWeight: 600, margin: 0, color: "#1d1d1f" }}>Ready to brief this moment?</p>
+              <p style={{ fontSize: "0.78rem", color: "#86868b", margin: 0 }}>Claude will generate a full Apple Pay Partner Marketing brief using this moment&apos;s data.</p>
+            </div>
+            <BriefExport momentId={momentId} />
           </div>
         )}
       </div>

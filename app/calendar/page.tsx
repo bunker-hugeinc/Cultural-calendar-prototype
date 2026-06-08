@@ -1,8 +1,64 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import { CalendarTimeline } from "@/components/calendar-timeline";
 import { CalendarGrid } from "@/components/calendar-grid";
+
+// ─── Suggested Moment Card ────────────────────────────────────────────────────
+interface SuggestedCandidate {
+  id: string;
+  name: string;
+  startDate: string;
+  endDate: string | null;
+  category: string;
+  score: number;
+  why: string;
+}
+
+const CAT_BG: Record<string, string> = {
+  gather:  "rgba(52,199,89,0.12)",
+  improve: "rgba(220,80,120,0.12)",
+  excite:  "rgba(0,113,227,0.12)",
+};
+const CAT_TEXT: Record<string, string> = {
+  gather: "#248a3d", improve: "#b03060", excite: "#0071e3",
+};
+
+function SuggestedMomentCard({ candidate: c }: { candidate: SuggestedCandidate }) {
+  const scoreColor = c.score >= 4 ? "#34c759" : c.score >= 3 ? "#ff9f0a" : "#ff3b30";
+  const fmt = (d: string) => new Date(d + "T00:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+  const dateRange = c.endDate && c.endDate !== c.startDate ? `${fmt(c.startDate)} – ${fmt(c.endDate)}` : fmt(c.startDate);
+
+  return (
+    <div className="card" style={{ display: "flex", flexDirection: "column", height: "100%" }}>
+      <div style={{ padding: "16px 18px 12px" }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
+          <span style={{
+            display: "inline-flex", alignItems: "center", padding: "2px 8px", borderRadius: 20,
+            fontSize: "0.65rem", fontWeight: 700, letterSpacing: "0.05em", textTransform: "capitalize",
+            background: CAT_BG[c.category] ?? "#f5f5f7",
+            color: CAT_TEXT[c.category] ?? "#86868b",
+          }}>{c.category}</span>
+          <span style={{ fontSize: "0.72rem", fontWeight: 700, color: scoreColor }}>
+            {c.score.toFixed(1)}/5
+          </span>
+        </div>
+        <h3 style={{ fontSize: "0.95rem", marginBottom: 3, lineHeight: 1.3 }}>{c.name}</h3>
+        <p style={{ fontSize: "0.75rem", color: "#86868b", marginBottom: 10 }}>{dateRange}</p>
+        <p style={{
+          fontSize: "0.78rem", color: "#6e6e73", lineHeight: 1.5,
+          display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden",
+        }}>{c.why}</p>
+      </div>
+      <div style={{ borderTop: "1px solid #f0f0f5", padding: "10px 18px", marginTop: "auto" }}>
+        <Link href={`/feed/${c.id}/add-details`} style={{ fontSize: "0.78rem", fontWeight: 500, color: "#0071e3", textDecoration: "none" }}>
+          Add Details →
+        </Link>
+      </div>
+    </div>
+  );
+}
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 export interface CalendarMoment {
@@ -56,6 +112,7 @@ export default function CalendarPage() {
   const [loading, setLoading] = useState(true);
   const [view, setView] = useState<"timeline" | "grid">("timeline");
   const [categoryFilter, setCategoryFilter] = useState<string | null>(null);
+  const [suggested, setSuggested] = useState<SuggestedCandidate[]>([]);
 
   // Restore view preference from localStorage
   useEffect(() => {
@@ -77,6 +134,13 @@ export default function CalendarPage() {
         setLoading(false);
       })
       .catch(() => setLoading(false));
+    // Fetch pending feed candidates for Suggested Moments section
+    fetch("/api/feed")
+      .then(r => r.json())
+      .then((rows: SuggestedCandidate[]) => {
+        if (Array.isArray(rows)) setSuggested(rows.filter(c => (c as { status?: string }).status === "pending").slice(0, 6));
+      })
+      .catch(() => {});
   }, []);
 
   const filteredMoments = categoryFilter
@@ -206,6 +270,32 @@ export default function CalendarPage() {
           <CalendarGrid moments={filteredMoments} />
         </div>
       )}
+
+      {/* ── Suggested Moments — AI feed preview ──────────────────────── */}
+      <div style={{ marginTop: 48, paddingBottom: 48 }}>
+        <div style={{ display: "flex", alignItems: "baseline", gap: 12, marginBottom: 20 }}>
+          <p className="eyebrow">AI SUGGESTIONS</p>
+          <h2 style={{ fontSize: "1.4rem" }}>Suggested Moments</h2>
+          <Link href="/feed" style={{ fontSize: "0.8rem", color: "#0071e3", marginLeft: "auto" }}>
+            View all in Feed →
+          </Link>
+        </div>
+
+        {suggested.length === 0 ? (
+          <div className="card-p" style={{ textAlign: "center", color: "#86868b" }}>
+            <p style={{ marginBottom: 12 }}>No suggested moments yet.</p>
+            <Link href="/feed" className="btn btn-primary btn-sm" style={{ textDecoration: "none" }}>
+              Go to Feed to generate suggestions
+            </Link>
+          </div>
+        ) : (
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 12 }}>
+            {suggested.map(c => (
+              <SuggestedMomentCard key={c.id} candidate={c} />
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

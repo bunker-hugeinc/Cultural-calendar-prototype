@@ -18,6 +18,7 @@ export async function GET() {
         gte(feedCandidates.startDate, cutoffStr),
         eq(feedCandidates.status, "added"),
         eq(feedCandidates.status, "dismissed"),
+        eq(feedCandidates.status, "in_review"),
       )
     )
     .orderBy(asc(feedCandidates.startDate));

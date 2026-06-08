@@ -28,6 +28,13 @@ export function MomentCard({
 }: MomentCardProps) {
   const pillClass = CATEGORY_PILL[category] ?? "pill";
 
+  // Derive overall score from sub-scores when score field is null
+  const displayScore = score ?? (
+    audienceRelevance != null && productConnection != null && partnerAlignment != null
+      ? (audienceRelevance + productConnection + partnerAlignment) / 3
+      : null
+  );
+
   const daysLabel =
     daysAway === 0 ? "Today"
     : daysAway < 0 ? `${Math.abs(daysAway)}d ago`
@@ -54,9 +61,9 @@ export function MomentCard({
           </p>
 
           {/* Score bars */}
-          {score != null && (
+          {displayScore != null && (
             <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-              <ScoreBar label="Overall fit" value={score} max={10} />
+              <ScoreBar label="Overall fit" value={displayScore} max={10} />
               {audienceRelevance != null && <ScoreBar label="Audience" value={audienceRelevance} max={10} />}
               {productConnection != null && <ScoreBar label="Product" value={productConnection} max={10} />}
               {partnerAlignment  != null && <ScoreBar label="Partners" value={partnerAlignment}  max={10} />}

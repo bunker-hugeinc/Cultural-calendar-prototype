@@ -3,7 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
 import { moments, pairingScores, merchants } from "@/lib/db/schema";
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, count } from "drizzle-orm";
 import { MomentDetailClient } from "@/components/moment-detail-client";
 import { BriefExport } from "@/components/brief-export";
 import { SubScoreCard } from "@/components/sub-score-card";
@@ -50,6 +50,8 @@ export default async function MomentDetailPage({
     .innerJoin(merchants, eq(pairingScores.merchantId, merchants.id))
     .where(eq(pairingScores.momentId, id))
     .orderBy(desc(pairingScores.relevanceScore));
+
+  const [{ merchantCount }] = await db.select({ merchantCount: count() }).from(merchants);
 
   const categoryStyle = CATEGORY_STYLES[moment.category] ?? "bg-apple-gray-100 text-apple-gray-600";
   const dateRange = moment.endDate && moment.endDate !== moment.startDate
@@ -126,7 +128,7 @@ export default async function MomentDetailPage({
       />
 
       {/* Pairings + Influencer — client component */}
-      <MomentDetailClient momentId={id} initialPairings={pairings} />
+      <MomentDetailClient momentId={id} merchantCount={merchantCount} initialPairings={pairings} />
     </div>
   );
 }

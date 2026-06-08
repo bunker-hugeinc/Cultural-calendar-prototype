@@ -118,4 +118,6 @@
   }
   .chip:hover { border-color: #86868b; }
   .chip-on { background: #1d1d1f !important; color: white !important; border-color: #1d1d1f !important; }
+  /* Section divider — used in merchant/moment detail pages */
+  .section-rule { border-top: 1px solid #e8e8ed; padding-top: 20px; margin-top: 20px; }
 }

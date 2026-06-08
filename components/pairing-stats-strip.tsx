@@ -3,26 +3,27 @@
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
-type FilterStatus = "in_review" | "approved" | "live";
-
-const CHIPS: { key: FilterStatus; label: string; activeClass: string }[] = [
-  { key: "in_review", label: "In Review", activeClass: "bg-apple-amber/10 text-apple-amber border-apple-amber/30" },
-  { key: "approved",  label: "Approved",  activeClass: "bg-apple-blue/10 text-apple-blue border-apple-blue/30"   },
-  { key: "live",      label: "Live ✓",    activeClass: "bg-apple-green/10 text-apple-green border-apple-green/30" },
-];
-
 interface Counts {
   total: number;
+  draft: number;
   in_review: number;
   approved: number;
   live: number;
 }
 
+const SEGMENTS: { label: string; key: keyof Counts | null; filter: string | null }[] = [
+  { label: "ALL PAIRINGS", key: "total",     filter: null       },
+  { label: "DRAFT",        key: "draft",     filter: "draft"    },
+  { label: "IN REVIEW",    key: "in_review", filter: "in_review"},
+  { label: "APPROVED",     key: "approved",  filter: "approved" },
+  { label: "LIVE",         key: "live",      filter: "live"     },
+];
+
 export function PairingStatsStrip() {
   const [counts, setCounts] = useState<Counts | null>(null);
   const router = useRouter();
   const searchParams = useSearchParams();
-  const activeStatus = searchParams.get("pairingStatus") ?? null;
+  const activeFilter = searchParams.get("pairingStatus") ?? null;
 
   useEffect(() => {
     fetch("/api/pairings/stats")
@@ -31,12 +32,12 @@ export function PairingStatsStrip() {
       .catch(() => {});
   }, []);
 
-  function handleClick(key: FilterStatus) {
+  function handleClick(filter: string | null) {
     const params = new URLSearchParams(searchParams.toString());
-    if (activeStatus === key) {
+    if (filter === null || activeFilter === filter) {
       params.delete("pairingStatus");
     } else {
-      params.set("pairingStatus", key);
+      params.set("pairingStatus", filter);
     }
     router.push(`/?${params.toString()}`);
   }
@@ -44,28 +45,28 @@ export function PairingStatsStrip() {
   if (!counts) return null;
 
   return (
-    <div className="mb-5">
-      <p className="eyebrow mb-2">Moments by Pairing Status — {counts.total} total</p>
-      <div className="flex gap-2 flex-wrap">
-        {CHIPS.map(chip => {
-          const active = activeStatus === chip.key;
-          const count = counts[chip.key];
-          return (
-            <button
-              key={chip.key}
-              onClick={() => handleClick(chip.key)}
-              className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full border text-xs font-medium transition-colors cursor-pointer ${
-                active
-                  ? chip.activeClass
-                  : "border-apple-gray-200 text-apple-gray-400 hover:border-apple-gray-400 hover:text-apple-gray-600"
-              }`}
-            >
-              <span className="font-semibold tabular-nums">{count}</span>
-              <span className="uppercase tracking-wide text-[10px]">{chip.label}</span>
-            </button>
-          );
-        })}
-      </div>
+    <div style={{ display: "flex", gap: 1, marginBottom: 24, background: "white", borderRadius: 16, border: "1px solid #e8e8ed", overflow: "hidden" }}>
+      {SEGMENTS.map(({ label, key, filter }, i) => {
+        const value = key ? counts[key] : 0;
+        const isActive = filter === null ? activeFilter === null : activeFilter === filter;
+        return (
+          <button
+            key={label}
+            onClick={() => handleClick(filter)}
+            style={{
+              flex: 1, padding: "16px 12px", border: "none",
+              background: isActive ? "#f5f5f7" : "white",
+              borderBottom: isActive ? "2px solid #1d1d1f" : "2px solid transparent",
+              borderRight: i < SEGMENTS.length - 1 ? "1px solid #e8e8ed" : "none",
+              cursor: "pointer", fontFamily: "inherit", textAlign: "center",
+              transition: "all 0.15s",
+            }}
+          >
+            <div style={{ fontSize: "1.6rem", fontWeight: 700, color: "#1d1d1f", lineHeight: 1 }}>{value}</div>
+            <div className="eyebrow" style={{ marginTop: 4 }}>{label}</div>
+          </button>
+        );
+      })}
     </div>
   );
 }

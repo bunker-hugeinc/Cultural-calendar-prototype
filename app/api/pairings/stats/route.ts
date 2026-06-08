@@ -18,7 +18,7 @@ export async function GET() {
     .from(pairingScores)
     .groupBy(pairingScores.status);
 
-  const counts: Record<string, number> = { in_review: 0, approved: 0, live: 0 };
+  const counts: Record<string, number> = { draft: 0, in_review: 0, approved: 0, live: 0 };
   for (const row of rows) {
     if (row.status in counts) counts[row.status] = row.momentCount;
   }

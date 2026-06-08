@@ -112,7 +112,7 @@ export default function AddDetailsPage() {
       return;
     }
 
-    router.push("/calendar?submitted=1");
+    router.push("/review?submitted=1");
   }
 
   if (loading) {
@@ -127,7 +127,7 @@ export default function AddDetailsPage() {
     return (
       <div className="px-6 py-8 max-w-3xl mx-auto">
         <p className="text-sm text-apple-gray-400">Candidate not found.</p>
-        <Link href="/calendar" className="text-sm text-blue-600 hover:underline mt-2 block">← Back to Feed</Link>
+        <Link href="/feed" className="text-sm text-blue-600 hover:underline mt-2 block">← Back to Feed</Link>
       </div>
     );
   }
@@ -142,9 +142,20 @@ export default function AddDetailsPage() {
   return (
     <div className="px-6 py-8 max-w-3xl mx-auto">
       {/* Back */}
-      <Link href="/calendar" className="text-sm text-apple-gray-400 hover:text-apple-black transition-colors mb-6 block">
+      <Link href="/feed" className="text-sm text-apple-gray-400 hover:text-apple-black transition-colors mb-4 block no-underline">
         ← Back to Feed
       </Link>
+
+      {/* Workflow indicator */}
+      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 24, fontSize: "0.75rem" }}>
+        <Link href="/feed" style={{ color: "#86868b", textDecoration: "none" }}>Feed</Link>
+        <span style={{ color: "#d2d2d7" }}>→</span>
+        <span style={{ fontWeight: 600, color: "#1d1d1f" }}>Add Details</span>
+        <span style={{ color: "#d2d2d7" }}>→</span>
+        <span style={{ color: "#86868b" }}>Review</span>
+        <span style={{ color: "#d2d2d7" }}>→</span>
+        <span style={{ color: "#86868b" }}>Calendar</span>
+      </div>
 
       {/* Eyebrow + Header */}
       <div className="mb-8">
@@ -288,7 +299,7 @@ export default function AddDetailsPage() {
           >
             {submitting ? "Submitting…" : "Submit for Review"}
           </button>
-          <Link href="/calendar" className="text-sm text-apple-gray-400 hover:text-apple-black transition-colors">
+          <Link href="/feed" className="text-sm text-apple-gray-400 hover:text-apple-black transition-colors">
             Cancel
           </Link>
         </div>

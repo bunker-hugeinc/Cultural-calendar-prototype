@@ -38,6 +38,8 @@ interface Toast {
   id: number;
   message: string;
   type: "success" | "error";
+  momentId?: string;
+  momentName?: string;
 }
 
 const CAT_STYLES: Record<string, string> = {
@@ -66,10 +68,10 @@ export default function ReviewPage() {
       .then(data => { setItems(data); setLoading(false); });
   }, []);
 
-  function addToast(message: string, type: "success" | "error") {
+  function addToast(message: string, type: "success" | "error", momentId?: string, momentName?: string) {
     const id = ++toastId;
-    setToasts(prev => [...prev, { id, message, type }]);
-    setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 4000);
+    setToasts(prev => [...prev, { id, message, type, momentId, momentName }]);
+    setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 5000);
   }
 
   async function handleApprove(candidateId: string) {
@@ -77,8 +79,9 @@ export default function ReviewPage() {
     const res = await fetch(`/api/review/${candidateId}/approve`, { method: "POST" });
     setActing(a => ({ ...a, [candidateId]: false }));
     if (res.ok) {
+      const data = await res.json();
       setItems(prev => prev.filter(i => i.candidate.id !== candidateId));
-      addToast("Moment approved and added to the Calendar.", "success");
+      addToast(`${data.moment?.name ?? "Moment"} added to the calendar.`, "success", data.moment?.id, data.moment?.name);
     } else {
       const data = await res.json();
       addToast(data.error ?? "Approval failed.", "error");
@@ -111,11 +114,23 @@ export default function ReviewPage() {
         {toasts.map(t => (
           <div
             key={t.id}
-            className={`px-4 py-3 rounded-xl shadow-lg text-sm font-medium text-white pointer-events-auto ${
-              t.type === "success" ? "bg-apple-green" : "bg-apple-red"
-            }`}
+            style={{
+              background: t.type === "success" ? "#34c759" : "#ff3b30",
+              color: "white", padding: "12px 16px", borderRadius: 12,
+              fontSize: "0.85rem", fontWeight: 500, pointerEvents: "auto",
+              boxShadow: "0 4px 20px rgba(0,0,0,0.15)",
+              display: "flex", alignItems: "center", gap: 10,
+            }}
           >
-            {t.message}
+            <span>✓ {t.message}</span>
+            {t.momentId && (
+              <Link
+                href={`/moments/${t.momentId}`}
+                style={{ color: "white", fontWeight: 700, textDecoration: "underline", whiteSpace: "nowrap" }}
+              >
+                View moment →
+              </Link>
+            )}
           </div>
         ))}
       </div>
@@ -128,6 +143,9 @@ export default function ReviewPage() {
           {loading ? "Loading…" : items.length === 0
             ? "No moments pending review."
             : `${items.length} moment${items.length !== 1 ? "s" : ""} awaiting review`}
+        </p>
+        <p style={{ fontSize: "0.85rem", color: "#86868b", marginTop: 8, maxWidth: 520 }}>
+          Moments submitted from the Feed for calendar consideration. Approve to add to the calendar, or send back with feedback.
         </p>
       </div>
 

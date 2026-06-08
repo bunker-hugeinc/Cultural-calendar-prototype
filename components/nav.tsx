@@ -7,11 +7,18 @@ import { useEffect, useState } from "react";
 export function Nav() {
   const pathname = usePathname();
   const [reviewCount, setReviewCount] = useState<number>(0);
+  const [feedCount,   setFeedCount]   = useState<number>(0);
 
   useEffect(() => {
     fetch("/api/review")
       .then(r => r.json())
       .then((items: unknown[]) => setReviewCount(items.length))
+      .catch(() => {});
+    fetch("/api/feed")
+      .then(r => r.json())
+      .then((items: { status: string }[]) => {
+        if (Array.isArray(items)) setFeedCount(items.filter(c => c.status === "pending").length);
+      })
       .catch(() => {});
   }, [pathname]);
 
@@ -23,8 +30,9 @@ export function Nav() {
   const navLinks = [
     { href: "/",          label: "Dashboard" },
     { href: "/calendar",  label: "Calendar"  },
+    { href: "/feed",      label: "Feed",      badge: feedCount  },
     { href: "/merchants", label: "Merchants" },
-    { href: "/review",    label: "Review", badge: reviewCount },
+    { href: "/review",    label: "Review",    badge: reviewCount },
   ];
 
   return (
