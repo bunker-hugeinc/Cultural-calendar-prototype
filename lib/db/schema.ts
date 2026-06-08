@@ -16,6 +16,10 @@ export const moments = pgTable("moments", {
   productConnection: real("product_connection"),
   partnerAlignment:  real("partner_alignment"),
   feedCandidateId:   text("feed_candidate_id"),  // nullable — set when approved from feed
+  scoreRationale:    text("score_rationale"),    // JSON: { audienceRationale, productRationale, partnerRationale, overallRationale }
+  attachments:       text("attachments"),         // JSON array of { name, url, type }
+  campaignName:      text("campaign_name"),
+  targetQuarter:     text("target_quarter"),
   createdAt:   timestamp("created_at").defaultNow(),
   updatedAt:   timestamp("updated_at").defaultNow(),
 });

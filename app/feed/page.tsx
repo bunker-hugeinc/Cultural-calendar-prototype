@@ -1,25 +1,38 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { ProactiveFeed, type FeedCandidate } from "@/components/proactive-feed";
-import Link from "next/link";
 
 export default function FeedPage() {
   const [candidates, setCandidates] = useState<FeedCandidate[]>([]);
   const [loading, setLoading] = useState(true);
+  const [toast, setToast] = useState<string | null>(null);
 
-  useEffect(() => {
-    fetch("/api/feed")
-      .then(r => r.json())
-      .then((rows: FeedCandidate[]) => {
-        setCandidates(Array.isArray(rows) ? rows : []);
-        setLoading(false);
-      })
-      .catch(() => setLoading(false));
+  const loadFeed = useCallback(async () => {
+    try {
+      const r = await fetch("/api/feed");
+      const rows: FeedCandidate[] = await r.json();
+      setCandidates(Array.isArray(rows) ? rows : []);
+    } catch {
+      // ignore
+    }
   }, []);
 
-  async function onApprove(_id: string, _name: string): Promise<void> {
-    // Approval flows through Add Details → submit-review → Review queue → approve
+  useEffect(() => {
+    loadFeed().finally(() => setLoading(false));
+  }, [loadFeed]);
+
+  function showToast(msg: string) {
+    setToast(msg);
+    setTimeout(() => setToast(null), 3000);
+  }
+
+  async function onApprove(id: string, name: string): Promise<void> {
+    const res = await fetch(`/api/feed/${id}/approve`, { method: "POST" });
+    if (res.ok) {
+      setCandidates(prev => prev.map(c => c.id === id ? { ...c, status: "added" } : c));
+      showToast(`✓ ${name} added to your calendar.`);
+    }
   }
 
   async function onDismiss(id: string): Promise<void> {
@@ -40,8 +53,6 @@ export default function FeedPage() {
     });
   }
 
-  const inReview = candidates.filter(c => c.status === "in_review");
-
   if (loading) {
     return (
       <div style={{ padding: "40px 24px", maxWidth: 1100, margin: "0 auto" }}>
@@ -53,34 +64,21 @@ export default function FeedPage() {
   return (
     <div style={{ padding: "40px 24px", maxWidth: 1100, margin: "0 auto" }}>
       <ProactiveFeed
-        candidates={candidates.filter(c => c.status !== "in_review")}
+        candidates={candidates}
         onApprove={onApprove}
         onDismiss={onDismiss}
         onRestore={onRestore}
         onDiscovered={onDiscovered}
       />
 
-      {/* In Review section (Fix 5D) */}
-      {inReview.length > 0 && (
-        <div style={{ marginTop: 40, borderTop: "1px solid #e8e8ed", paddingTop: 24 }}>
-          <p className="eyebrow" style={{ marginBottom: 12 }}>In Review ({inReview.length})</p>
-          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            {inReview.map(c => (
-              <div key={c.id} className="card" style={{ padding: "14px 20px", display: "flex", alignItems: "center", gap: 12 }}>
-                <span className={`pill pill-${c.category}`} style={{ textTransform: "capitalize" }}>{c.category}</span>
-                <div style={{ flex: 1 }}>
-                  <p style={{ fontWeight: 600, fontSize: "0.9rem", color: "#1d1d1f" }}>{c.name}</p>
-                  <p style={{ fontSize: "0.75rem", color: "#86868b", marginTop: 2 }}>
-                    Submitted for review. Check the Review queue.
-                  </p>
-                </div>
-                <span className="pill pill-review">In Review</span>
-                <Link href="/review" className="btn btn-outline btn-sm" style={{ textDecoration: "none" }}>
-                  View in Review →
-                </Link>
-              </div>
-            ))}
-          </div>
+      {toast && (
+        <div style={{
+          position: "fixed", bottom: 32, left: "50%", transform: "translateX(-50%)",
+          background: "#1d1d1f", color: "#fff", padding: "10px 18px", borderRadius: 8,
+          fontSize: "0.85rem", fontWeight: 500, zIndex: 200,
+          boxShadow: "0 4px 20px rgba(0,0,0,.2)", whiteSpace: "nowrap",
+        }}>
+          {toast}
         </div>
       )}
     </div>

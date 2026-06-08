@@ -125,6 +125,7 @@ export default async function MomentDetailPage({
         audienceRelevance={moment.audienceRelevance ?? null}
         productConnection={moment.productConnection ?? null}
         partnerAlignment={moment.partnerAlignment ?? null}
+        scoreRationale={moment.scoreRationale ?? null}
       />
 
       {/* Pairings + Influencer — client component */}

@@ -185,11 +185,8 @@ export function PairingRow({
         <td className="py-3 px-4">
           <ScoreBadge score={relevanceScore} />
         </td>
-        <td className="py-3 px-4 text-sm text-apple-gray-600 max-w-xs truncate">
+        <td className="py-3 px-4 text-sm text-apple-gray-600" style={{ lineHeight: 1.4 }}>
           {campaignAngle}
-        </td>
-        <td className="py-3 px-4" onClick={e => e.stopPropagation()}>
-          <StatusPill pairingId={id} initial={status as PairingStatus} />
         </td>
         <td className="py-3 px-4 text-sm text-apple-gray-400 text-right">
           <span className="text-xs">{expanded ? "▲" : "▼"}</span>
@@ -197,7 +194,7 @@ export function PairingRow({
       </tr>
       {expanded && (
         <tr className="border-b border-apple-gray-100 bg-apple-gray-50">
-          <td colSpan={6} className="px-4 py-4">
+          <td colSpan={5} className="px-4 py-4">
             <p className="text-sm font-semibold text-apple-black mb-1">{campaignAngle}</p>
             {rationale && <p className="text-sm text-apple-gray-600">{rationale}</p>}
           </td>

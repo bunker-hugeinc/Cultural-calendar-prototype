@@ -86,7 +86,6 @@ export function MomentDetailClient({ momentId, merchantCount, initialPairings }:
                   <th className="py-3 px-4 text-left eyebrow">Category</th>
                   <th className="py-3 px-4 text-left eyebrow">Score</th>
                   <th className="py-3 px-4 text-left eyebrow">Campaign Angle</th>
-                  <th className="py-3 px-4 text-left eyebrow">Status</th>
                   <th className="py-3 px-4" />
                 </tr>
               </thead>

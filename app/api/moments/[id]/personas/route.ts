@@ -14,10 +14,11 @@ if (!process.env.ANTHROPIC_API_KEY) {
 
 export interface InfluencerPersona {
   type: string;
-  handle: string;
+  realExamples: string;
   audienceSize: string;
   contentStyle: string;
   whyThisMoment: string;
+  campaignAngle: string;
 }
 
 export async function POST(

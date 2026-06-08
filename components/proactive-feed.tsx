@@ -238,12 +238,13 @@ function FeedCard({
           >
             {busy === "dismiss" ? "Dismissing…" : "Dismiss"}
           </button>
-          <a
-            href={`/feed/${c.id}/add-details`}
-            className="badge-apple bg-gather/10 text-gather border border-gather/30 no-underline hover:opacity-80 transition-opacity px-4 py-2 rounded-full text-xs font-medium"
+          <button
+            onClick={handleApprove}
+            disabled={busy !== null}
+            className="badge-apple bg-gather/10 text-gather border border-gather/30 hover:opacity-80 transition-opacity px-4 py-2 rounded-full text-xs font-medium disabled:opacity-50"
           >
-            Add Details →
-          </a>
+            {busy === "approve" ? "Adding…" : "+ Add to Calendar"}
+          </button>
         </div>
       </div>
     </div>
@@ -296,7 +297,6 @@ export function ProactiveFeed({ candidates, onApprove, onDismiss, onRestore, onD
   }
 
   const pending        = candidates.filter(c => c.status === "pending");
-  const inReviewCount  = candidates.filter(c => c.status === "in_review").length;
   const added          = candidates.filter(c => c.status === "added").length;
   const dismissedItems = candidates.filter(c => c.status === "dismissed");
 
@@ -340,7 +340,6 @@ export function ProactiveFeed({ candidates, onApprove, onDismiss, onRestore, onD
         <div className="flex gap-6 items-center">
           {[
             { label: "Pending",   value: pending.length,        color: "text-apple-blue",  href: null },
-            { label: "In Review", value: inReviewCount,         color: "text-apple-amber", href: "/review" },
             { label: "Added",     value: added,                 color: "text-apple-green", href: null },
             { label: "Dismissed", value: dismissedItems.length, color: "text-improve",     href: null },
           ].map(s => (

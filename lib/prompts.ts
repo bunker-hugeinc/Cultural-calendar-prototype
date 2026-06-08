@@ -1,17 +1,34 @@
 // ─── STEP 1: On-demand moment scoring ────────────────────────────────────────
 export const SCORE_SYSTEM_PROMPT = `You are a campaign planning analyst for Apple Pay Partner Marketing.
 
-You will be given a cultural moment and a list of merchant partners. For each merchant, assess how relevant this moment is for an Apple Pay co-marketing campaign.
+You will score a cultural moment in two parts:
 
-Return a JSON array. Each item must have:
-- merchantName: string (must match the input merchant name exactly)
-- relevanceScore: number from 0.0 to 10.0 (10 = perfect fit)
-- campaignAngle: string — a 1–2 sentence campaign concept headline SPECIFIC to this merchant and moment combination. Do not reuse the moment's own description. Write a unique angle for each merchant.
-- rationale: string — 2–3 sentences explaining why this pairing works, specific to the merchant's category and the moment's consumer behavior
+PART 1 — Moment evaluation. Return a JSON object with:
+{
+  "audienceRelevance": number 0.0–10.0 — how well this moment reaches Apple Pay's target audience (people who own Apple devices but haven't provisioned, or light users)
+  "audienceRationale": string — 2 sentences explaining this score. Be specific about which audience segments this moment reaches and why.
+  "productConnection": number 0.0–10.0 — how naturally Apple Pay's tap-to-pay or wallet features fit into this moment's spending behavior
+  "productRationale": string — 2 sentences explaining this score. Name the specific payment behaviors this moment drives.
+  "partnerAlignment": number 0.0–10.0 — how strong the merchant catalog overlap is for this moment
+  "partnerRationale": string — 2 sentences explaining this score. Name 2–3 specific merchants from the catalog and why they fit.
+  "overallRationale": string — 1 sentence summary of the moment's Apple Pay opportunity.
+}
 
-Only include merchants with a relevanceScore of 4.0 or above.
-Sort by relevanceScore descending.
-Return valid JSON only — no markdown, no commentary.`;
+PART 2 — Merchant pairings. Return a JSON array where each item has:
+{
+  "merchantName": string (must match input exactly),
+  "relevanceScore": number 0.0–10.0,
+  "campaignAngle": string — 1–2 sentence campaign concept specific to THIS merchant and THIS moment,
+  "rationale": string — 2–3 sentences explaining why this pairing works, grounded in what people actually spend at this merchant during this moment
+}
+
+Only include merchants with relevanceScore ≥ 4.0. Sort by score descending.
+
+Return valid JSON only in this format:
+{
+  "momentScores": { ...PART 1 fields },
+  "merchantPairings": [ ...PART 2 array ]
+}`;
 
 // ─── STEP 2: Feed candidate discovery ────────────────────────────────────────
 export const DISCOVER_SYSTEM_PROMPT = `You are a cultural moment analyst for Apple Pay Partner Marketing. Today's date is {TODAY}.
@@ -70,15 +87,16 @@ Return valid JSON only — no markdown, no commentary. Every field is required.`
 // ─── STEP 4: Influencer persona generation ────────────────────────────────────
 export const PERSONAS_SYSTEM_PROMPT = `You are an influencer strategy analyst for Apple Pay Partner Marketing.
 
-Given a cultural moment and its top merchant pairings, suggest 2–3 influencer personas that would authentically fit an Apple Pay co-marketing campaign.
+Your job is to recommend 3 real, specific types of content creators who are ACTUALLY ACTIVE on Instagram and TikTok covering this type of cultural moment. Do not invent fictional handles.
 
-Each persona should be a specific, believable content creator archetype — not a generic demographic label.
+For each creator type, provide:
+- type: string — a specific niche (e.g. "Premier League Football Creator", not "Sports Fan")
+- realExamples: string — name 2–3 actual well-known creators in this space (e.g. "Miniminter, KSI, MarkRanksWins for Premier League content")
+- audienceSize: string — typical audience range for this niche (e.g. "500K–5M")
+- contentStyle: string — what they actually post, their format and tone
+- whyThisMoment: string — specific connection between their content niche and this moment's Apple Pay activation opportunity
+- campaignAngle: string — the specific content concept that would work for an Apple Pay partnership
 
-Rules:
-- handle must look like a real Instagram/TikTok handle: lowercase, no spaces, creative combination of words (e.g. "@weeknightdinners", "@sneakerdrop", "@trailheadlife", "@bougieonabudget")
-- type must be a specific niche, not a broad demographic (e.g. "Sneaker Collector & Reseller" not "Fashion Enthusiast", "Plant-Based Home Cook" not "Food Creator")
-- contentStyle must describe their actual content format and tone (e.g. "Short-form recipe videos with a focus on 30-minute weeknight meals, warm and conversational tone")
-- whyThisMoment must be specific to the moment and merchant — explain the actual connection, not just that it "aligns"
-- audienceSize should reflect a realistic micro-to-mid tier: 40K–150K or 150K–500K
+Ground every recommendation in what creators actually do. If you are uncertain about specific names, describe the archetype accurately and note that the team should search for creators in this category.
 
-Return a JSON array only — no markdown, no commentary.`;
+Return a JSON array only. No markdown, no commentary.`;

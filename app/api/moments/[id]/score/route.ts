@@ -11,11 +11,26 @@ if (!process.env.ANTHROPIC_API_KEY) {
   console.warn("[score] ANTHROPIC_API_KEY is not set");
 }
 
+interface MomentScores {
+  audienceRelevance: number;
+  audienceRationale: string;
+  productConnection: number;
+  productRationale: string;
+  partnerAlignment: number;
+  partnerRationale: string;
+  overallRationale: string;
+}
+
 interface ScoringResult {
   merchantName: string;
   relevanceScore: number;
   campaignAngle: string;
   rationale: string;
+}
+
+interface ScoreResponse {
+  momentScores: MomentScores;
+  merchantPairings: ScoringResult[];
 }
 
 export async function POST(
@@ -52,21 +67,41 @@ ${allMerchants.map(m => `- ${m.name} (${m.category}): ${m.seasonalNotes ?? ""}`)
     maxTokens: 4096,
     temperature: 0.2,
   });
-  let pairings: ScoringResult[];
+
+  let result: ScoreResponse;
   try {
-    pairings = parseJSON<ScoringResult[]>(raw);
+    result = parseJSON<ScoreResponse>(raw);
   } catch {
     console.error("[score] JSON parse failed:", raw.slice(0, 500));
     return NextResponse.json({ error: "AI returned invalid JSON", raw: raw.slice(0, 500) }, { status: 502 });
   }
 
+  const { momentScores, merchantPairings } = result;
+
+  // Save moment sub-scores and rationale
+  const overallScore = (momentScores.audienceRelevance + momentScores.productConnection + momentScores.partnerAlignment) / 3;
+  await db.update(moments)
+    .set({
+      audienceRelevance: momentScores.audienceRelevance,
+      productConnection: momentScores.productConnection,
+      partnerAlignment: momentScores.partnerAlignment,
+      score: parseFloat(overallScore.toFixed(1)),
+      scoreRationale: JSON.stringify({
+        audienceRationale: momentScores.audienceRationale,
+        productRationale: momentScores.productRationale,
+        partnerRationale: momentScores.partnerRationale,
+        overallRationale: momentScores.overallRationale,
+      }),
+    })
+    .where(eq(moments.id, id));
+
   // Build merchant name → id map
   const merchantMap = new Map(allMerchants.map(m => [m.name.toLowerCase(), m.id]));
 
   let upserted = 0;
-  for (const p of pairings) {
+  for (const p of merchantPairings) {
     const merchantId = merchantMap.get(p.merchantName.toLowerCase());
-    if (!merchantId) continue; // skip if name doesn't match
+    if (!merchantId) continue;
 
     await db
       .insert(pairingScores)
@@ -88,5 +123,5 @@ ${allMerchants.map(m => `- ${m.name} (${m.category}): ${m.seasonalNotes ?? ""}`)
     upserted++;
   }
 
-  return NextResponse.json({ scored: upserted, pairings });
+  return NextResponse.json({ scored: upserted, pairings: merchantPairings });
 }

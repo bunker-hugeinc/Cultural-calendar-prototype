@@ -159,6 +159,34 @@ Focus on real, specific events that will actually occur in the time window above
   // Always filter out candidates that start within 30 days
   candidates = candidates.filter(c => c.startDate > cutoff);
 
+  // ── Deduplication ───────────────────────────────────────────────────────────
+  const [existingCandidates, existingMoments] = await Promise.all([
+    db.select({ name: feedCandidates.name }).from(feedCandidates),
+    db.select({ name: moments.name }).from(moments),
+  ]);
+  const allExistingNames = [
+    ...existingCandidates.map(r => r.name.toLowerCase()),
+    ...existingMoments.map(r => r.name.toLowerCase()),
+  ];
+
+  // Deduplicate against DB
+  candidates = candidates.filter(c => {
+    const cn = c.name.toLowerCase();
+    return !allExistingNames.some(existing =>
+      existing === cn ||
+      (existing.includes(cn.split(" ")[0]) && cn.includes(existing.split(" ")[0]))
+    );
+  });
+
+  // Deduplicate within batch
+  const seen = new Set<string>();
+  candidates = candidates.filter(c => {
+    const key = c.name.toLowerCase().replace(/\s+/g, "");
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+
   // ── Insert feed candidates ──────────────────────────────────────────────────
   const inserted = [];
   for (const c of candidates) {

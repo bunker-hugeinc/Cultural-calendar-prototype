@@ -6,14 +6,9 @@ import { useEffect, useState } from "react";
 
 export function Nav() {
   const pathname = usePathname();
-  const [reviewCount, setReviewCount] = useState<number>(0);
-  const [feedCount,   setFeedCount]   = useState<number>(0);
+  const [feedCount, setFeedCount] = useState<number>(0);
 
   useEffect(() => {
-    fetch("/api/review")
-      .then(r => r.json())
-      .then((items: unknown[]) => setReviewCount(items.length))
-      .catch(() => {});
     fetch("/api/feed")
       .then(r => r.json())
       .then((items: { status: string }[]) => {
@@ -32,7 +27,6 @@ export function Nav() {
     { href: "/calendar",  label: "Calendar"  },
     { href: "/feed",      label: "Feed",      badge: feedCount  },
     { href: "/merchants", label: "Merchants" },
-    { href: "/review",    label: "Review",    badge: reviewCount },
   ];
 
   return (
