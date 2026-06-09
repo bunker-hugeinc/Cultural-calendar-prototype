@@ -108,9 +108,9 @@ ${topPairings.length
   : "No pairings scored yet — use top Apple Pay merchant categories relevant to this moment."}
 
 Sub-scores:
-- Audience Relevance: ${moment.audienceRelevance ?? "not scored"}
-- Product Connection: ${moment.productConnection ?? "not scored"}
-- Partner Alignment: ${moment.partnerAlignment ?? "not scored"}
+- eCommerce Fit: ${moment.ecommerceScore ?? "not scored"}
+- Audience Fit: ${moment.audienceFit ?? "not scored"}
+- White Space: ${moment.whiteSpaceScore ?? "not scored"}
 ${reviewContext?.campaignName ? `\nCampaign Name: ${reviewContext.campaignName}` : ""}
 ${reviewContext?.targetQuarter ? `Target Quarter: ${reviewContext.targetQuarter}` : ""}
 ${reviewContext?.priorityMerchants?.length ? `Priority Merchants: ${reviewContext.priorityMerchants.join(", ")}` : ""}
@@ -143,11 +143,11 @@ ${reviewContext?.notes ? `Strategist Notes: ${reviewContext.notes}` : ""}
       category:           moment.category,
       description:        moment.description,
       hook:               moment.hook,
-      score:              moment.score,
-      audienceRelevance:  moment.audienceRelevance,
-      productConnection:  moment.productConnection,
-      partnerAlignment:   moment.partnerAlignment,
-      quarter:            null,  // populated in Step 3 when feedCandidateId FK is added
+      score:          moment.score,
+      ecommerceScore: moment.ecommerceScore,
+      audienceFit:    moment.audienceFit,
+      whiteSpaceScore: moment.whiteSpaceScore,
+      quarter:        moment.quarter,
     },
     pairings: topPairings,
     briefContent,

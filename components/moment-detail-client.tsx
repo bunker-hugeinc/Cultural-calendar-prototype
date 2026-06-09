@@ -14,7 +14,6 @@ interface Pairing {
   relevanceScore: number;
   campaignAngle: string;
   rationale: string | null;
-  status: string;
 }
 
 interface AIPairing {
@@ -100,7 +99,6 @@ export function MomentDetailClient({ momentId, merchantCount, initialPairings }:
                     relevanceScore={p.relevanceScore}
                     campaignAngle={p.campaignAngle}
                     rationale={p.rationale}
-                    status={p.status as "draft" | "in_review" | "approved" | "live"}
                   />
                 ))}
               </tbody>

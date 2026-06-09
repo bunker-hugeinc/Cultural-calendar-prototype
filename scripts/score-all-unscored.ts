@@ -4,11 +4,11 @@
 async function scoreAllUnscored() {
   const res = await fetch("http://localhost:3000/api/moments");
   const data = await res.json();
-  const allMoments: { id: string; name: string; audienceRelevance?: number; productConnection?: number; partnerAlignment?: number }[] =
+  const allMoments: { id: string; name: string; ecommerceScore?: number; audienceFit?: number; whiteSpaceScore?: number }[] =
     Array.isArray(data) ? data : (data.moments ?? []);
 
   const unscored = allMoments.filter(m =>
-    !m.audienceRelevance || !m.productConnection || !m.partnerAlignment
+    !m.ecommerceScore || !m.audienceFit || !m.whiteSpaceScore
   );
 
   console.log(`Found ${unscored.length} moments needing sub-scores...`);

@@ -20,7 +20,6 @@ export async function GET(
       relevanceScore: pairingScores.relevanceScore,
       campaignAngle: pairingScores.campaignAngle,
       rationale: pairingScores.rationale,
-      status: pairingScores.status,
     })
     .from(pairingScores)
     .innerJoin(merchants, eq(pairingScores.merchantId, merchants.id))
@@ -63,12 +62,9 @@ export async function PUT(
       hook: body.hook ?? null,
       score: body.score != null ? parseFloat(body.score) : null,
       notes: body.notes ?? null,
-      campaignName: body.campaignName ?? null,
-      targetQuarter: body.targetQuarter ?? null,
-      attachments: body.attachments ?? null,
-      audienceRelevance: body.audienceRelevance != null ? parseFloat(body.audienceRelevance) : undefined,
-      productConnection: body.productConnection != null ? parseFloat(body.productConnection) : undefined,
-      partnerAlignment: body.partnerAlignment != null ? parseFloat(body.partnerAlignment) : undefined,
+      ecommerceScore: body.ecommerceScore != null ? parseFloat(body.ecommerceScore) : undefined,
+      audienceFit: body.audienceFit != null ? parseFloat(body.audienceFit) : undefined,
+      whiteSpaceScore: body.whiteSpaceScore != null ? parseFloat(body.whiteSpaceScore) : undefined,
       updatedAt: new Date(),
     })
     .where(eq(moments.id, id))

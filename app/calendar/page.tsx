@@ -68,9 +68,9 @@ export interface CalendarMoment {
   endDate: string | null;
   category: string;
   score: number | null;
-  audienceRelevance: number | null;
-  productConnection: number | null;
-  partnerAlignment: number | null;
+  ecommerceScore: number | null;
+  audienceFit: number | null;
+  whiteSpaceScore: number | null;
   description: string;
   hook: string | null;
 }

@@ -44,7 +44,6 @@ export default async function MomentDetailPage({
       relevanceScore: pairingScores.relevanceScore,
       campaignAngle: pairingScores.campaignAngle,
       rationale: pairingScores.rationale,
-      status: pairingScores.status,
     })
     .from(pairingScores)
     .innerJoin(merchants, eq(pairingScores.merchantId, merchants.id))
@@ -122,9 +121,9 @@ export default async function MomentDetailPage({
       {/* Sub-scores */}
       <SubScoreCard
         momentId={id}
-        audienceRelevance={moment.audienceRelevance ?? null}
-        productConnection={moment.productConnection ?? null}
-        partnerAlignment={moment.partnerAlignment ?? null}
+        ecommerceScore={moment.ecommerceScore ?? null}
+        audienceFit={moment.audienceFit ?? null}
+        whiteSpaceScore={moment.whiteSpaceScore ?? null}
         scoreRationale={moment.scoreRationale ?? null}
       />
 

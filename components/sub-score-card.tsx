@@ -4,17 +4,18 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 
 interface ScoreRationale {
+  ecommerceRationale?: string;
   audienceRationale?: string;
-  productRationale?: string;
-  partnerRationale?: string;
+  whiteSpaceRationale?: string;
   overallRationale?: string;
+  whiteSpaceAnalysis?: string;
 }
 
 interface SubScoreCardProps {
   momentId: string;
-  audienceRelevance: number | null;
-  productConnection: number | null;
-  partnerAlignment: number | null;
+  ecommerceScore: number | null;
+  audienceFit: number | null;
+  whiteSpaceScore: number | null;
   scoreRationale?: string | null;
 }
 
@@ -32,7 +33,7 @@ function textColor(score: number | null): string {
   return "#cc2200";
 }
 
-export function SubScoreCard({ momentId, audienceRelevance, productConnection, partnerAlignment, scoreRationale }: SubScoreCardProps) {
+export function SubScoreCard({ momentId, ecommerceScore, audienceFit, whiteSpaceScore, scoreRationale }: SubScoreCardProps) {
   const router = useRouter();
   const [rescoring, setRescoring] = useState(false);
 
@@ -41,7 +42,7 @@ export function SubScoreCard({ momentId, audienceRelevance, productConnection, p
     if (scoreRationale) rationale = JSON.parse(scoreRationale);
   } catch { /* ignore */ }
 
-  const hasScores = audienceRelevance != null && productConnection != null && partnerAlignment != null;
+  const hasScores = ecommerceScore != null && audienceFit != null && whiteSpaceScore != null;
 
   async function handleRescore() {
     setRescoring(true);
@@ -54,9 +55,9 @@ export function SubScoreCard({ momentId, audienceRelevance, productConnection, p
   }
 
   const subScores = [
-    { label: "Audience Relevance", value: audienceRelevance, text: rationale?.audienceRationale },
-    { label: "Product Connection",  value: productConnection,  text: rationale?.productRationale },
-    { label: "Partner Alignment",   value: partnerAlignment,   text: rationale?.partnerRationale },
+    { label: "eCommerce Fit",  value: ecommerceScore,  text: rationale?.ecommerceRationale },
+    { label: "Audience Fit",   value: audienceFit,     text: rationale?.audienceRationale  },
+    { label: "White Space",    value: whiteSpaceScore, text: rationale?.whiteSpaceRationale },
   ];
 
   return (

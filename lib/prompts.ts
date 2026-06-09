@@ -5,12 +5,13 @@ You will score a cultural moment in two parts:
 
 PART 1 — Moment evaluation. Return a JSON object with:
 {
-  "audienceRelevance": number 0.0–10.0 — how well this moment reaches Apple Pay's target audience (people who own Apple devices but haven't provisioned, or light users)
+  "ecommerceScore": number 0.0–10.0 — is this a genuine spending moment where Apple Pay adds value?
+  "ecommerceRationale": string — 2 sentences explaining this score. Name the specific purchase behaviors this moment drives.
+  "audienceFit": number 0.0–10.0 — how well this moment reaches Apple Pay's target audience (iPhone owners who haven't provisioned, or light users)
   "audienceRationale": string — 2 sentences explaining this score. Be specific about which audience segments this moment reaches and why.
-  "productConnection": number 0.0–10.0 — how naturally Apple Pay's tap-to-pay or wallet features fit into this moment's spending behavior
-  "productRationale": string — 2 sentences explaining this score. Name the specific payment behaviors this moment drives.
-  "partnerAlignment": number 0.0–10.0 — how strong the merchant catalog overlap is for this moment
-  "partnerRationale": string — 2 sentences explaining this score. Name 2–3 specific merchants from the catalog and why they fit.
+  "whiteSpaceScore": number 0.0–10.0 — how open is the competitive landscape for Apple Pay to own this moment?
+  "whiteSpaceRationale": string — 2 sentences explaining this score. Name competing payment brands active in this space.
+  "whiteSpaceAnalysis": string — 1 sentence on the biggest competitive threat or opportunity.
   "overallRationale": string — 1 sentence summary of the moment's Apple Pay opportunity.
 }
 

@@ -12,13 +12,14 @@ if (!process.env.ANTHROPIC_API_KEY) {
 }
 
 interface MomentScores {
-  audienceRelevance: number;
+  ecommerceScore: number;
+  ecommerceRationale: string;
+  audienceFit: number;
   audienceRationale: string;
-  productConnection: number;
-  productRationale: string;
-  partnerAlignment: number;
-  partnerRationale: string;
+  whiteSpaceScore: number;
+  whiteSpaceRationale: string;
   overallRationale: string;
+  whiteSpaceAnalysis?: string;
 }
 
 interface ScoringResult {
@@ -79,18 +80,19 @@ ${allMerchants.map(m => `- ${m.name} (${m.category}): ${m.seasonalNotes ?? ""}`)
   const { momentScores, merchantPairings } = result;
 
   // Save moment sub-scores and rationale
-  const overallScore = (momentScores.audienceRelevance + momentScores.productConnection + momentScores.partnerAlignment) / 3;
+  const overallScore = (momentScores.ecommerceScore + momentScores.audienceFit + momentScores.whiteSpaceScore) / 3;
   await db.update(moments)
     .set({
-      audienceRelevance: momentScores.audienceRelevance,
-      productConnection: momentScores.productConnection,
-      partnerAlignment: momentScores.partnerAlignment,
+      ecommerceScore: momentScores.ecommerceScore,
+      audienceFit: momentScores.audienceFit,
+      whiteSpaceScore: momentScores.whiteSpaceScore,
       score: parseFloat(overallScore.toFixed(1)),
       scoreRationale: JSON.stringify({
+        ecommerceRationale: momentScores.ecommerceRationale,
         audienceRationale: momentScores.audienceRationale,
-        productRationale: momentScores.productRationale,
-        partnerRationale: momentScores.partnerRationale,
+        whiteSpaceRationale: momentScores.whiteSpaceRationale,
         overallRationale: momentScores.overallRationale,
+        whiteSpaceAnalysis: momentScores.whiteSpaceAnalysis,
       }),
     })
     .where(eq(moments.id, id));

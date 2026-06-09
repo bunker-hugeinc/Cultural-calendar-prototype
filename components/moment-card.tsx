@@ -10,9 +10,9 @@ interface MomentCardProps {
   category: string;
   daysAway: number;
   score?: number | null;
-  audienceRelevance?: number | null;
-  productConnection?: number | null;
-  partnerAlignment?: number | null;
+  ecommerceScore?: number | null;
+  audienceFit?: number | null;
+  whiteSpaceScore?: number | null;
 }
 
 function formatDate(dateStr: string) {
@@ -24,14 +24,13 @@ function formatDate(dateStr: string) {
 
 export function MomentCard({
   id, name, startDate, endDate, category, daysAway, score,
-  audienceRelevance, productConnection, partnerAlignment,
+  ecommerceScore, audienceFit, whiteSpaceScore,
 }: MomentCardProps) {
   const pillClass = CATEGORY_PILL[category] ?? "pill";
 
-  // Derive overall score from sub-scores when score field is null
   const displayScore = score ?? (
-    audienceRelevance != null && productConnection != null && partnerAlignment != null
-      ? (audienceRelevance + productConnection + partnerAlignment) / 3
+    ecommerceScore != null && audienceFit != null && whiteSpaceScore != null
+      ? (ecommerceScore + audienceFit + whiteSpaceScore) / 3
       : null
   );
 
@@ -64,9 +63,9 @@ export function MomentCard({
           {displayScore != null && (
             <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
               <ScoreBar label="Overall fit" value={displayScore} max={10} />
-              {audienceRelevance != null && <ScoreBar label="Audience" value={audienceRelevance} max={10} />}
-              {productConnection != null && <ScoreBar label="Product" value={productConnection} max={10} />}
-              {partnerAlignment  != null && <ScoreBar label="Partners" value={partnerAlignment}  max={10} />}
+              {ecommerceScore != null && <ScoreBar label="eCommerce" value={ecommerceScore} max={10} />}
+              {audienceFit    != null && <ScoreBar label="Audience"  value={audienceFit}    max={10} />}
+              {whiteSpaceScore != null && <ScoreBar label="White space" value={whiteSpaceScore} max={10} />}
             </div>
           )}
         </div>
