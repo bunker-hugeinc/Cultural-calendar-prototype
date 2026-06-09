@@ -312,10 +312,12 @@ export function PitchBriefExport({ pitchId }: { pitchId: string }) {
           background: status === "done" ? "rgba(52,199,89,0.08)" : undefined,
           borderColor: status === "done" ? "rgba(52,199,89,0.4)" : undefined,
           color: status === "done" ? "#248a3d" : undefined,
+          display: "inline-flex", alignItems: "center", gap: 7,
         }}
       >
+        {status === "loading" && <span className="spinner" />}
         {status === "loading" ? (
-          "Generating Brief…"
+          "Generating brief…"
         ) : status === "done" ? (
           "✓ Brief Downloaded"
         ) : (

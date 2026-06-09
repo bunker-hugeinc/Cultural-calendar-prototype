@@ -378,13 +378,20 @@ export function MerchantDetailFull({ merchant, initialPairings }: Props) {
             <button
               onClick={handleGenerateSignals}
               disabled={signalingLoading}
-              style={{ fontSize: "0.78rem", color: "#0071e3", background: "none", border: "none", cursor: "pointer", opacity: signalingLoading ? 0.5 : 1 }}
+              style={{ fontSize: "0.78rem", color: "#0071e3", background: "none", border: "none", cursor: "pointer", opacity: signalingLoading ? 0.5 : 1, display: "inline-flex", alignItems: "center", gap: 5 }}
             >
-              {signalingLoading ? "Evaluating…" : "Re-evaluate"}
+              {signalingLoading && <span className="spinner" />}
+              {signalingLoading ? "Generating signals…" : "Re-evaluate"}
             </button>
           )}
         </div>
 
+        {signalingLoading && (
+          <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "14px 18px", background: "rgba(52,199,89,0.06)", border: "1px solid rgba(52,199,89,0.2)", borderRadius: 12, marginBottom: 12 }}>
+            <span className="spinner" style={{ color: "#248a3d" }} />
+            <span style={{ fontSize: "0.85rem", color: "#248a3d", fontWeight: 500 }}>Generating merchant signals — Apple Pay affinity, transaction profile, and outreach approach…</span>
+          </div>
+        )}
         {signalingError && (
           <p style={{ fontSize: "0.82rem", color: "#cc2200", marginBottom: 12 }}>{signalingError}</p>
         )}
@@ -417,8 +424,9 @@ export function MerchantDetailFull({ merchant, initialPairings }: Props) {
             <p style={{ fontSize: "0.85rem", color: "#86868b", marginBottom: 20 }}>
               Claude will assess Apple Pay affinity, transaction profile, marketing openness, and suggest the best outreach approach for this partner.
             </p>
-            <button className="btn btn-primary" onClick={handleGenerateSignals} disabled={signalingLoading}>
-              {signalingLoading ? "Evaluating…" : "Evaluate with Claude"}
+            <button className="btn btn-primary" onClick={handleGenerateSignals} disabled={signalingLoading} style={{ display: "inline-flex", alignItems: "center", gap: 7 }}>
+              {signalingLoading && <span className="spinner" />}
+              {signalingLoading ? "Generating merchant signals…" : "Evaluate with Claude"}
             </button>
           </div>
         )}
@@ -455,15 +463,22 @@ export function MerchantDetailFull({ merchant, initialPairings }: Props) {
               onClick={handleFindMoments}
               disabled={matchLoading}
               className="btn btn-outline"
-              style={{ fontSize: "0.78rem", padding: "4px 12px", opacity: matchLoading ? 0.5 : 1 }}
+              style={{ fontSize: "0.78rem", padding: "4px 12px", opacity: matchLoading ? 0.5 : 1, display: "inline-flex", alignItems: "center", gap: 6 }}
             >
-              {matchLoading ? "Finding…" : matches.length > 0 ? "Re-score" : "Find Matching Moments"}
+              {matchLoading && <span className="spinner" />}
+              {matchLoading ? "Claude is scoring moments…" : matches.length > 0 ? "Re-score" : "Find Matching Moments"}
             </button>
           </div>
         </div>
 
+        {matchLoading && (
+          <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "14px 18px", background: "rgba(0,113,227,0.04)", border: "1px solid rgba(0,113,227,0.15)", borderRadius: 12, marginBottom: 12 }}>
+            <span className="spinner" style={{ color: "#0071e3" }} />
+            <span style={{ fontSize: "0.85rem", color: "#0071e3", fontWeight: 500 }}>Claude is scoring all upcoming moments against this merchant…</span>
+          </div>
+        )}
         {matchError && (
-          <p style={{ fontSize: "0.82rem", color: "#cc2200", marginBottom: 12 }}>{matchError}</p>
+          <div style={{ padding: "10px 14px", background: "#fff5f5", border: "1px solid #ffc7c5", borderRadius: 10, fontSize: "0.82rem", color: "#cc2200", marginBottom: 12 }}>{matchError}</div>
         )}
 
         {matches.length > 0 ? (

@@ -278,9 +278,10 @@ export default function FeedCandidatePage({ params }: { params: Promise<{ id: st
             <button
               onClick={handleScore}
               disabled={scoring}
-              style={{ fontSize: "0.75rem", color: "#0071e3", background: "none", border: "none", cursor: "pointer", opacity: scoring ? 0.5 : 1 }}
+              style={{ fontSize: "0.75rem", color: "#0071e3", background: "none", border: "none", cursor: "pointer", opacity: scoring ? 0.5 : 1, display: "inline-flex", alignItems: "center", gap: 5 }}
             >
-              {scoring ? "Scoring…" : "Re-score"}
+              {scoring && <span className="spinner" />}
+              {scoring ? "Evaluating…" : "Re-score"}
             </button>
           )}
         </div>
@@ -309,8 +310,9 @@ export default function FeedCandidatePage({ params }: { params: Promise<{ id: st
             <p style={{ fontSize: "0.85rem", color: "#86868b", marginBottom: 20 }}>
               Claude will evaluate the ecommerce opportunity, audience fit, and competitive white space — and score all merchants for this moment.
             </p>
-            <button className="btn btn-blue" onClick={handleScore} disabled={scoring}>
-              {scoring ? "Evaluating…" : "Evaluate with Claude"}
+            <button className="btn btn-blue" onClick={handleScore} disabled={scoring} style={{ display: "inline-flex", alignItems: "center", gap: 7 }}>
+              {scoring && <span className="spinner" />}
+              {scoring ? "Claude is evaluating…" : "Evaluate with Claude"}
             </button>
           </div>
         )}

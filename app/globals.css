@@ -120,4 +120,11 @@
   .chip-on { background: #1d1d1f !important; color: white !important; border-color: #1d1d1f !important; }
   /* Section divider — used in merchant/moment detail pages */
   .section-rule { border-top: 1px solid #e8e8ed; padding-top: 20px; margin-top: 20px; }
+  /* Spinner animation — used on all Claude call buttons */
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .spinner {
+    display: inline-block; width: 12px; height: 12px;
+    border: 2px solid currentColor; border-top-color: transparent;
+    border-radius: 50%; animation: spin 0.7s linear infinite; flex-shrink: 0;
+  }
 }

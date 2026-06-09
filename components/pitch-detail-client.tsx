@@ -72,9 +72,11 @@ function SectionCard({
               border: "1px solid rgba(0,113,227,0.2)",
               padding: "4px 12px", borderRadius: 8, cursor: generating ? "default" : "pointer",
               opacity: generating ? 0.7 : 1, fontFamily: "inherit",
+              display: "inline-flex", alignItems: "center", gap: 6,
             }}
           >
-            {generating ? "Generating…" : hasContent ? "Regenerate" : "Generate with Claude"}
+            {generating && <span className="spinner" />}
+            {generating ? "Building your pitch…" : hasContent ? "Regenerate" : "Generate with Claude"}
           </button>
         )}
       </div>
@@ -137,12 +139,12 @@ export function PitchDetailClient({ pitch, allMoments, allMerchants }: Props) {
   const [gen, setGen] = useState<Record<string, boolean>>({});
 
   // Toast
-  const [toast, setToast] = useState<string | null>(null);
+  const [toast, setToast] = useState<{ msg: string; type: "success" | "error" } | null>(null);
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  function showToast(msg: string) {
-    setToast(msg);
-    setTimeout(() => setToast(null), 2500);
+  function showToast(msg: string, type: "success" | "error" = "success") {
+    setToast({ msg, type });
+    setTimeout(() => setToast(null), type === "error" ? 4000 : 2500);
   }
 
   // Debounced save
@@ -167,7 +169,7 @@ export function PitchDetailClient({ pitch, allMoments, allMerchants }: Props) {
         body: JSON.stringify({ section }),
       });
       const data = await res.json();
-      if (!res.ok) { showToast(`Error: ${data.error ?? "Generation failed"}`); return; }
+      if (!res.ok) { showToast(data.error ?? "Generation failed", "error"); return; }
 
       if (section === "situation" && data.situation) {
         setSituation(data.situation);
@@ -503,7 +505,8 @@ export function PitchDetailClient({ pitch, allMoments, allMerchants }: Props) {
             className="btn btn-blue"
             style={{ width: "100%", justifyContent: "center", fontSize: "0.82rem", opacity: (gen.all || gen.situation || gen.concept) ? 0.6 : 1 }}
           >
-            {gen.all ? "Generating…" : "Generate All Sections"}
+            {gen.all && <span className="spinner" />}
+            {gen.all ? "Building your pitch…" : "Generate All Sections"}
           </button>
 
           <PitchBriefExport pitchId={pitch.id} />
@@ -514,11 +517,12 @@ export function PitchDetailClient({ pitch, allMoments, allMerchants }: Props) {
       {toast && (
         <div style={{
           position: "fixed", bottom: 32, left: "50%", transform: "translateX(-50%)",
-          background: "#1d1d1f", color: "white", padding: "10px 18px",
+          background: toast.type === "error" ? "#cc2200" : "#248a3d",
+          color: "white", padding: "10px 18px",
           borderRadius: 8, fontSize: "0.85rem", fontWeight: 500, zIndex: 200,
           boxShadow: "0 4px 20px rgba(0,0,0,.2)", whiteSpace: "nowrap",
         }}>
-          {toast}
+          {toast.type === "error" ? "⚠ " : "✓ "}{toast.msg}
         </div>
       )}
     </div>

@@ -182,8 +182,9 @@ export default function FeedPage() {
             onClick={handleDiscover}
             disabled={discovering}
             className="btn btn-primary"
-            style={{ opacity: discovering ? 0.6 : 1 }}
+            style={{ opacity: discovering ? 0.6 : 1, display: "inline-flex", alignItems: "center", gap: 7 }}
           >
+            {discovering && <span className="spinner" />}
             {discovering ? "Discovering…" : "Discover New Moments"}
           </button>
         </div>
@@ -196,8 +197,9 @@ export default function FeedPage() {
             onClick={handleDiscover}
             disabled={discovering}
             className="btn btn-primary"
-            style={{ opacity: discovering ? 0.6 : 1 }}
+            style={{ opacity: discovering ? 0.6 : 1, display: "inline-flex", alignItems: "center", gap: 7 }}
           >
+            {discovering && <span className="spinner" />}
             {discovering ? "Discovering…" : "Discover New Moments"}
           </button>
         </div>
@@ -206,7 +208,14 @@ export default function FeedPage() {
       {/* Pending candidates */}
       {pending.length === 0 ? (
         <div style={{ textAlign: "center", padding: "60px 24px", border: "1px dashed #d2d2d7", borderRadius: 16 }}>
-          <p style={{ fontSize: "0.9rem", color: "#86868b", marginBottom: 16 }}>No pending suggestions. Click Discover to find new moments.</p>
+          <p className="eyebrow" style={{ marginBottom: 8 }}>NO SUGGESTIONS YET</p>
+          <p style={{ fontSize: "0.9rem", color: "#86868b", marginBottom: 20, maxWidth: 340, margin: "0 auto 20px" }}>
+            Use the Discover panel above to find new cultural moments for Apple Pay activation.
+          </p>
+          <button className="btn btn-primary" onClick={handleDiscover} disabled={discovering} style={{ display: "inline-flex", alignItems: "center", gap: 7 }}>
+            {discovering && <span className="spinner" />}
+            {discovering ? "Discovering…" : "Discover Now"}
+          </button>
         </div>
       ) : (
         <div>

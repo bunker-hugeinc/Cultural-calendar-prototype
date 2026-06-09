@@ -253,9 +253,10 @@ export function MomentDetailFull({ moment, initialPairings }: Props) {
             className="btn btn-outline"
             onClick={handleScore}
             disabled={scoring}
-            style={{ opacity: scoring ? 0.6 : 1 }}
+            style={{ opacity: scoring ? 0.6 : 1, display: "inline-flex", alignItems: "center", gap: 6 }}
           >
-            {scoring ? "Scoring…" : scored ? "Re-score" : liveScores.hasScores ? "Re-score" : "Score"}
+            {scoring && <span className="spinner" />}
+            {scoring ? "Claude is evaluating…" : scored ? "Re-score" : liveScores.hasScores ? "Re-score" : "Score"}
           </button>
         </div>
       </div>
@@ -269,6 +270,13 @@ export function MomentDetailFull({ moment, initialPairings }: Props) {
       {/* ── Section 2: AI Evaluation ────────────────────────────────────────── */}
       <div style={{ marginBottom: 28 }}>
         <p className="eyebrow" style={{ marginBottom: 12 }}>AI EVALUATION</p>
+
+        {scoring && (
+          <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "14px 18px", background: "rgba(0,113,227,0.06)", border: "1px solid rgba(0,113,227,0.2)", borderRadius: 12, marginBottom: 12 }}>
+            <span className="spinner" style={{ color: "#0071e3" }} />
+            <span style={{ fontSize: "0.85rem", color: "#0071e3", fontWeight: 500 }}>Claude is evaluating ecommerce fit, audience reach, and competitive landscape…</span>
+          </div>
+        )}
 
         {liveScores.hasScores ? (
           <>
@@ -313,8 +321,9 @@ export function MomentDetailFull({ moment, initialPairings }: Props) {
             <p style={{ fontSize: "0.85rem", color: "#86868b", marginBottom: 20 }}>
               Claude will evaluate the Apple Pay opportunity — ecommerce fit, audience reach, and competitive white space — and score all merchants for this moment.
             </p>
-            <button className="btn btn-blue" onClick={handleScore} disabled={scoring}>
-              {scoring ? "Evaluating…" : "Evaluate with Claude"}
+            <button className="btn btn-blue" onClick={handleScore} disabled={scoring} style={{ display: "inline-flex", alignItems: "center", gap: 7 }}>
+              {scoring && <span className="spinner" />}
+              {scoring ? "Claude is evaluating…" : "Evaluate with Claude"}
             </button>
           </div>
         )}
