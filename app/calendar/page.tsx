@@ -52,8 +52,8 @@ function SuggestedMomentCard({ candidate: c }: { candidate: SuggestedCandidate }
         }}>{c.why}</p>
       </div>
       <div style={{ borderTop: "1px solid #f0f0f5", padding: "10px 18px", marginTop: "auto" }}>
-        <Link href={`/feed/${c.id}/add-details`} style={{ fontSize: "0.78rem", fontWeight: 500, color: "#0071e3", textDecoration: "none" }}>
-          Add Details →
+        <Link href={`/feed/${c.id}`} style={{ fontSize: "0.78rem", fontWeight: 500, color: "#0071e3", textDecoration: "none" }}>
+          Evaluate &amp; Add →
         </Link>
       </div>
     </div>

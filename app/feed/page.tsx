@@ -93,15 +93,6 @@ export default function FeedPage() {
     }
   }
 
-  async function handleAdd(id: string) {
-    const res = await fetch(`/api/feed/${id}/approve`, { method: "POST" });
-    if (res.ok) {
-      const { moment } = await res.json();
-      setCandidates(prev => prev.filter(c => c.id !== id));
-      showToast(`✓ Added to calendar — ${moment?.name ?? "moment"}`);
-    }
-  }
-
   async function handleDismiss(id: string) {
     await fetch(`/api/feed/${id}/dismiss`, { method: "POST" });
     setCandidates(prev => prev.map(c => c.id === id ? { ...c, status: "dismissed" } : c));
@@ -247,8 +238,10 @@ export default function FeedPage() {
                     </div>
                   )}
                 </div>
-                <div style={{ borderTop: "1px solid #f0f0f5", padding: "12px 20px", display: "flex", gap: 10 }}>
-                  <button className="btn btn-primary btn-sm" onClick={() => handleAdd(c.id)}>+ Add to Calendar</button>
+                <div style={{ borderTop: "1px solid #f0f0f5", padding: "12px 20px", display: "flex", gap: 10, alignItems: "center" }}>
+                  <a href={`/feed/${c.id}`} className="btn btn-primary btn-sm" style={{ textDecoration: "none" }}>
+                    Evaluate &amp; Add →
+                  </a>
                   <button className="btn btn-outline btn-sm" onClick={() => handleDismiss(c.id)}>Dismiss</button>
                 </div>
               </div>
