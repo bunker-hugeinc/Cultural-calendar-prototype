@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef } from "react";
 import Link from "next/link";
+import { PitchBriefExport } from "@/components/pitch-brief-export";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -505,14 +506,7 @@ export function PitchDetailClient({ pitch, allMoments, allMerchants }: Props) {
             {gen.all ? "Generating…" : "Generate All Sections"}
           </button>
 
-          {/* Download placeholder */}
-          <button
-            disabled
-            className="btn btn-outline"
-            style={{ width: "100%", justifyContent: "center", fontSize: "0.82rem", opacity: 0.5 }}
-          >
-            Download Brief
-          </button>
+          <PitchBriefExport pitchId={pitch.id} />
         </div>
       </div>
 

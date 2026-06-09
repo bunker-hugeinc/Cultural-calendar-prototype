@@ -178,3 +178,24 @@ Return a JSON object:
 }
 
 Return valid JSON only. No markdown.`;
+
+// --- STEP 8: Pitch brief generation ---
+export const BRIEF_GENERATION_PROMPT = `You are a campaign strategist for Apple Pay Partner Marketing.
+
+Using the provided pitch data, generate a complete Apple Pay Partner Marketing brief.
+
+Return JSON with exactly these fields:
+{
+  "toplineOverview": "2-3 sentence TL;DR of the campaign, specific to this moment and merchant combination. What are we doing and why now?",
+  "businessObjectives": ["2-3 bullets on the business problem this campaign solves. Focus on Apple Pay provisioning, spending uplift, or partner co-marketing goals."],
+  "audience": "1-2 sentences on the primary audience with a specific behavioral insight. Include non-provisioned Apple device owners or light Apple Pay users where relevant.",
+  "deliverables": ["Bulleted list of what would be produced based on the channel strategy and moment type. Be specific (e.g. 2 Discovery Cards UK FR DE, 1 partner co-branded social kit)."],
+  "successMetrics": ["2-3 KPIs most relevant to this campaign type. Choose from: CID Provisions, Engagement Rate, CTR, Partner Redemptions, Spend Uplift, ROAS, App Opens, Wallet Adds."],
+  "timingNotes": "1-2 sentences on timing rationale based on the moment dates and Apple FQ calendar. Note any production lead time implications.",
+  "foundationalInsights": "2-3 sentences of audience or moment insight grounded in real behavioral patterns. Reference habit inertia, security concerns, or convenience gaps where relevant.",
+  "messagingHierarchy": ["3-5 message pillars in priority order. Each as a short label + 1-sentence rationale."],
+  "creativeTacticalConsiderations": ["2-4 must-haves or watch-outs specific to this moment and merchant. Include legal, geo, or brand constraints relevant to Apple Pay campaigns."]
+}
+
+Be specific to the moment, merchant, and channel strategy provided. No generic templates.
+Return valid JSON only. No markdown.`;
