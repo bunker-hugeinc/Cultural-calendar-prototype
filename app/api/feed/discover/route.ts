@@ -4,7 +4,7 @@ import { merchants, moments, feedCandidates } from "@/lib/db/schema";
 import { callClaude, parseJSON } from "@/lib/ai";
 import { DISCOVER_SYSTEM_PROMPT } from "@/lib/prompts";
 import { createId } from "@paralleldrive/cuid2";
-import { sql } from "drizzle-orm";
+import { sql, ne } from "drizzle-orm";
 
 export const maxDuration = 60;
 
@@ -161,28 +161,20 @@ Focus on real, specific events that will actually occur in the time window above
 
   // ── Deduplication ───────────────────────────────────────────────────────────
   const [existingCandidates, existingMoments] = await Promise.all([
-    db.select({ name: feedCandidates.name }).from(feedCandidates),
+    db.select({ name: feedCandidates.name }).from(feedCandidates)
+      .where(ne(feedCandidates.status, "dismissed")),
     db.select({ name: moments.name }).from(moments),
   ]);
-  const allExistingNames = [
-    ...existingCandidates.map(r => r.name.toLowerCase()),
-    ...existingMoments.map(r => r.name.toLowerCase()),
-  ];
+  const allExistingNames = new Set([
+    ...existingCandidates.map(r => r.name.toLowerCase().trim()),
+    ...existingMoments.map(r => r.name.toLowerCase().trim()),
+  ]);
 
-  // Deduplicate against DB
-  candidates = candidates.filter(c => {
-    const cn = c.name.toLowerCase();
-    return !allExistingNames.some(existing =>
-      existing === cn ||
-      (existing.includes(cn.split(" ")[0]) && cn.includes(existing.split(" ")[0]))
-    );
-  });
-
-  // Deduplicate within batch
+  // Deduplicate against DB and within batch
   const seen = new Set<string>();
   candidates = candidates.filter(c => {
-    const key = c.name.toLowerCase().replace(/\s+/g, "");
-    if (seen.has(key)) return false;
+    const key = c.name.toLowerCase().trim();
+    if (allExistingNames.has(key) || seen.has(key)) return false;
     seen.add(key);
     return true;
   });

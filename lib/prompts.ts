@@ -71,7 +71,7 @@ Return a JSON array of 4-6 cultural moment candidates. Each must have:
 - score: number 0.0-5.0 -- how strong a fit for Apple Pay
 - headline: string -- short campaign angle (under 12 words)
 - body: string -- campaign concept paragraph (2-3 sentences)
-- why: string -- specific reason this moment drives Apple Pay spending, mentioning which merchant categories benefit and why tap-to-pay is relevant. Do not use the template "This moment fits Apple Pay as it combines...". Write freshly for each moment.
+- why: string -- 2-3 sentences explaining WHY this specific moment drives Apple Pay spending. Be specific: name the spending behavior (e.g. "game-day food ordering surges during NFL playoff weekends"), which merchant categories benefit most, and what makes Apple Pay's tap-to-pay or rewards specifically compelling here. Every sentence must be grounded in a real behavior. No template language like "This moment fits Apple Pay as it combines X and Y."
 - hook: string -- comma-separated hook types from: Bundle, Values Highlight, Exclusive Access, Gifting, Experiential, Cultural Moment, Product Drop
 - partners: array of strings -- 3-5 merchant names from the provided catalog that fit best
 - personas: array of objects -- each with t (type), h (handle style), d (description) -- 1-2 personas
@@ -150,3 +150,31 @@ For each moment, return:
 Only include moments with relevanceScore >= 4.0. Sort by score descending.
 
 Return a JSON array only. No markdown.`;
+
+// --- STEP 7: Pitch generation ---
+export const PITCH_SITUATION_PROMPT = `You are a partnership strategist for Apple Pay Partner Marketing.
+
+Write a 3-4 sentence situation statement for a partnership pitch brief. Cover in order:
+1. Why this moment matters for Apple Pay right now (be specific about timing, cultural relevance, and spending behavior)
+2. Why this merchant is the right partner (customer overlap, category fit, co-marketing potential)
+3. What the competitive white space is (who isn't activating here, or where Apple Pay has an opening)
+4. The specific Apple Pay opportunity (what action you want consumers to take)
+
+Be specific and data-grounded. Reference the scores and rationale provided. Write in present tense, confident tone. Return plain text only -- no JSON, no markdown, no headers.`;
+
+export const PITCH_CONCEPT_PROMPT = `You are a campaign strategist for Apple Pay Partner Marketing.
+
+Generate a campaign concept for an Apple Pay x merchant partnership during a cultural moment.
+
+Return a JSON object:
+{
+  "headline": "5-8 word campaign headline. Bold, action-oriented, specific to this merchant x moment combination.",
+  "description": "2-3 sentence campaign description. What does the campaign do, how does it work, what does the consumer experience?",
+  "keyMessages": [
+    "Key message 1 -- lead with the consumer benefit",
+    "Key message 2 -- the Apple Pay / merchant-specific angle",
+    "Key message 3 -- the urgency / moment-specific hook"
+  ]
+}
+
+Return valid JSON only. No markdown.`;

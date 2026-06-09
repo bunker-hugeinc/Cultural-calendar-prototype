@@ -16,13 +16,11 @@ export async function POST(
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
-  // Mark candidate as added
   await db
     .update(feedCandidates)
     .set({ status: "added" })
     .where(eq(feedCandidates.id, id));
 
-  // Insert into moments table
   const [newMoment] = await db
     .insert(moments)
     .values({
@@ -33,8 +31,9 @@ export async function POST(
       description: candidate.body,
       hook: candidate.hook,
       score: candidate.score,
+      feedCandidateId: candidate.id,
     })
-    .returning({ id: moments.id });
+    .returning();
 
-  return NextResponse.json({ momentId: newMoment.id });
+  return NextResponse.json({ moment: newMoment });
 }
