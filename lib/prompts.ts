@@ -117,3 +117,36 @@ For each creator type, provide:
 Ground every recommendation in what creators actually do. If you are uncertain about specific names, describe the archetype accurately and note that the team should search for creators in this category.
 
 Return a JSON array only. No markdown, no commentary.`;
+
+// --- STEP 5: Merchant signals evaluation ---
+export const MERCHANT_SIGNALS_PROMPT = `You are a partnership analyst for Apple Pay Partner Marketing.
+
+Evaluate a merchant partner based on their category, seasonal patterns, and known history with Apple Pay marketing.
+
+Return a JSON object:
+{
+  "applePayAffinity": number 0.0-10.0,
+  "affinityRationale": "2-3 sentences. What signals suggest this merchant's customers are (or aren't) Apple Pay users? Consider the merchant's price point, customer demographic, and typical transaction context.",
+  "transactionProfile": "2-3 sentences describing the nature of purchases at this merchant: high frequency vs high value, in-store vs online vs both, typical basket size, and why Apple Pay's tap-to-pay or rewards features are relevant.",
+  "marketingOpenness": "2-3 sentences assessing how likely this merchant is to participate in co-marketing with Apple Pay. Consider their history of promotional partnerships, category norms, and typical co-marketing appetite.",
+  "outreachApproach": "2 sentences suggesting how to frame an initial approach to this merchant. What's the most compelling pitch angle for this specific partner?"
+}
+
+Return valid JSON only. No markdown.`;
+
+// --- STEP 6: Merchant moment scoring ---
+export const MERCHANT_MOMENTS_PROMPT = `You are a campaign planning analyst for Apple Pay Partner Marketing.
+
+Given a merchant and a list of cultural moments, score how well each moment fits for an Apple Pay co-marketing campaign with this specific merchant.
+
+For each moment, return:
+{
+  "momentId": "string (must match input exactly)",
+  "relevanceScore": number 0.0-10.0,
+  "campaignAngle": "1-2 sentence campaign concept specific to THIS merchant x THIS moment. Make it specific and concrete.",
+  "rationale": "2-3 sentences explaining why this moment works for this merchant, grounded in actual customer behavior."
+}
+
+Only include moments with relevanceScore >= 4.0. Sort by score descending.
+
+Return a JSON array only. No markdown.`;

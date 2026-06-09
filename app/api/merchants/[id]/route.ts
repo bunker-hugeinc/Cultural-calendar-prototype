@@ -59,8 +59,10 @@ export async function PATCH(
   const body = await req.json();
   const updates: Record<string, unknown> = { updatedAt: new Date() };
   if (body.partnerGroup !== undefined) updates.partnerGroup = body.partnerGroup;
+  if (body.partnerStatus !== undefined) updates.partnerStatus = body.partnerStatus;
   if (body.name !== undefined) updates.name = body.name;
   if (body.seasonalNotes !== undefined) updates.seasonalNotes = body.seasonalNotes;
+  if (body.pastCampaignNotes !== undefined) updates.pastCampaignNotes = body.pastCampaignNotes;
   const [updated] = await db.update(merchants).set(updates).where(eq(merchants.id, id)).returning();
   if (!updated) return NextResponse.json({ error: "Not found" }, { status: 404 });
   return NextResponse.json(updated);
