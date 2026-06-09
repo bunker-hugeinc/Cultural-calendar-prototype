@@ -2,21 +2,9 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
 
 export function Nav() {
   const pathname = usePathname();
-  const [feedCount, setFeedCount] = useState<number>(0);
-
-  useEffect(() => {
-    fetch("/api/feed")
-      .then(r => r.json())
-      .then((items: { status: string }[]) => {
-        if (Array.isArray(items)) setFeedCount(items.filter(c => c.status === "pending").length);
-      })
-      .catch(() => {});
-  }, [pathname]);
-
   function isActive(href: string) {
     if (href === "/") return pathname === "/";
     return pathname.startsWith(href);
@@ -25,8 +13,9 @@ export function Nav() {
   const navLinks = [
     { href: "/",          label: "Dashboard" },
     { href: "/calendar",  label: "Calendar"  },
-    { href: "/feed",      label: "Feed",      badge: feedCount  },
     { href: "/merchants", label: "Merchants" },
+    { href: "/pitches",   label: "Pitches"   },
+    { href: "/feed",      label: "Feed"      },
   ];
 
   return (
@@ -44,7 +33,7 @@ export function Nav() {
         </Link>
 
         {/* Nav links */}
-        {navLinks.map(({ href, label, badge }) => {
+        {navLinks.map(({ href, label }) => {
           const active = isActive(href);
           return (
             <Link
@@ -54,22 +43,13 @@ export function Nav() {
                 fontSize: "0.85rem", fontWeight: 500,
                 color: active ? "#1d1d1f" : "#86868b",
                 padding: "0 12px", height: 52,
-                display: "flex", alignItems: "center", gap: 5,
+                display: "flex", alignItems: "center",
                 borderBottom: active ? "2px solid #1d1d1f" : "2px solid transparent",
                 transition: "all 0.15s",
                 textDecoration: "none",
               }}
             >
               {label}
-              {badge != null && badge > 0 && (
-                <span style={{
-                  background: "#ff9f0a", color: "white",
-                  borderRadius: 10, fontSize: "0.65rem", fontWeight: 700,
-                  padding: "1px 6px",
-                }}>
-                  {badge}
-                </span>
-              )}
             </Link>
           );
         })}

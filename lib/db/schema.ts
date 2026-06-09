@@ -1,4 +1,4 @@
-import { pgTable, text, real, timestamp, unique } from "drizzle-orm/pg-core";
+import { pgTable, text, real, timestamp, boolean, unique } from "drizzle-orm/pg-core";
 import { createId } from "@paralleldrive/cuid2";
 
 // ─── MOMENT ───────────────────────────────────────────────
@@ -10,16 +10,15 @@ export const moments = pgTable("moments", {
   category:    text("category").notNull(),          // "gather" | "improve" | "excite"
   description: text("description").notNull(),
   hook:        text("hook"),
+  quarter:     text("quarter"),
   score:       real("score"),
   notes:       text("notes"),
-  audienceRelevance: real("audience_relevance"),
-  productConnection: real("product_connection"),
-  partnerAlignment:  real("partner_alignment"),
-  feedCandidateId:   text("feed_candidate_id"),  // nullable — set when approved from feed
-  scoreRationale:    text("score_rationale"),    // JSON: { audienceRationale, productRationale, partnerRationale, overallRationale }
-  attachments:       text("attachments"),         // JSON array of { name, url, type }
-  campaignName:      text("campaign_name"),
-  targetQuarter:     text("target_quarter"),
+  feedCandidateId:          text("feed_candidate_id"),
+  ecommerceScore:           real("ecommerce_score"),
+  audienceFit:              real("audience_fit"),
+  whiteSpaceScore:          real("white_space_score"),
+  scoreRationale:           text("score_rationale"),           // JSON: { ecommerceRationale, audienceRationale, whiteSpaceRationale, overallRationale, whiteSpaceAnalysis }
+  channelRecommendations:   text("channel_recommendations"),   // JSON array
   createdAt:   timestamp("created_at").defaultNow(),
   updatedAt:   timestamp("updated_at").defaultNow(),
 });
@@ -36,6 +35,8 @@ export const merchants = pgTable("merchants", {
   partnerGroup:  text("partner_group"),
   // "Travel & Staying" | "Clothing" | "Delivery & Rides" | "Big Stores" |
   // "Sports & Entertainment" | "Food" | "Misc" | "Kids"
+  merchantSignals:   text("merchant_signals"),    // JSON: { applePayAffinity, affinityRationale, transactionProfile, marketingOpenness, outreachApproach }
+  pastCampaignNotes: text("past_campaign_notes"), // Free text — BD/DS insights
   updatedAt:     timestamp("updated_at").defaultNow(),
   createdAt:     timestamp("created_at").defaultNow(),
 });
@@ -48,10 +49,7 @@ export const pairingScores = pgTable("pairing_scores", {
   relevanceScore: real("relevance_score").notNull(),
   campaignAngle:  text("campaign_angle").notNull(),
   rationale:      text("rationale"),
-  status:         text("status").notNull().default("draft"),
-  // Values: "draft" | "in_review" | "approved" | "live"
   createdAt:      timestamp("created_at").defaultNow(),
-  updatedAt:      timestamp("updated_at").defaultNow(),
 }, (t) => ({
   uniq: unique().on(t.momentId, t.merchantId),
 }));
@@ -88,8 +86,41 @@ export const momentReviews = pgTable("moment_reviews", {
   priorityMerchants:   text("priority_merchants"),   // JSON array of merchant IDs
   submittedAt:         timestamp("submitted_at").defaultNow(),
   reviewedAt:          timestamp("reviewed_at"),
-  reviewedBy:          text("reviewed_by"),          // free text, no auth
-  reviewNotes:         text("review_notes"),         // feedback from reviewer
+  reviewedBy:          text("reviewed_by"),
+  reviewNotes:         text("review_notes"),
   status:              text("status").notNull().default("in_review"),
   // "in_review" | "approved" | "rejected"
+});
+
+// ─── PITCHES ──────────────────────────────────────────────
+export const pitches = pgTable("pitches", {
+  id:               text("id").primaryKey().$defaultFn(() => createId()),
+  title:            text("title").notNull(),
+  type:             text("type").notNull().default("moment_led"), // "moment_led" | "merchant_led"
+  status:           text("status").notNull().default("draft"),    // "draft" | "ready"
+  situation:        text("situation"),
+  campaignConcept:  text("campaign_concept"),
+  campaignHeadline: text("campaign_headline"),
+  keyMessages:      text("key_messages"),       // JSON array of strings
+  channelStrategy:  text("channel_strategy"),   // JSON object
+  influencerStrategy: text("influencer_strategy"), // JSON array
+  nextSteps:        text("next_steps"),
+  targetQuarter:    text("target_quarter"),
+  attachments:      text("attachments"),         // JSON array {name, url, type}
+  createdAt:        timestamp("created_at").defaultNow(),
+  updatedAt:        timestamp("updated_at").defaultNow(),
+});
+
+export const pitchMoments = pgTable("pitch_moments", {
+  id:        text("id").primaryKey().$defaultFn(() => createId()),
+  pitchId:   text("pitch_id").notNull().references(() => pitches.id, { onDelete: "cascade" }),
+  momentId:  text("moment_id").notNull().references(() => moments.id),
+  isPrimary: boolean("is_primary").default(false),
+});
+
+export const pitchMerchants = pgTable("pitch_merchants", {
+  id:         text("id").primaryKey().$defaultFn(() => createId()),
+  pitchId:    text("pitch_id").notNull().references(() => pitches.id, { onDelete: "cascade" }),
+  merchantId: text("merchant_id").notNull().references(() => merchants.id),
+  isPrimary:  boolean("is_primary").default(false),
 });
