@@ -11,18 +11,27 @@ if (!process.env.ANTHROPIC_API_KEY) {
   console.warn("[score] ANTHROPIC_API_KEY is not set");
 }
 
-interface MomentScores {
+interface MomentEvaluation {
   ecommerceScore: number;
   ecommerceRationale: string;
   audienceFit: number;
   audienceRationale: string;
   whiteSpaceScore: number;
   whiteSpaceRationale: string;
+  whiteSpaceAnalysis: string;
   overallRationale: string;
-  whiteSpaceAnalysis?: string;
+  channelRecommendations: ChannelRec[];
 }
 
-interface ScoringResult {
+interface ChannelRec {
+  channel: string;
+  channelLabel: string;
+  recommended: boolean;
+  rationale: string;
+  suggestedFormat: string;
+}
+
+interface MerchantPairing {
   merchantName: string;
   relevanceScore: number;
   campaignAngle: string;
@@ -30,8 +39,8 @@ interface ScoringResult {
 }
 
 interface ScoreResponse {
-  momentScores: MomentScores;
-  merchantPairings: ScoringResult[];
+  momentEvaluation: MomentEvaluation;
+  merchantPairings: MerchantPairing[];
 }
 
 export async function POST(
@@ -65,7 +74,7 @@ ${allMerchants.map(m => `- ${m.name} (${m.category}): ${m.seasonalNotes ?? ""}`)
     system: SCORE_SYSTEM_PROMPT,
     user: userMessage,
     model: "claude-haiku-4-5-20251001",
-    maxTokens: 4096,
+    maxTokens: 6000,
     temperature: 0.2,
   });
 
@@ -77,27 +86,27 @@ ${allMerchants.map(m => `- ${m.name} (${m.category}): ${m.seasonalNotes ?? ""}`)
     return NextResponse.json({ error: "AI returned invalid JSON", raw: raw.slice(0, 500) }, { status: 502 });
   }
 
-  const { momentScores, merchantPairings } = result;
+  const { momentEvaluation, merchantPairings } = result;
 
-  // Save moment sub-scores and rationale
-  const overallScore = (momentScores.ecommerceScore + momentScores.audienceFit + momentScores.whiteSpaceScore) / 3;
+  const overallScore = (momentEvaluation.ecommerceScore + momentEvaluation.audienceFit + momentEvaluation.whiteSpaceScore) / 3;
+
   await db.update(moments)
     .set({
-      ecommerceScore: momentScores.ecommerceScore,
-      audienceFit: momentScores.audienceFit,
-      whiteSpaceScore: momentScores.whiteSpaceScore,
+      ecommerceScore: momentEvaluation.ecommerceScore,
+      audienceFit: momentEvaluation.audienceFit,
+      whiteSpaceScore: momentEvaluation.whiteSpaceScore,
       score: parseFloat(overallScore.toFixed(1)),
       scoreRationale: JSON.stringify({
-        ecommerceRationale: momentScores.ecommerceRationale,
-        audienceRationale: momentScores.audienceRationale,
-        whiteSpaceRationale: momentScores.whiteSpaceRationale,
-        overallRationale: momentScores.overallRationale,
-        whiteSpaceAnalysis: momentScores.whiteSpaceAnalysis,
+        ecommerceRationale: momentEvaluation.ecommerceRationale,
+        audienceRationale: momentEvaluation.audienceRationale,
+        whiteSpaceRationale: momentEvaluation.whiteSpaceRationale,
+        whiteSpaceAnalysis: momentEvaluation.whiteSpaceAnalysis,
+        overallRationale: momentEvaluation.overallRationale,
       }),
+      channelRecommendations: JSON.stringify(momentEvaluation.channelRecommendations),
     })
     .where(eq(moments.id, id));
 
-  // Build merchant name → id map
   const merchantMap = new Map(allMerchants.map(m => [m.name.toLowerCase(), m.id]));
 
   let upserted = 0;
