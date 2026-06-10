@@ -16,6 +16,22 @@ interface Pairing {
   rationale: string | null;
 }
 
+interface ParsedRationale {
+  text: string;
+  offerType: string;
+}
+
+function parseRationale(raw: string | null): ParsedRationale {
+  if (!raw) return { text: "", offerType: "" };
+  try {
+    const parsed = JSON.parse(raw);
+    if (parsed && typeof parsed === "object" && "text" in parsed) {
+      return { text: parsed.text ?? "", offerType: parsed.offerType ?? "" };
+    }
+  } catch { /* */ }
+  return { text: raw, offerType: "" };
+}
+
 interface ChannelRec {
   channel: string;
   channelLabel: string;
@@ -25,6 +41,7 @@ interface ChannelRec {
 }
 
 interface ScoreRationale {
+  opportunitySummary?: string;
   ecommerceRationale?: string;
   audienceRationale?: string;
   whiteSpaceRationale?: string;
@@ -211,6 +228,9 @@ export function MomentDetailFull({ moment, initialPairings }: Props) {
     ? `${formatDate(moment.startDate)} – ${formatDate(moment.endDate)}`
     : formatDate(moment.startDate);
 
+  // Show hook types as pills
+  const hookPills = moment.hook ? moment.hook.split(",").map(h => h.trim()).filter(Boolean) : [];
+
   return (
     <div style={{ padding: "32px 24px", maxWidth: 1000, margin: "0 auto" }}>
 
@@ -231,7 +251,7 @@ export function MomentDetailFull({ moment, initialPairings }: Props) {
                   (liveScores.ecommerce + (liveScores.audience ?? 0) + (liveScores.whiteSpace ?? 0)) / 3
                 ),
               }}>
-                {((liveScores.ecommerce + (liveScores.audience ?? 0) + (liveScores.whiteSpace ?? 0)) / 3).toFixed(1)} overall
+                {((liveScores.ecommerce + (liveScores.audience ?? 0) + (liveScores.whiteSpace ?? 0)) / 3).toFixed(1)} / 10
               </span>
             )}
           </div>
@@ -280,6 +300,19 @@ export function MomentDetailFull({ moment, initialPairings }: Props) {
 
         {liveScores.hasScores ? (
           <>
+            {/* Opportunity Summary — shown FIRST */}
+            {liveScores.rationale.opportunitySummary && (
+              <div className="card-p" style={{
+                background: "rgba(0,113,227,0.04)",
+                border: "1px solid rgba(0,113,227,0.12)",
+                marginBottom: 16,
+              }}>
+                <p className="eyebrow" style={{ color: "#0071e3", marginBottom: 8 }}>OPPORTUNITY SUMMARY</p>
+                <p style={{ fontSize: "1rem", lineHeight: 1.6, fontWeight: 500 }}>{liveScores.rationale.opportunitySummary}</p>
+              </div>
+            )}
+
+            {/* Three score cards */}
             <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12, marginBottom: 16 }}>
               <ScoreCard
                 eyebrow="SPENDING BEHAVIOR"
@@ -301,17 +334,12 @@ export function MomentDetailFull({ moment, initialPairings }: Props) {
               />
             </div>
 
+            {/* Moment Analysis (renamed from White Space Analysis) */}
             {liveScores.rationale.whiteSpaceAnalysis && (
               <div className="card-p" style={{ background: "rgba(0,113,227,0.03)", border: "1px solid rgba(0,113,227,0.12)", marginBottom: 0 }}>
-                <p className="eyebrow" style={{ color: "#0071e3", marginBottom: 8 }}>WHITE SPACE ANALYSIS</p>
+                <p className="eyebrow" style={{ color: "#0071e3", marginBottom: 8 }}>MOMENT ANALYSIS</p>
                 <p style={{ fontSize: "0.9rem", lineHeight: 1.6, color: "#1d1d1f" }}>{liveScores.rationale.whiteSpaceAnalysis}</p>
               </div>
-            )}
-
-            {liveScores.rationale.overallRationale && (
-              <p style={{ marginTop: 12, fontSize: "0.85rem", color: "#86868b", fontStyle: "italic" }}>
-                {liveScores.rationale.overallRationale}
-              </p>
             )}
           </>
         ) : (
@@ -348,6 +376,7 @@ export function MomentDetailFull({ moment, initialPairings }: Props) {
                     <th style={{ padding: "10px 14px", textAlign: "left" }} className="eyebrow">Merchant</th>
                     <th style={{ padding: "10px 14px", textAlign: "left" }} className="eyebrow">Category</th>
                     <th style={{ padding: "10px 14px", textAlign: "left" }} className="eyebrow">Score</th>
+                    <th style={{ padding: "10px 14px", textAlign: "left" }} className="eyebrow">Offer Type</th>
                     <th style={{ padding: "10px 14px", textAlign: "left" }} className="eyebrow">Campaign Angle</th>
                   </tr>
                 </thead>
@@ -415,13 +444,6 @@ export function MomentDetailFull({ moment, initialPairings }: Props) {
                     <p style={{ fontSize: "0.75rem", color: "#0071e3", lineHeight: 1.5 }}>{ch.suggestedFormat}</p>
                   )}
                 </div>
-                <span style={{
-                  fontSize: "0.65rem", fontWeight: 700, padding: "2px 8px", borderRadius: 10, flexShrink: 0,
-                  background: ch.recommended ? "rgba(52,199,89,0.12)" : "#f5f5f7",
-                  color: ch.recommended ? "#248a3d" : "#86868b",
-                }}>
-                  {ch.recommended ? "Recommended" : "Optional"}
-                </span>
               </div>
             ))}
           </div>
@@ -444,10 +466,17 @@ export function MomentDetailFull({ moment, initialPairings }: Props) {
             <p className="eyebrow" style={{ marginBottom: 6 }}>Description</p>
             <p style={{ fontSize: "0.9rem", color: "#1d1d1f", lineHeight: 1.6 }}>{moment.description}</p>
           </div>
-          {moment.hook && (
+          {hookPills.length > 0 && (
             <div style={{ borderTop: "1px solid #f0f0f5", paddingTop: 16 }}>
-              <p className="eyebrow" style={{ marginBottom: 6 }}>Hook Type</p>
-              <p style={{ fontSize: "0.9rem", color: "#1d1d1f" }}>{moment.hook}</p>
+              <p className="eyebrow" style={{ marginBottom: 8 }}>Hook Type</p>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                {hookPills.map(h => (
+                  <span key={h} style={{
+                    fontSize: "0.78rem", padding: "3px 10px", borderRadius: 10,
+                    background: "#f5f5f7", color: "#1d1d1f", border: "1px solid #e8e8ed",
+                  }}>{h}</span>
+                ))}
+              </div>
             </div>
           )}
           {moment.notes && (
@@ -476,6 +505,8 @@ function MerchantRow({
   const color = pairing.relevanceScore >= 7 ? "#248a3d" : pairing.relevanceScore >= 4 ? "#c47c00" : "#cc2200";
   const bg   = pairing.relevanceScore >= 7 ? "rgba(52,199,89,0.1)" : pairing.relevanceScore >= 4 ? "rgba(255,159,10,0.1)" : "rgba(255,59,48,0.1)";
 
+  const { text: rationaleText, offerType } = parseRationale(pairing.rationale);
+
   return (
     <>
       <tr
@@ -500,18 +531,44 @@ function MerchantRow({
           </Link>
         </td>
         <td style={{ padding: "10px 14px", fontSize: "0.82rem", color: "#86868b" }}>{pairing.merchantCategory}</td>
+        <td style={{ padding: "10px 14px", whiteSpace: "nowrap" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+            <span style={{ fontSize: "0.85rem", fontWeight: 700, color, background: bg, padding: "2px 8px", borderRadius: 8 }}>
+              {pairing.relevanceScore.toFixed(1)}
+            </span>
+            {rationaleText && (
+              <div style={{ position: "relative" }} className="tooltip-trigger">
+                <span style={{ cursor: "help", color: "#86868b", fontSize: "0.75rem" }}>ⓘ</span>
+                <div className="tooltip" style={{
+                  display: "none", position: "absolute", bottom: "100%", left: "50%",
+                  transform: "translateX(-50%)", background: "#1d1d1f", color: "white",
+                  padding: "8px 12px", borderRadius: 8, fontSize: "0.75rem", lineHeight: 1.5,
+                  width: 260, zIndex: 10, marginBottom: 6,
+                }}>
+                  {rationaleText}
+                </div>
+              </div>
+            )}
+          </div>
+        </td>
         <td style={{ padding: "10px 14px" }}>
-          <span style={{ fontSize: "0.85rem", fontWeight: 700, color, background: bg, padding: "2px 8px", borderRadius: 8 }}>
-            {pairing.relevanceScore.toFixed(1)}
-          </span>
+          {offerType ? (
+            <span style={{
+              fontSize: "0.7rem", fontWeight: 600, padding: "2px 8px", borderRadius: 10,
+              background: "#f5f5f7", color: "#1d1d1f",
+              whiteSpace: "nowrap",
+            }}>
+              {offerType}
+            </span>
+          ) : <span style={{ color: "#d2d2d7" }}>—</span>}
         </td>
         <td style={{ padding: "10px 14px", fontSize: "0.82rem", color: "#1d1d1f", lineHeight: 1.4 }}>{pairing.campaignAngle}</td>
       </tr>
-      {expanded && pairing.rationale && (
+      {expanded && rationaleText && (
         <tr style={{ borderBottom: "1px solid #f0f0f5", background: selected ? "rgba(0,113,227,0.04)" : "#fafafa" }}>
           <td />
-          <td colSpan={4} style={{ padding: "8px 14px 14px", fontSize: "0.8rem", color: "#6e6e73", lineHeight: 1.6 }}>
-            {pairing.rationale}
+          <td colSpan={5} style={{ padding: "8px 14px 14px", fontSize: "0.8rem", color: "#6e6e73", lineHeight: 1.6 }}>
+            {rationaleText}
           </td>
         </tr>
       )}

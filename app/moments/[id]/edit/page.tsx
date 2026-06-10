@@ -6,6 +6,20 @@ import { useParams, useRouter } from "next/navigation";
 const QUARTERS = ["FQ1 2026","FQ2 2026","FQ3 2026","FQ4 2026","FQ1 2027","FQ2 2027","FQ3 2027","FQ4 2027","FQ1 2028"];
 const CATEGORIES = ["gather","improve","excite"];
 
+const HOOK_TYPES = [
+  "Bundle",
+  "Values Highlight",
+  "Exclusive Access",
+  "Gifting",
+  "Experiential",
+  "Cultural Moment",
+  "Product Drop",
+  "Sweepstakes",
+  "Discount / Expedited Shipping",
+  "Loyalty Points",
+  "Influencer Curation",
+];
+
 interface Attachment { name: string; url: string; type: string; }
 
 interface FormState {
@@ -14,11 +28,9 @@ interface FormState {
   endDate: string;
   category: string;
   description: string;
-  hook: string;
   campaignName: string;
   targetQuarter: string;
   notes: string;
-  uniqueHook: string;
   officialSponsors: string;
   attachments: Attachment[];
 }
@@ -63,9 +75,10 @@ export default function EditMomentPage() {
   const router = useRouter();
   const [form, setForm] = useState<FormState>({
     name: "", startDate: "", endDate: "", category: "gather",
-    description: "", hook: "", campaignName: "", targetQuarter: "",
-    notes: "", uniqueHook: "", officialSponsors: "", attachments: [],
+    description: "", campaignName: "", targetQuarter: "",
+    notes: "", officialSponsors: "", attachments: [],
   });
+  const [selectedHooks, setSelectedHooks] = useState<string[]>([]);
   const [momentName, setMomentName] = useState("");
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -85,19 +98,27 @@ export default function EditMomentPage() {
           endDate: m.endDate ?? "",
           category: m.category ?? "gather",
           description: m.description ?? "",
-          hook: m.hook ?? "",
           campaignName: m.campaignName ?? "",
           targetQuarter: m.targetQuarter ?? "",
           notes: m.notes ?? "",
-          uniqueHook: "",
           officialSponsors: "",
           attachments,
         });
+        // Parse existing hook as comma-separated
+        if (m.hook) {
+          setSelectedHooks(m.hook.split(",").map((h: string) => h.trim()).filter(Boolean));
+        }
       });
   }, [id]);
 
   function set<K extends keyof FormState>(key: K, value: FormState[K]) {
     setForm(prev => ({ ...prev, [key]: value }));
+  }
+
+  function toggleHook(hook: string) {
+    setSelectedHooks(prev =>
+      prev.includes(hook) ? prev.filter(h => h !== hook) : [...prev, hook]
+    );
   }
 
   async function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
@@ -133,7 +154,7 @@ export default function EditMomentPage() {
           endDate: form.endDate || null,
           category: form.category,
           description: form.description,
-          hook: form.hook,
+          hook: selectedHooks.join(", "),
           campaignName: form.campaignName,
           targetQuarter: form.targetQuarter,
           notes: form.notes,
@@ -183,8 +204,48 @@ export default function EditMomentPage() {
         <Field label="Description">
           <textarea style={textareaStyle} value={form.description} onChange={e => set("description", e.target.value)} />
         </Field>
+
+        {/* Hook type — multi-select chips */}
         <Field label="Hook type">
-          <input style={inputStyle} value={form.hook ?? ""} onChange={e => set("hook", e.target.value)} placeholder="e.g. Gifting, Cultural Moment, Bundle" />
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 8 }}>
+            {HOOK_TYPES.map(hook => {
+              const on = selectedHooks.includes(hook);
+              return (
+                <button
+                  key={hook}
+                  type="button"
+                  onClick={() => toggleHook(hook)}
+                  style={{
+                    fontSize: "0.78rem", fontWeight: on ? 600 : 400,
+                    padding: "4px 12px", borderRadius: 20, cursor: "pointer",
+                    border: on ? "1.5px solid #1d1d1f" : "1.5px solid #d2d2d7",
+                    background: on ? "#1d1d1f" : "#fff",
+                    color: on ? "#fff" : "#1d1d1f",
+                    transition: "all 0.12s",
+                  }}
+                >
+                  {hook}
+                </button>
+              );
+            })}
+          </div>
+          <input
+            type="text"
+            placeholder="+ Add custom hook type (press Enter)"
+            style={{ fontSize: "0.85rem", padding: "6px 12px", borderRadius: 8, border: "1px solid #d2d2d7", width: "100%", boxSizing: "border-box" }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                const val = e.currentTarget.value.trim();
+                if (val) { toggleHook(val); e.currentTarget.value = ""; }
+              }
+            }}
+          />
+          {selectedHooks.length > 0 && (
+            <p style={{ fontSize: "0.75rem", color: "#86868b", marginTop: 6 }}>
+              Selected: {selectedHooks.join(", ")}
+            </p>
+          )}
         </Field>
       </Section>
 
@@ -233,15 +294,6 @@ export default function EditMomentPage() {
         </Field>
         <Field label="Notes">
           <textarea style={textareaStyle} value={form.notes ?? ""} onChange={e => set("notes", e.target.value)} placeholder="Any additional context for the team…" />
-        </Field>
-      </Section>
-
-      <Section title="AI scoring inputs">
-        <Field label="Unique hook" hint="What makes this moment special for Apple Pay?">
-          <input style={inputStyle} value={form.uniqueHook} onChange={e => set("uniqueHook", e.target.value)} placeholder="e.g. First major UK spending moment after January pay cheques" />
-        </Field>
-        <Field label="Official sponsors" hint="Known brand sponsors of this event">
-          <input style={inputStyle} value={form.officialSponsors} onChange={e => set("officialSponsors", e.target.value)} placeholder="e.g. Barclays, Visa, Mastercard" />
         </Field>
       </Section>
 

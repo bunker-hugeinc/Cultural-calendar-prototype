@@ -209,8 +209,8 @@ export default function FeedCandidatePage({ params }: { params: Promise<{ id: st
             <span style={{ fontSize: "0.68rem", fontWeight: 700, padding: "2px 10px", borderRadius: 10, background: cat.bg, color: cat.color, textTransform: "uppercase", letterSpacing: "0.06em" }}>
               {candidate.category}
             </span>
-            <span style={{ fontSize: "0.78rem", fontWeight: 700, color: candidate.score >= 4 ? "#34c759" : "#ff9f0a" }}>
-              {candidate.score.toFixed(1)}/5 fit score
+            <span style={{ fontSize: "0.78rem", fontWeight: 700, color: candidate.score >= 7 ? "#34c759" : "#ff9f0a" }}>
+              {candidate.score.toFixed(1)}/10 fit score
             </span>
             {isAdded && (
               <span style={{ fontSize: "0.68rem", fontWeight: 700, padding: "2px 10px", borderRadius: 10, background: "rgba(52,199,89,0.12)", color: "#248a3d" }}>
@@ -295,7 +295,7 @@ export default function FeedCandidatePage({ params }: { params: Promise<{ id: st
             </div>
             {evaluation.whiteSpaceAnalysis && (
               <div className="card-p" style={{ background: "rgba(0,113,227,0.03)", border: "1px solid rgba(0,113,227,0.12)", marginBottom: 12 }}>
-                <p className="eyebrow" style={{ color: "#0071e3", marginBottom: 6 }}>WHITE SPACE ANALYSIS</p>
+                <p className="eyebrow" style={{ color: "#0071e3", marginBottom: 6 }}>MOMENT ANALYSIS</p>
                 <p style={{ fontSize: "0.88rem", lineHeight: 1.6 }}>{evaluation.whiteSpaceAnalysis}</p>
               </div>
             )}

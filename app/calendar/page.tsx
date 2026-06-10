@@ -26,7 +26,7 @@ const CAT_TEXT: Record<string, string> = {
 };
 
 function SuggestedMomentCard({ candidate: c }: { candidate: SuggestedCandidate }) {
-  const scoreColor = c.score >= 4 ? "#34c759" : c.score >= 3 ? "#ff9f0a" : "#ff3b30";
+  const scoreColor = c.score >= 7 ? "#34c759" : c.score >= 4 ? "#ff9f0a" : "#ff3b30";
   const fmt = (d: string) => new Date(d + "T00:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
   const dateRange = c.endDate && c.endDate !== c.startDate ? `${fmt(c.startDate)} – ${fmt(c.endDate)}` : fmt(c.startDate);
 
@@ -41,7 +41,7 @@ function SuggestedMomentCard({ candidate: c }: { candidate: SuggestedCandidate }
             color: CAT_TEXT[c.category] ?? "#86868b",
           }}>{c.category}</span>
           <span style={{ fontSize: "0.72rem", fontWeight: 700, color: scoreColor }}>
-            {c.score.toFixed(1)}/5
+            {c.score.toFixed(1)}/10
           </span>
         </div>
         <h3 style={{ fontSize: "0.95rem", marginBottom: 3, lineHeight: 1.3 }}>{c.name}</h3>

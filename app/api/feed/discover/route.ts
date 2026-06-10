@@ -70,7 +70,7 @@ Requirements:
 - Time window: ${startDate} to ${endDate}
 - Categories wanted: ${catList}
 - Priority merchant partners: ${mercList}
-- Minimum fit score: ${settings.minScore.toFixed(1)}/5.0`;
+- Minimum fit score: ${settings.minScore.toFixed(1)}/10.0`;
 }
 
 export async function POST(req: Request) {
@@ -124,7 +124,7 @@ export async function POST(req: Request) {
 Time window: ${windowStart} to ${windowEnd}
 Categories wanted: ${settings?.categories?.join(", ") ?? "gather, improve, excite"}
 Priority merchant partners: ${settings?.priorityMerchants?.join(", ") || "any from catalog"}
-Minimum fit score: ${settings?.minScore ?? 3.5}/5.0
+Minimum fit score: ${settings?.minScore ?? 3.5}/10.0
 
 Available merchant partners:
 ${allMerchants.map(m => `- ${m.name} (${m.category})`).join("\n")}

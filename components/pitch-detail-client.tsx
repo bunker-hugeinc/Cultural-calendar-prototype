@@ -266,10 +266,10 @@ export function PitchDetailClient({ pitch, allMoments, allMerchants }: Props) {
           </p>
         </div>
 
-        {/* 1 — Situation */}
+        {/* 1 — Business Rationale */}
         <SectionCard
           eyebrow="SECTION 1"
-          title="Situation"
+          title="Business Rationale"
           onGenerate={() => generate("situation")}
           generating={gen.situation}
           hasContent={!!situation}

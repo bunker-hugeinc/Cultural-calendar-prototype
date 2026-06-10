@@ -72,7 +72,7 @@ Outreach Approach: ${signals.outreachApproach ?? ""}`;
       system: PITCH_SITUATION_PROMPT,
       user: `${momentCtx}\n\n${merchantCtx}`,
       model: "claude-sonnet-4-6",
-      maxTokens: 512,
+      maxTokens: 600,
       temperature: 0.3,
     });
 

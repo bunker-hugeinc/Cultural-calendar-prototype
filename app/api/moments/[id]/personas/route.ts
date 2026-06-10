@@ -18,7 +18,6 @@ export interface InfluencerPersona {
   audienceSize: string;
   contentStyle: string;
   whyThisMoment: string;
-  campaignAngle: string;
 }
 
 export async function POST(
@@ -60,18 +59,20 @@ Campaign angle: ${topPairing?.campaignAngle ?? moment.description}
 Top merchant partners: ${topMerchants.join(", ") || "various partners"}
 Hook type: ${moment.hook ?? "not specified"}
 
-Generate 2–3 specific influencer personas for this exact moment and these specific merchants.`;
+Generate exactly 3 specific influencer personas for this exact moment and these specific merchants. Each should be clearly differentiated — different audience, different platform, different content style.`;
 
     const raw = await callClaude({
       system: PERSONAS_SYSTEM_PROMPT,
       user: userMessage,
       model: "claude-haiku-4-5-20251001",
-      maxTokens: 1024,
+      maxTokens: 1500,
       temperature: 0.3,
     });
     let personas: InfluencerPersona[];
     try {
       personas = parseJSON<InfluencerPersona[]>(raw);
+      // Ensure exactly 3
+      personas = personas.slice(0, 3);
     } catch {
       console.error("[personas] JSON parse failed:", raw.slice(0, 500));
       return NextResponse.json({ error: "AI returned invalid JSON", raw: raw.slice(0, 500) }, { status: 502 });

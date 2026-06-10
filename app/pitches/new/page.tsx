@@ -7,6 +7,16 @@ import { Suspense } from "react";
 
 const QUARTERS = ["FQ1 2026", "FQ2 2026", "FQ3 2026", "FQ4 2026", "FQ1 2027", "FQ2 2027", "FQ3 2027", "FQ4 2027"];
 
+function getAppleFQ(dateStr: string): string {
+  const date = new Date(dateStr + "T00:00:00");
+  const month = date.getMonth() + 1;
+  const year = date.getFullYear();
+  if (month >= 10) return `FQ1 ${year + 1}`;
+  if (month <= 3)  return `FQ2 ${year}`;
+  if (month <= 6)  return `FQ3 ${year}`;
+  return `FQ4 ${year}`;
+}
+
 interface MomentOpt { id: string; name: string; startDate: string; category: string; }
 interface MerchantOpt { id: string; name: string; category: string; }
 
@@ -50,6 +60,13 @@ function NewPitchForm() {
     else if (m) setTitle(m.name);
     else if (mr) setTitle(mr.name);
   }, [momentId, merchantId, allMoments, allMerchants, title]);
+
+  // Auto-populate target quarter from moment start date
+  useEffect(() => {
+    if (quarter) return;
+    const m = allMoments.find(m => m.id === momentId);
+    if (m?.startDate) setQuarter(getAppleFQ(m.startDate));
+  }, [momentId, allMoments, quarter]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -195,6 +212,11 @@ function NewPitchForm() {
               <option value="">— Select quarter —</option>
               {QUARTERS.map(q => <option key={q} value={q}>{q}</option>)}
             </select>
+            {quarter && momentId && (
+              <p style={{ fontSize: "0.75rem", color: "#86868b", marginTop: 4 }}>
+                Auto-populated from moment date · override above if needed
+              </p>
+            )}
           </div>
 
           {error && <p style={{ fontSize: "0.85rem", color: "#cc2200" }}>{error}</p>}

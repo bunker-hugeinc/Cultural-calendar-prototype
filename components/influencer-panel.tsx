@@ -12,7 +12,6 @@ interface CreatorType {
   audienceSize: string;
   contentStyle: string;
   whyThisMoment: string;
-  campaignAngle: string;
 }
 
 interface InfluencerPanelProps {
@@ -106,24 +105,40 @@ export function InfluencerPanel({ momentId, hasPairings }: InfluencerPanelProps)
             <div key={i} style={{
               background: "#fafafa", border: "1px solid rgba(0,0,0,.09)", borderRadius: 10, padding: "16px 18px",
             }}>
-              <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, marginBottom: 8 }}>
-                <div>
-                  <p style={{ fontFamily: DISP, fontSize: 14, fontWeight: 700, color: "#111", margin: "0 0 2px" }}>{c.type}</p>
-                  <p style={{ fontFamily: SANS, fontSize: 12, color: "#0071e3", margin: 0 }}>
-                    {c.realExamples}
-                  </p>
-                </div>
+              {/* Creator type + audience size */}
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 8 }}>
+                <p style={{ fontFamily: DISP, fontSize: 14, fontWeight: 700, color: "#111", margin: 0 }}>{c.type}</p>
                 <span style={{ fontFamily: MONO, fontSize: 9, color: "#6e6e80", letterSpacing: ".06em", whiteSpace: "nowrap", flexShrink: 0 }}>{c.audienceSize}</span>
               </div>
-              <p style={{ fontFamily: SANS, fontSize: 12, color: "#444", lineHeight: 1.55, margin: "0 0 8px" }}>{c.contentStyle}</p>
-              <div style={{ marginBottom: 6 }}>
-                <span style={{ fontFamily: MONO, fontSize: 8, fontWeight: 600, letterSpacing: ".1em", textTransform: "uppercase", color: "#9c2050" }}>Why this moment: </span>
-                <span style={{ fontFamily: SANS, fontSize: 12, color: "#1d1d1f", lineHeight: 1.55 }}>{c.whyThisMoment}</span>
+
+              {/* Real examples — hyperlinked */}
+              <p style={{ fontFamily: SANS, fontSize: 12, marginBottom: 10, margin: "0 0 10px" }}>
+                {c.realExamples?.split(", ").map((name, j) => {
+                  const handle = name.replace(/^@/, "").replace(/\s/g, "").toLowerCase();
+                  return (
+                    <span key={j}>
+                      {j > 0 && ", "}
+                      <a
+                        href={`https://www.instagram.com/${handle}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{ color: "#0071e3", textDecoration: "none" }}
+                      >
+                        {name}
+                      </a>
+                    </span>
+                  );
+                })}
+              </p>
+
+              {/* Why this moment — PROMINENT */}
+              <div style={{ background: "#f5f5f7", borderRadius: 8, padding: "10px 12px", marginBottom: 8 }}>
+                <p style={{ fontFamily: MONO, fontSize: 8, fontWeight: 600, letterSpacing: ".1em", textTransform: "uppercase", color: "#9c2050", marginBottom: 4 }}>WHY THIS MOMENT</p>
+                <p style={{ fontFamily: SANS, fontSize: 12, color: "#1d1d1f", lineHeight: 1.55, margin: 0 }}>{c.whyThisMoment}</p>
               </div>
-              <div>
-                <span style={{ fontFamily: MONO, fontSize: 8, fontWeight: 600, letterSpacing: ".1em", textTransform: "uppercase", color: "#6e6e80" }}>Campaign angle: </span>
-                <span style={{ fontFamily: SANS, fontSize: 12, color: "#1d1d1f", lineHeight: 1.55 }}>{c.campaignAngle}</span>
-              </div>
+
+              {/* Content style — secondary */}
+              <p style={{ fontFamily: SANS, fontSize: 12, color: "#6e6e73", lineHeight: 1.4, margin: 0 }}>{c.contentStyle}</p>
             </div>
           ))}
         </div>

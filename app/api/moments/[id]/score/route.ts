@@ -12,6 +12,7 @@ if (!process.env.ANTHROPIC_API_KEY) {
 }
 
 interface MomentEvaluation {
+  opportunitySummary: string;
   ecommerceScore: number;
   ecommerceRationale: string;
   audienceFit: number;
@@ -34,6 +35,7 @@ interface ChannelRec {
 interface MerchantPairing {
   merchantName: string;
   relevanceScore: number;
+  offerType: string;
   campaignAngle: string;
   rationale: string;
 }
@@ -88,6 +90,51 @@ ${allMerchants.map(m => `- ${m.name} (${m.category}): ${m.seasonalNotes ?? ""}`)
 
   const { momentEvaluation, merchantPairings } = result;
 
+  // Identify top merchant for merchant-specific channel context
+  const topMerchant = merchantPairings[0];
+
+  // Re-generate channel recs with top merchant context if we have one
+  let channelRecs = momentEvaluation.channelRecommendations;
+  if (topMerchant) {
+    const channelSystem = `You are a campaign strategist for Apple Pay Partner Marketing.
+
+IMPORTANT — Apple Pay product accuracy:
+Apple Pay = contactless tap-to-pay payment method, secure one-tap online/in-app checkout, Wallet integration.
+Apple Pay does NOT include cash back, percentage rewards, or instalments — those are Apple Card features.
+Never attribute rewards, cash back, or instalment features to Apple Pay in any output.
+
+Generate 4 channel recommendations for an Apple Pay × merchant partnership activation. These should be specific to the merchant × moment combination.
+
+- "apple_owned": Apple-controlled channels (Wallet notifications, App Store, Apple.com)
+- "partner_owned": List the ACTUAL channels this specific merchant is known to use (their app, email list, in-store, social). Do not use generic descriptions — be specific to this merchant's known channels.
+- "external": Paid media, social ads, OOH relevant to this moment
+- "influencer": Whether this merchant category typically uses influencer marketing and whether they likely have existing spokesperson relationships. If the merchant already has athlete/creator relationships, note that activations should leverage existing partnerships.
+
+Return a JSON array of exactly 4 items:
+[{ "channel": "apple_owned"|"partner_owned"|"external"|"influencer", "channelLabel": string, "recommended": boolean, "rationale": string, "suggestedFormat": string }]
+
+Return valid JSON only. No markdown.`;
+
+    const channelMsg = `Moment: ${moment.name}
+Top merchant partner: ${topMerchant.merchantName}
+Campaign angle: ${topMerchant.campaignAngle}
+Offer type: ${topMerchant.offerType}`;
+
+    try {
+      const channelRaw = await callClaude({
+        system: channelSystem,
+        user: channelMsg,
+        model: "claude-haiku-4-5-20251001",
+        maxTokens: 1024,
+        temperature: 0.2,
+      });
+      const parsed = parseJSON<ChannelRec[]>(channelRaw);
+      if (Array.isArray(parsed)) channelRecs = parsed;
+    } catch {
+      // Fall back to the recs from the main scoring call
+    }
+  }
+
   const overallScore = (momentEvaluation.ecommerceScore + momentEvaluation.audienceFit + momentEvaluation.whiteSpaceScore) / 3;
 
   await db.update(moments)
@@ -97,13 +144,14 @@ ${allMerchants.map(m => `- ${m.name} (${m.category}): ${m.seasonalNotes ?? ""}`)
       whiteSpaceScore: momentEvaluation.whiteSpaceScore,
       score: parseFloat(overallScore.toFixed(1)),
       scoreRationale: JSON.stringify({
+        opportunitySummary: momentEvaluation.opportunitySummary,
         ecommerceRationale: momentEvaluation.ecommerceRationale,
         audienceRationale: momentEvaluation.audienceRationale,
         whiteSpaceRationale: momentEvaluation.whiteSpaceRationale,
         whiteSpaceAnalysis: momentEvaluation.whiteSpaceAnalysis,
         overallRationale: momentEvaluation.overallRationale,
       }),
-      channelRecommendations: JSON.stringify(momentEvaluation.channelRecommendations),
+      channelRecommendations: JSON.stringify(channelRecs),
     })
     .where(eq(moments.id, id));
 
@@ -114,6 +162,9 @@ ${allMerchants.map(m => `- ${m.name} (${m.category}): ${m.seasonalNotes ?? ""}`)
     const merchantId = merchantMap.get(p.merchantName.toLowerCase());
     if (!merchantId) continue;
 
+    // Store offerType + rationale as JSON
+    const rationaleJson = JSON.stringify({ text: p.rationale, offerType: p.offerType ?? "" });
+
     await db
       .insert(pairingScores)
       .values({
@@ -121,14 +172,14 @@ ${allMerchants.map(m => `- ${m.name} (${m.category}): ${m.seasonalNotes ?? ""}`)
         merchantId,
         relevanceScore: p.relevanceScore,
         campaignAngle: p.campaignAngle,
-        rationale: p.rationale,
+        rationale: rationaleJson,
       })
       .onConflictDoUpdate({
         target: [pairingScores.momentId, pairingScores.merchantId],
         set: {
           relevanceScore: p.relevanceScore,
           campaignAngle: p.campaignAngle,
-          rationale: p.rationale,
+          rationale: rationaleJson,
         },
       });
     upserted++;
