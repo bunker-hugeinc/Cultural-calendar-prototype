@@ -74,8 +74,8 @@ interface PitchSummary {
   id: string;
   status: string;
   targetQuarter: string | null;
-  createdAt: string;
-  updatedAt: string;
+  createdAt: Date | string | null;
+  updatedAt: Date | string | null;
   merchantName: string | null;
   merchantCategory: string | null;
 }
