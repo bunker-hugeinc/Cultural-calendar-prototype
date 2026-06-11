@@ -18,6 +18,8 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     "businessRationale", "offerMechanics", "influencerStrategy", "channelStrategy",
     "additionalNotes", "status", "sentAt", "approvedAt", "title", "situation",
     "campaignConcept", "campaignHeadline", "keyMessages", "nextSteps", "targetQuarter",
+    "audienceReachNarrative", "transactionOpportunityNarrative", "coMarketingValueNarrative",
+    "roiNarrative", "lastAutoSavedAt", "exportedAt",
   ];
   const updates: any = { updatedAt: new Date() };
   for (const key of allowed) {

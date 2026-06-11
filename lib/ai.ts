@@ -2,7 +2,8 @@ import { createAnthropic } from "@ai-sdk/anthropic";
 import { generateText } from "ai";
 
 const anthropic = createAnthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY,
+  apiKey: process.env.ANTHROPIC_API_KEY ?? "placeholder",
+  baseURL: process.env.ANTHROPIC_BASE_URL,
 });
 
 export async function callClaude({

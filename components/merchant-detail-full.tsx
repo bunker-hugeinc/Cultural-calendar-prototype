@@ -316,8 +316,9 @@ export function MerchantDetailFull({ merchant, initialPairings }: Props) {
 
   const sm = STATUS_META[status] ?? STATUS_META.existing;
   const selectedMatches = matches.filter(m => selected.has(m.momentId));
-  const pitchUrl = `/pitches/new?merchantId=${merchant.id}${
-    selectedMatches.length > 0 ? "&momentIds=" + selectedMatches.map(m => m.momentId).join(",") : ""
+  const primaryMomentId = selectedMatches[0]?.momentId ?? null;
+  const pitchUrl = `/pitch/new?merchantId=${merchant.id}${
+    primaryMomentId ? `&momentId=${primaryMomentId}` : ""
   }`;
 
   return (

@@ -133,6 +133,19 @@ export const pitches = pgTable("pitches", {
   additionalNotes:  text("additional_notes"),
   sentAt:           timestamp("sent_at"),
   approvedAt:       timestamp("approved_at"),
+  // Phase 21: ROI narrative blocks
+  roiNarrative:                   text("roi_narrative"),
+  audienceReachNarrative:         text("audience_reach_narrative"),
+  transactionOpportunityNarrative: text("transaction_opportunity_narrative"),
+  coMarketingValueNarrative:      text("co_marketing_value_narrative"),
+  // Phase 21: POC discovery
+  pocSearchResults: text("poc_search_results"),
+  pocSearchedAt:    timestamp("poc_searched_at"),
+  pocSearchQuery:   text("poc_search_query"),
+  // Phase 21: document state
+  documentGeneratedAt: timestamp("document_generated_at"),
+  lastAutoSavedAt:     timestamp("last_auto_saved_at"),
+  exportedAt:          timestamp("exported_at"),
   createdAt:        timestamp("created_at").defaultNow(),
   updatedAt:        timestamp("updated_at").defaultNow(),
 });

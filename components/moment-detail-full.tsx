@@ -266,30 +266,15 @@ export function MomentDetailFull({ moment, initialPairings }: Props) {
     }
   }, [moment.id]);
 
-  async function buildPitchFromPairing(merchantId: string) {
-    setBuildingPitch(merchantId);
-    try {
-      const res = await fetch("/api/pitch/build-from-pairing", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ momentId: moment.id, merchantId }),
-      });
-      const { pitchId } = await res.json();
-      router.push(`/pitch/${pitchId}`);
-    } finally {
-      setBuildingPitch(null);
-    }
+  function buildPitchFromPairing(merchantId: string) {
+    router.push(`/pitch/new?momentId=${moment.id}&merchantId=${merchantId}`);
   }
 
   const selectedMerchants = pairings.filter(p => selected.has(p.id));
   const sortedSelected = [...selectedMerchants].sort((a, b) => (b.relevanceScore ?? 0) - (a.relevanceScore ?? 0));
   const primaryMerchantId = sortedSelected[0]?.merchantId ?? null;
-  const pitchUrl = `/pitches/new?momentId=${moment.id}${
-    primaryMerchantId ? `&primaryMerchantId=${primaryMerchantId}` : ""
-  }${
-    sortedSelected.length > 1
-      ? "&merchantIds=" + sortedSelected.slice(1).map(p => p.merchantId).join(",")
-      : ""
+  const pitchUrl = `/pitch/new?momentId=${moment.id}${
+    primaryMerchantId ? `&merchantId=${primaryMerchantId}` : ""
   }`;
 
   function formatDate(dateStr: string) {
