@@ -53,9 +53,7 @@ Return JSON:
 }`;
 
   const text = await callClaude({ system, user: prompt, model: "claude-haiku-4-5-20251001", maxTokens: 200 });
-  try {
-    return NextResponse.json(JSON.parse(text.trim()));
-  } catch {
-    return NextResponse.json({ headline: moment.name, subhead: `Pay with Apple Pay at ${names.join(", ")}.` });
-  }
+  const { extractJSONSafe } = await import("@/lib/json-utils");
+  const result = extractJSONSafe(text, { headline: moment.name, subhead: `Pay with Apple Pay at ${names.join(", ")}.` });
+  return NextResponse.json(result);
 }

@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { pitches, moments, merchants } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { callClaude } from "@/lib/ai";
+import { extractJSONSafe } from "@/lib/json-utils";
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
@@ -48,7 +49,7 @@ Return JSON with UNIQUE copy specific to ${merchant.name}'s brand, products, and
 }`;
 
   const text = await callClaude({ system, user: prompt, model: "claude-haiku-4-5-20251001", maxTokens: 1200 });
-  try { return JSON.parse(text.trim()); } catch { return {}; }
+  return extractJSONSafe(text, {});
 }
 
 export async function POST(req: NextRequest) {

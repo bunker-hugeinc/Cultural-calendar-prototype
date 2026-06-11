@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { pitches, moments, merchants } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { callClaude } from "@/lib/ai";
+import { extractJSONSafe } from "@/lib/json-utils";
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
@@ -82,11 +83,7 @@ Return a JSON object with ALL of these fields:
     return NextResponse.json({ error: msg }, { status: 503 });
   }
 
-  let sections: any = {};
-  try {
-    const cleaned = text.replace(/^```(?:json)?\n?/i, "").replace(/\n?```$/i, "").trim();
-    sections = JSON.parse(cleaned);
-  } catch { sections = {}; }
+  const sections: any = extractJSONSafe(text, {});
 
   const finalQuarter = sections.targetQuarter ?? targetQuarter;
 

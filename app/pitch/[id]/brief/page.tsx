@@ -69,6 +69,8 @@ export default function BriefPage() {
   const [lastSaved, setLastSaved] = useState<string>("");
 
   const saveTimeouts = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
+  const pendingChanges = useRef<Record<string, string>>({});
+  const hasPending = useRef(false);
 
   // Load pitch metadata + check for existing brief
   useEffect(() => {
@@ -119,18 +121,46 @@ export default function BriefPage() {
     init();
   }, [pitchId]);
 
+  async function saveBriefFields(fields: Record<string, string>) {
+    if (!brief?.id) return;
+    await fetch("/api/brief", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: brief.id, ...fields, lastAutoSavedAt: new Date().toISOString() }),
+    });
+    setLastSaved(new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }));
+    Object.keys(fields).forEach(k => delete pendingChanges.current[k]);
+    if (Object.keys(pendingChanges.current).length === 0) hasPending.current = false;
+  }
+
   const handleEdit = useCallback((field: keyof BriefData, value: string) => {
     setBrief(prev => prev ? { ...prev, [field]: value } : prev);
+    pendingChanges.current[field as string] = value;
+    hasPending.current = true;
     clearTimeout(saveTimeouts.current[field as string]);
-    saveTimeouts.current[field as string] = setTimeout(async () => {
-      if (!brief?.id) return;
-      await fetch("/api/brief", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: brief.id, [field]: value, lastAutoSavedAt: new Date().toISOString() }),
-      });
-      setLastSaved(new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }));
+    saveTimeouts.current[field as string] = setTimeout(() => {
+      saveBriefFields({ [field as string]: value });
     }, 1500);
+  }, [brief?.id]);
+
+  function handleBlur(field: keyof BriefData, value: string) {
+    clearTimeout(saveTimeouts.current[field as string]);
+    delete pendingChanges.current[field as string];
+    if (Object.keys(pendingChanges.current).length === 0) hasPending.current = false;
+    saveBriefFields({ [field as string]: value });
+  }
+
+  // Flush pending saves on unmount
+  useEffect(() => {
+    return () => {
+      Object.values(saveTimeouts.current).forEach(clearTimeout);
+      if (hasPending.current && brief?.id && Object.keys(pendingChanges.current).length > 0) {
+        navigator.sendBeacon(
+          "/api/brief",
+          JSON.stringify({ id: brief.id, ...pendingChanges.current, lastAutoSavedAt: new Date().toISOString() })
+        );
+      }
+    };
   }, [brief?.id]);
 
   function handleDownloadPDF() {
@@ -225,7 +255,7 @@ export default function BriefPage() {
               {momentName}{targetQuarter ? ` · ${targetQuarter}` : ""}
             </p>
           </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 12, flexShrink: 0 }}>
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 8, flexShrink: 0 }}>
             {lastSaved && (
               <span style={{ fontSize: "0.72rem", color: "#86868b" }}>Saved {lastSaved}</span>
             )}
@@ -237,6 +267,36 @@ export default function BriefPage() {
               }}
             >
               Download PDF
+            </button>
+            <button
+              onClick={async () => {
+                setBrief(null);
+                setGenerateError(null);
+                setGenerating(true);
+                // Delete existing brief to force re-generation
+                if (brief?.id) {
+                  await fetch("/api/brief", {
+                    method: "PATCH",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ id: brief.id, status: "regenerating" }),
+                  });
+                }
+                const genRes = await fetch("/api/brief/generate", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ pitchId, forceRefresh: true }),
+                });
+                const generated = await genRes.json();
+                if (generated?.error) {
+                  setGenerateError(generated.error);
+                } else {
+                  setBrief(generated);
+                }
+                setGenerating(false);
+              }}
+              style={{ fontSize: "0.72rem", color: "#86868b", background: "none", border: "none", cursor: "pointer", textDecoration: "underline" }}
+            >
+              Regenerate brief
             </button>
           </div>
         </div>
@@ -254,6 +314,7 @@ export default function BriefPage() {
           <textarea
             value={(brief as Record<string, unknown>)[field] as string ?? ""}
             onChange={e => handleEdit(field, e.target.value)}
+            onBlur={e => handleBlur(field, e.target.value)}
             rows={Math.max(3, Math.ceil(((brief as Record<string, unknown>)[field] as string ?? "").length / 120))}
             placeholder={`${label}…`}
             style={{

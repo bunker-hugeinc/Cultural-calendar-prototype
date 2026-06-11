@@ -45,11 +45,13 @@ interface POCData {
 function EditableTextarea({
   value,
   onChange,
+  onBlur,
   placeholder,
   minRows = 3,
 }: {
   value: string;
   onChange: (v: string) => void;
+  onBlur?: (v: string) => void;
   placeholder?: string;
   minRows?: number;
 }) {
@@ -58,6 +60,7 @@ function EditableTextarea({
     <textarea
       value={value ?? ""}
       onChange={e => onChange(e.target.value)}
+      onBlur={e => onBlur?.(e.target.value)}
       placeholder={placeholder}
       rows={rows}
       style={{
@@ -71,7 +74,6 @@ function EditableTextarea({
         resize: "vertical",
         color: "#1d1d1f",
       }}
-      onFocus={e => { e.target.style.outline = "none"; }}
     />
   );
 }
@@ -143,10 +145,13 @@ export default function PitchDocumentPage() {
   const [copied, setCopied] = useState(false);
   const [pocData, setPocData] = useState<POCData | null>(null);
   const [isSearchingPOC, setIsSearchingPOC] = useState(false);
+  const [pocError, setPocError] = useState<string | null>(null);
   const [pitchQueue, setPitchQueue] = useState<string[]>([]);
   const [currentPitchIndex, setCurrentPitchIndex] = useState(-1);
 
   const saveTimeouts = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
+  const pendingChanges = useRef<Record<string, string>>({});
+  const hasPending = useRef(false);
 
   // Load pitch + names
   useEffect(() => {
@@ -220,17 +225,45 @@ export default function PitchDocumentPage() {
     }
   }
 
+  async function savePitchFields(fields: Record<string, string>) {
+    await fetch(`/api/pitch/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ...fields, lastAutoSavedAt: new Date().toISOString() }),
+    });
+    setLastSaved(new Date());
+    Object.keys(fields).forEach(k => delete pendingChanges.current[k]);
+    if (Object.keys(pendingChanges.current).length === 0) hasPending.current = false;
+  }
+
   const handleEdit = useCallback((field: keyof PitchData, value: string) => {
     setPitch(prev => prev ? { ...prev, [field]: value } : prev);
+    pendingChanges.current[field] = value;
+    hasPending.current = true;
     clearTimeout(saveTimeouts.current[field]);
-    saveTimeouts.current[field] = setTimeout(async () => {
-      await fetch(`/api/pitch/${id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ [field]: value, lastAutoSavedAt: new Date().toISOString() }),
-      });
-      setLastSaved(new Date());
+    saveTimeouts.current[field] = setTimeout(() => {
+      savePitchFields({ [field]: value });
     }, 1500);
+  }, [id]);
+
+  function handleBlur(field: keyof PitchData, value: string) {
+    clearTimeout(saveTimeouts.current[field]);
+    delete pendingChanges.current[field];
+    if (Object.keys(pendingChanges.current).length === 0) hasPending.current = false;
+    savePitchFields({ [field]: value });
+  }
+
+  // Flush pending saves on unmount
+  useEffect(() => {
+    return () => {
+      Object.values(saveTimeouts.current).forEach(clearTimeout);
+      if (hasPending.current && Object.keys(pendingChanges.current).length > 0) {
+        navigator.sendBeacon(
+          `/api/pitch/${id}`,
+          JSON.stringify({ ...pendingChanges.current, lastAutoSavedAt: new Date().toISOString() })
+        );
+      }
+    };
   }, [id]);
 
   async function updateStatus(newStatus: string) {
@@ -245,14 +278,19 @@ export default function PitchDocumentPage() {
     });
     setPitch(prev => prev ? { ...prev, ...updates } : prev);
     setStatusUpdating(false);
+    router.refresh();
   }
 
   async function handleFindPOC() {
     setIsSearchingPOC(true);
+    setPocError(null);
     try {
       const res = await fetch(`/api/pitch/${id}/find-poc`, { method: "POST" });
+      if (!res.ok) throw new Error(`Search failed (${res.status})`);
       const data = await res.json();
       setPocData(data);
+    } catch (err: any) {
+      setPocError("Contact search failed. Please try again.");
     } finally {
       setIsSearchingPOC(false);
     }
@@ -403,6 +441,7 @@ export default function PitchDocumentPage() {
         <EditableTextarea
           value={pitch.businessRationale ?? ""}
           onChange={v => handleEdit("businessRationale", v)}
+          onBlur={v => handleBlur("businessRationale", v)}
           placeholder="Generating partnership overview…"
           minRows={4}
         />
@@ -420,6 +459,7 @@ export default function PitchDocumentPage() {
             <EditableTextarea
               value={pitch.audienceReachNarrative ?? ""}
               onChange={v => handleEdit("audienceReachNarrative", v)}
+              onBlur={v => handleBlur("audienceReachNarrative", v)}
               placeholder="Generating audience reach narrative…"
               minRows={3}
             />
@@ -432,6 +472,7 @@ export default function PitchDocumentPage() {
             <EditableTextarea
               value={pitch.transactionOpportunityNarrative ?? ""}
               onChange={v => handleEdit("transactionOpportunityNarrative", v)}
+              onBlur={v => handleBlur("transactionOpportunityNarrative", v)}
               placeholder="Generating transaction opportunity narrative…"
               minRows={3}
             />
@@ -444,6 +485,7 @@ export default function PitchDocumentPage() {
             <EditableTextarea
               value={pitch.coMarketingValueNarrative ?? ""}
               onChange={v => handleEdit("coMarketingValueNarrative", v)}
+              onBlur={v => handleBlur("coMarketingValueNarrative", v)}
               placeholder="Generating co-marketing value narrative…"
               minRows={3}
             />
@@ -458,6 +500,7 @@ export default function PitchDocumentPage() {
         <EditableTextarea
           value={pitch.offerMechanics ?? ""}
           onChange={v => handleEdit("offerMechanics", v)}
+          onBlur={v => handleBlur("offerMechanics", v)}
           placeholder="Generating proposed activation…"
           minRows={3}
         />
@@ -469,6 +512,7 @@ export default function PitchDocumentPage() {
         <EditableTextarea
           value={pitch.additionalNotes ?? ""}
           onChange={v => handleEdit("additionalNotes", v)}
+          onBlur={v => handleBlur("additionalNotes", v)}
           placeholder="Add any additional notes or context…"
           minRows={2}
         />
@@ -477,6 +521,10 @@ export default function PitchDocumentPage() {
       {/* ── Points of Contact ────────────────────────────────────────────── */}
       <div style={{ marginBottom: 28 }}>
         <p className="eyebrow" style={{ marginBottom: 12 }}>POINTS OF CONTACT</p>
+
+        {pocError && (
+          <p style={{ fontSize: "0.78rem", color: "#cc2200", marginBottom: 8 }}>{pocError}</p>
+        )}
 
         {!pocData && (
           <button

@@ -13,7 +13,14 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const body = await req.json();
+  const contentType = req.headers.get("content-type") ?? "";
+  let body: any;
+  if (contentType.includes("application/json")) {
+    body = await req.json();
+  } else {
+    const text = await req.text();
+    try { body = JSON.parse(text); } catch { return NextResponse.json({ error: "Invalid body" }, { status: 400 }); }
+  }
   const allowed = [
     "businessRationale", "offerMechanics", "influencerStrategy", "channelStrategy",
     "additionalNotes", "status", "sentAt", "approvedAt", "title", "situation",

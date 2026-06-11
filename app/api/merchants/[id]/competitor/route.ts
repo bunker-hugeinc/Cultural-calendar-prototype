@@ -27,7 +27,8 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
         category: merchant.category,
       });
       const text = await callClaude({ system, user, model: "claude-haiku-4-5-20251001", maxTokens: 800 });
-      return JSON.parse(text.trim().replace(/^```(?:json)?\n?/i, "").replace(/\n?```$/i, ""));
+      const { extractJSON } = await import("@/lib/json-utils");
+      return extractJSON(text);
     },
   });
 

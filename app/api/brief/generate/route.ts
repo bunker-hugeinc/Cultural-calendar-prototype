@@ -3,17 +3,19 @@ import { db } from "@/lib/db";
 import { briefs, pitches, moments, merchants } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { callClaude } from "@/lib/ai";
+import { extractJSONSafe } from "@/lib/json-utils";
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
 export async function POST(req: NextRequest) {
   try {
-  const { pitchId } = await req.json();
+  const body = await req.json();
+  const { pitchId, forceRefresh } = body;
 
-  // Return existing brief if already generated
+  // Return existing brief if already generated (unless forceRefresh)
   const existing = await db.select().from(briefs)
     .where(eq(briefs.pitchId, pitchId)).limit(1);
-  if (existing[0]) return NextResponse.json(existing[0]);
+  if (existing[0] && !forceRefresh) return NextResponse.json(existing[0]);
 
   const [pitch] = await db.select().from(pitches).where(eq(pitches.id, pitchId)).limit(1);
   if (!pitch) return NextResponse.json({ error: "Pitch not found" }, { status: 404 });
@@ -73,16 +75,24 @@ Return a JSON object:
     maxTokens: 2000,
   });
 
-  let sections: Record<string, string> = {};
-  try { sections = JSON.parse(text.trim()); } catch { sections = {}; }
+  const sections: Record<string, string> = extractJSONSafe(text, {});
 
-  const [brief] = await db.insert(briefs).values({
-    pitchId,
-    momentId: pitch.momentId,
-    merchantId: pitch.merchantId,
-    ...sections,
-    generatedAt: new Date(),
-  }).returning();
+  let brief;
+  if (existing[0] && forceRefresh) {
+    [brief] = await db.update(briefs).set({
+      ...sections,
+      generatedAt: new Date(),
+      updatedAt: new Date(),
+    }).where(eq(briefs.id, existing[0].id)).returning();
+  } else {
+    [brief] = await db.insert(briefs).values({
+      pitchId,
+      momentId: pitch.momentId,
+      merchantId: pitch.merchantId,
+      ...sections,
+      generatedAt: new Date(),
+    }).returning();
+  }
 
   return NextResponse.json(brief);
   } catch (err: unknown) {

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
-import { moments, pairingScores, merchants } from "@/lib/db/schema";
+import { moments, pairingScores, merchants, pitches } from "@/lib/db/schema";
 import { eq, desc } from "drizzle-orm";
 import { MomentDetailFull } from "@/components/moment-detail-full";
 
@@ -37,6 +37,21 @@ export default async function MomentDetailPage({
     .where(eq(pairingScores.momentId, id))
     .orderBy(desc(pairingScores.relevanceScore));
 
+  const momentPitches = await db
+    .select({
+      id: pitches.id,
+      status: pitches.status,
+      targetQuarter: pitches.targetQuarter,
+      createdAt: pitches.createdAt,
+      updatedAt: pitches.updatedAt,
+      merchantName: merchants.name,
+      merchantCategory: merchants.category,
+    })
+    .from(pitches)
+    .leftJoin(merchants, eq(pitches.merchantId, merchants.id))
+    .where(eq(pitches.momentId, id))
+    .orderBy(desc(pitches.updatedAt));
+
   return (
     <MomentDetailFull
       moment={{
@@ -57,6 +72,7 @@ export default async function MomentDetailPage({
         notes: moment.notes,
       }}
       initialPairings={pairings}
+      initialPitches={momentPitches}
     />
   );
 }

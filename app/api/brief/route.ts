@@ -13,7 +13,15 @@ export async function GET(req: NextRequest) {
 }
 
 export async function PATCH(req: NextRequest) {
-  const { id, ...updates } = await req.json();
+  const contentType = req.headers.get("content-type") ?? "";
+  let body: any;
+  if (contentType.includes("application/json")) {
+    body = await req.json();
+  } else {
+    const text = await req.text();
+    try { body = JSON.parse(text); } catch { return NextResponse.json({ error: "Invalid body" }, { status: 400 }); }
+  }
+  const { id, ...updates } = body;
   const allowed = [
     "toplineOverview", "businessObjectives", "targetAudience",
     "messagingHierarchy", "creativeTacticalConsiderations",

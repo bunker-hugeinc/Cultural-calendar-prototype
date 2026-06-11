@@ -44,10 +44,8 @@ Return ONLY the JSON object. No other text.`;
 
   const text = await callClaude({ system, user: prompt, model: "claude-haiku-4-5-20251001", maxTokens: 1200 });
 
-  let parsed: { matches: any[]; recommendations: any[] } = { matches: [], recommendations: [] };
-  try {
-    parsed = JSON.parse(text.trim().replace(/^```(?:json)?\n?/i, "").replace(/\n?```$/i, ""));
-  } catch { /* return empty */ }
+  const { extractJSONSafe } = await import("@/lib/json-utils");
+  const parsed: { matches: any[]; recommendations: any[] } = extractJSONSafe(text, { matches: [], recommendations: [] });
 
   const enrichedMatches = (parsed.matches || []).map((r: any) => {
     const merchant = allMerchants.find(m => m.id === r.id);

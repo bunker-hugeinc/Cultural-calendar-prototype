@@ -70,9 +70,20 @@ interface MomentData {
   notes: string | null;
 }
 
+interface PitchSummary {
+  id: string;
+  status: string;
+  targetQuarter: string | null;
+  createdAt: string;
+  updatedAt: string;
+  merchantName: string | null;
+  merchantCategory: string | null;
+}
+
 interface Props {
   moment: MomentData;
   initialPairings: Pairing[];
+  initialPitches?: PitchSummary[];
 }
 
 // ── Progress message ──────────────────────────────────────────────────────────
@@ -172,7 +183,7 @@ interface CompetitorData {
   whiteSpace: string;
 }
 
-export function MomentDetailFull({ moment, initialPairings }: Props) {
+export function MomentDetailFull({ moment, initialPairings, initialPitches = [] }: Props) {
   const router = useRouter();
   const [pairings, setPairings] = useState<Pairing[]>(initialPairings);
   const [scoring, setScoring] = useState(false);
@@ -188,6 +199,7 @@ export function MomentDetailFull({ moment, initialPairings }: Props) {
   const [isCreatingPitches, setIsCreatingPitches] = useState(false);
   const [createdCount, setCreatedCount] = useState(0);
   const [approvedPitches, setApprovedPitches] = useState<any[]>([]);
+  const [momentPitches, setMomentPitches] = useState<PitchSummary[]>(initialPitches);
   const [moduleHeadline, setModuleHeadline] = useState("");
   const [moduleSubhead, setModuleSubhead] = useState("");
   const [isGeneratingHeadline, setIsGeneratingHeadline] = useState(false);
@@ -280,6 +292,7 @@ export function MomentDetailFull({ moment, initialPairings }: Props) {
       .then(r => r.json())
       .then(data => setApprovedPitches(data.pitches ?? []));
   }, [moment.id]);
+
 
   function buildPitchFromPairing(merchantId: string) {
     router.push(`/pitch/new?momentId=${moment.id}&merchantId=${merchantId}`);
@@ -526,6 +539,44 @@ export function MomentDetailFull({ moment, initialPairings }: Props) {
           </button>
         )}
       </div>
+
+      {/* ── Section: Partnership Pitches ────────────────────────────────────── */}
+      {momentPitches.length > 0 && (
+        <div style={{ marginBottom: 28 }}>
+          <p className="eyebrow" style={{ marginBottom: 12 }}>PARTNERSHIP PITCHES</p>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {momentPitches.map((pitch: any) => (
+              <Link
+                key={pitch.id}
+                href={`/pitch/${pitch.id}`}
+                style={{
+                  display: "flex", alignItems: "center", justifyContent: "space-between",
+                  padding: "10px 16px", background: "white", borderRadius: 10,
+                  border: "1px solid #e8e8ed", textDecoration: "none", fontSize: "0.875rem",
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  <span style={{
+                    width: 8, height: 8, borderRadius: "50%", flexShrink: 0,
+                    background: pitch.status === "approved" ? "#34c759"
+                      : pitch.status === "sent" ? "#0071e3"
+                      : pitch.status === "rejected" ? "#ff3b30"
+                      : "#d2d2d7",
+                  }} />
+                  <span style={{ fontWeight: 600, color: "#1d1d1f" }}>{pitch.merchantName ?? "No merchant"}</span>
+                  {pitch.targetQuarter && (
+                    <span style={{ color: "#86868b" }}>{pitch.targetQuarter}</span>
+                  )}
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <span style={{ fontSize: "0.75rem", color: "#86868b", textTransform: "capitalize" }}>{pitch.status}</span>
+                  <span style={{ color: "#d2d2d7" }}>→</span>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* ── Section: Merchant Matches ─────────────────────────────────────── */}
       <div style={{ marginBottom: 28 }}>

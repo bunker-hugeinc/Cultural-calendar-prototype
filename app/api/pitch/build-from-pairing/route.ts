@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { moments, merchants, pitches } from "@/lib/db/schema";
 import { eq, and } from "drizzle-orm";
 import { callClaude } from "@/lib/ai";
+import { extractJSONSafe } from "@/lib/json-utils";
 import { APPLE_PAY_CRITICAL } from "@/lib/prompts";
 import { createId } from "@paralleldrive/cuid2";
 export const dynamic = "force-dynamic";
@@ -75,10 +76,7 @@ Return a JSON object — all fields written as if Apple Pay is reaching out TO t
 }`;
 
   const text = await callClaude({ system, user: prompt, model: "claude-haiku-4-5-20251001", maxTokens: 1200 });
-  let sections: any = {};
-  try {
-    sections = JSON.parse(text.trim().replace(/^```(?:json)?\n?/i, "").replace(/\n?```$/i, ""));
-  } catch { sections = {}; }
+  const sections: any = extractJSONSafe(text, {});
 
   let pitchId: string;
   if (existing[0]) {

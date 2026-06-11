@@ -45,13 +45,9 @@ Rank by relevance to the search intent. Consider: audience alignment, category m
 
   const text = await callClaude({ system, user: prompt, model: "claude-haiku-4-5-20251001", maxTokens: 1024 });
 
-  let results: { id: string; relevanceScore: number; reason: string }[] = [];
-  try {
-    const parsed = JSON.parse(text.trim().replace(/^```(?:json)?\n?/i, "").replace(/\n?```$/i, ""));
-    results = Array.isArray(parsed) ? parsed : [];
-  } catch {
-    results = [];
-  }
+  const { extractJSONSafe } = await import("@/lib/json-utils");
+  const parsedResults = extractJSONSafe<any>(text, []);
+  const results: { id: string; relevanceScore: number; reason: string }[] = Array.isArray(parsedResults) ? parsedResults : [];
 
   const enriched = results.map(r => {
     const moment = allMoments.find(m => m.id === r.id);
