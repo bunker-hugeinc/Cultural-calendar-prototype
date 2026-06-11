@@ -1,8 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { InfluencerPanel } from "@/components/influencer-panel";
+import { CacheFooter } from "@/components/CacheFooter";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -136,12 +138,25 @@ function CategoryPill({ category }: { category: string }) {
 
 // ── Main component ────────────────────────────────────────────────────────────
 
+interface CompetitorData {
+  competitorsDetected: Array<{ brand: string; category: string; activationMethod: string; dominance: string }>;
+  overallRisk: "high" | "medium" | "low" | "none";
+  keyInsight: string;
+  whiteSpace: string;
+}
+
 export function MomentDetailFull({ moment, initialPairings }: Props) {
+  const router = useRouter();
   const [pairings, setPairings] = useState<Pairing[]>(initialPairings);
   const [scoring, setScoring] = useState(false);
   const [scoreError, setScoreError] = useState<string | null>(null);
   const [scored, setScored] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [competitorData, setCompetitorData] = useState<CompetitorData | null>(null);
+  const [competitorFromCache, setCompetitorFromCache] = useState(false);
+  const [competitorGeneratedAt, setCompetitorGeneratedAt] = useState<string | null>(null);
+  const [loadingCompetitor, setLoadingCompetitor] = useState(false);
+  const [buildingPitch, setBuildingPitch] = useState<string | null>(null);
 
   // Parse stored JSON fields
   let rationale: ScoreRationale = {};
@@ -210,6 +225,34 @@ export function MomentDetailFull({ moment, initialPairings }: Props) {
       if (next.has(id)) next.delete(id); else next.add(id);
       return next;
     });
+  }
+
+  const loadCompetitor = useCallback(async (refresh = false) => {
+    setLoadingCompetitor(true);
+    try {
+      const res = await fetch(`/api/moments/${moment.id}/competitor${refresh ? "?refresh=true" : ""}`);
+      const data = await res.json();
+      setCompetitorData(data);
+      setCompetitorFromCache(data.fromCache ?? false);
+      setCompetitorGeneratedAt(data.generatedAt ?? null);
+    } finally {
+      setLoadingCompetitor(false);
+    }
+  }, [moment.id]);
+
+  async function buildPitchFromPairing(merchantId: string) {
+    setBuildingPitch(merchantId);
+    try {
+      const res = await fetch("/api/pitch/build-from-pairing", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ momentId: moment.id, merchantId }),
+      });
+      const { pitchId } = await res.json();
+      router.push(`/pitch/${pitchId}`);
+    } finally {
+      setBuildingPitch(null);
+    }
   }
 
   const selectedMerchants = pairings.filter(p => selected.has(p.id));
@@ -357,7 +400,65 @@ export function MomentDetailFull({ moment, initialPairings }: Props) {
         )}
       </div>
 
-      {/* ── Section 3: Merchant Matches ─────────────────────────────────────── */}
+      {/* ── Section 3: Competitor Landscape ─────────────────────────────────── */}
+      <div style={{ marginBottom: 28 }}>
+        <p className="eyebrow" style={{ marginBottom: 12 }}>COMPETITOR LANDSCAPE</p>
+        {competitorData ? (
+          <div className="card-p" style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <span style={{
+                padding: "3px 10px", borderRadius: 20, fontSize: "0.75rem", fontWeight: 700,
+                background: competitorData.overallRisk === "high" ? "#ffe9e8" : competitorData.overallRisk === "medium" ? "#fff3e0" : competitorData.overallRisk === "low" ? "#fffde7" : "#e8f5e9",
+                color: competitorData.overallRisk === "high" ? "#cc2200" : competitorData.overallRisk === "medium" ? "#c47c00" : competitorData.overallRisk === "low" ? "#a36500" : "#248a3d",
+              }}>
+                {competitorData.overallRisk === "none" ? "No competitor presence" : `${competitorData.overallRisk} competitive risk`}
+              </span>
+            </div>
+            {competitorData.competitorsDetected.length > 0 && (
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                {competitorData.competitorsDetected.map((c, i) => (
+                  <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 10, fontSize: "0.85rem" }}>
+                    <span style={{
+                      flexShrink: 0, padding: "2px 8px", borderRadius: 6, fontSize: "0.72rem", fontWeight: 700,
+                      background: c.dominance === "dominant" ? "#ffe9e8" : c.dominance === "significant" ? "#fff3e0" : "#f5f5f7",
+                      color: c.dominance === "dominant" ? "#cc2200" : c.dominance === "significant" ? "#c47c00" : "#6e6e73",
+                    }}>{c.dominance}</span>
+                    <div>
+                      <span style={{ fontWeight: 600, color: "#1d1d1f" }}>{c.brand}</span>
+                      <span style={{ color: "#86868b", margin: "0 6px" }}>·</span>
+                      <span style={{ color: "#86868b", textTransform: "capitalize" }}>{c.category.replace(/_/g, " ")}</span>
+                      <p style={{ fontSize: "0.78rem", color: "#6e6e73", marginTop: 2 }}>{c.activationMethod}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, paddingTop: 12, borderTop: "1px solid #f0f0f5" }}>
+              <div>
+                <p className="eyebrow" style={{ marginBottom: 6 }}>KEY INSIGHT</p>
+                <p style={{ fontSize: "0.82rem", color: "#1d1d1f", lineHeight: 1.6 }}>{competitorData.keyInsight}</p>
+              </div>
+              <div>
+                <p className="eyebrow" style={{ color: "#248a3d", marginBottom: 6 }}>WHITE SPACE</p>
+                <p style={{ fontSize: "0.82rem", color: "#1d1d1f", lineHeight: 1.6 }}>{competitorData.whiteSpace}</p>
+              </div>
+            </div>
+            <CacheFooter fromCache={competitorFromCache} generatedAt={competitorGeneratedAt} onRegenerate={() => loadCompetitor(true)} isRegenerating={loadingCompetitor} />
+          </div>
+        ) : (
+          <button
+            onClick={() => loadCompetitor(false)}
+            disabled={loadingCompetitor}
+            className="btn btn-outline"
+            style={{ display: "inline-flex", alignItems: "center", gap: 6 }}
+          >
+            {loadingCompetitor && <span className="spinner" />}
+            {loadingCompetitor ? "Analyzing…" : "Analyze Competitor Landscape"}
+          </button>
+        )}
+      </div>
+
+      {/* ── Section: Merchant Matches ─────────────────────────────────────── */}
       <div style={{ marginBottom: 28 }}>
         <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 12 }}>
           <p className="eyebrow">MERCHANT MATCHES</p>
@@ -378,6 +479,7 @@ export function MomentDetailFull({ moment, initialPairings }: Props) {
                     <th style={{ padding: "10px 14px", textAlign: "left" }} className="eyebrow">Score</th>
                     <th style={{ padding: "10px 14px", textAlign: "left" }} className="eyebrow">Offer Type</th>
                     <th style={{ padding: "10px 14px", textAlign: "left" }} className="eyebrow">Campaign Angle</th>
+                    <th style={{ padding: "10px 12px" }} />
                   </tr>
                 </thead>
                 <tbody>
@@ -387,6 +489,8 @@ export function MomentDetailFull({ moment, initialPairings }: Props) {
                       pairing={p}
                       selected={selected.has(p.id)}
                       onToggle={() => toggleSelect(p.id)}
+                      onBuildPitch={() => buildPitchFromPairing(p.merchantId)}
+                      isBuilding={buildingPitch === p.merchantId}
                     />
                   ))}
                 </tbody>
@@ -422,7 +526,7 @@ export function MomentDetailFull({ moment, initialPairings }: Props) {
         )}
       </div>
 
-      {/* ── Section 4: Channel Recommendations ──────────────────────────────── */}
+      {/* ── Section: Channel Recommendations ──────────────────────────────── */}
       {liveScores.channels.length > 0 && (
         <div style={{ marginBottom: 28 }}>
           <p className="eyebrow" style={{ marginBottom: 12 }}>CHANNEL RECOMMENDATIONS</p>
@@ -495,11 +599,13 @@ export function MomentDetailFull({ moment, initialPairings }: Props) {
 // ── Merchant row with expand/collapse ─────────────────────────────────────────
 
 function MerchantRow({
-  pairing, selected, onToggle,
+  pairing, selected, onToggle, onBuildPitch, isBuilding,
 }: {
   pairing: Pairing;
   selected: boolean;
   onToggle: () => void;
+  onBuildPitch: () => void;
+  isBuilding: boolean;
 }) {
   const [expanded, setExpanded] = useState(false);
   const color = pairing.relevanceScore >= 7 ? "#248a3d" : pairing.relevanceScore >= 4 ? "#c47c00" : "#cc2200";
@@ -563,6 +669,15 @@ function MerchantRow({
           ) : <span style={{ color: "#d2d2d7" }}>—</span>}
         </td>
         <td style={{ padding: "10px 14px", fontSize: "0.82rem", color: "#1d1d1f", lineHeight: 1.4 }}>{pairing.campaignAngle}</td>
+        <td style={{ padding: "10px 12px" }} onClick={e => e.stopPropagation()}>
+          <button
+            onClick={onBuildPitch}
+            disabled={isBuilding}
+            style={{ fontSize: "0.72rem", fontWeight: 600, padding: "4px 10px", borderRadius: 8, background: "#0071e3", color: "white", border: "none", cursor: "pointer", whiteSpace: "nowrap", opacity: isBuilding ? 0.6 : 1 }}
+          >
+            {isBuilding ? "…" : "Quick Pitch"}
+          </button>
+        </td>
       </tr>
       {expanded && rationaleText && (
         <tr style={{ borderBottom: "1px solid #f0f0f5", background: selected ? "rgba(0,113,227,0.04)" : "#fafafa" }}>

@@ -1,3 +1,8 @@
+export const APPLE_PAY_CRITICAL = `CRITICAL: This tool is for Apple Pay only — NOT Apple Card, NOT Apple Cash.
+NEVER mention: rewards, cash back, 2%, Daily Cash, APR, interest rates, credit limits.
+Apple Pay is a contactless payment method accepted wherever NFC or online checkout supports it.
+Apple Pay's value proposition: speed, security, privacy, broad merchant acceptance.`;
+
 const APPLE_PAY_ACCURACY = `IMPORTANT — Apple Pay product accuracy:
 Apple Pay = contactless tap-to-pay payment method, secure one-tap online/in-app checkout, Wallet integration.
 Apple Pay does NOT include cash back, percentage rewards, or instalments — those are Apple Card features.
@@ -229,3 +234,49 @@ Return JSON with exactly these fields:
 
 Be specific to the moment, merchant, and channel strategy provided. No generic templates.
 Return valid JSON only. No markdown.`;
+
+// --- STEP 9: Competitor analysis (Phase 19) ---
+export function buildCompetitorAnalysisPrompt(
+  entityType: "moment" | "merchant",
+  entityData: { name: string; description?: string; category?: string; date?: string }
+) {
+  return {
+    system: `${APPLE_PAY_CRITICAL}
+
+You are an Apple Pay partnership strategist analyzing the competitive landscape.
+Return ONLY valid JSON. No markdown, no text outside the JSON.`,
+
+    user: `Analyze whether this ${entityType} is dominated by any Apple Pay competitors.
+
+${entityType === "moment"
+  ? `MOMENT: ${entityData.name}\nDate: ${entityData.date ?? "N/A"}\nCategory: ${entityData.category ?? "N/A"}\nDescription: ${entityData.description ?? "N/A"}`
+  : `MERCHANT: ${entityData.name}\nCategory: ${entityData.category ?? "N/A"}\nDescription: ${entityData.description ?? "N/A"}`
+}
+
+COMPETITOR CATEGORIES TO EVALUATE:
+1. Card networks & issuers: Mastercard, Visa, Citi, Discover, American Express, Chase, Bank of America, Capital One, BMO, Wells Fargo, PNC, US Bank, and similar
+2. Digital wallets & P2P: Google Pay, PayPal, Venmo, Zelle, CashApp, and similar
+3. Buy Now Pay Later (BNPL): Affirm, Klarna, Afterpay, and similar
+
+For each competitor you detect, note:
+- How they activate (title sponsorship, presenting sponsor, co-branded content, digital integration, merchant partnership, advertising, event naming rights)
+- Frequency / dominance level: "dominant" | "significant" | "minor"
+
+Return a JSON object:
+{
+  "competitorsDetected": [
+    {
+      "brand": "<brand name>",
+      "category": "card_network_issuer" | "digital_wallet" | "bnpl",
+      "activationMethod": "<how they activate>",
+      "dominance": "dominant" | "significant" | "minor"
+    }
+  ],
+  "overallRisk": "high" | "medium" | "low" | "none",
+  "keyInsight": "<1-2 sentences: what this competitive picture means for an Apple Pay activation>",
+  "whiteSpace": "<1-2 sentences: what activation angles are NOT yet claimed by competitors>"
+}
+
+If no competitors are detected, return competitorsDetected as an empty array and overallRisk as "none".`,
+  };
+}

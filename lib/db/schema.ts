@@ -19,6 +19,16 @@ export const moments = pgTable("moments", {
   whiteSpaceScore:          real("white_space_score"),
   scoreRationale:           text("score_rationale"),           // JSON: { ecommerceRationale, audienceRationale, whiteSpaceRationale, overallRationale, whiteSpaceAnalysis }
   channelRecommendations:   text("channel_recommendations"),   // JSON array
+  // AI evaluation cache
+  competitorAnalysisCache:   text("competitor_analysis_cache"),    // JSON string
+  opportunitySummaryCache:   text("opportunity_summary_cache"),
+  influencerRecsCache:       text("influencer_recs_cache"),        // JSON string
+  channelStrategyCacheData:  text("channel_strategy_cache_data"),  // JSON string
+  scoreCacheGeneratedAt:     timestamp("score_cache_generated_at"),
+  competitorCacheGeneratedAt: timestamp("competitor_cache_generated_at"),
+  influencerCacheGeneratedAt: timestamp("influencer_cache_generated_at"),
+  channelCacheGeneratedAt:   timestamp("channel_cache_generated_at"),
+  opportunityCacheGeneratedAt: timestamp("opportunity_cache_generated_at"),
   createdAt:   timestamp("created_at").defaultNow(),
   updatedAt:   timestamp("updated_at").defaultNow(),
 });
@@ -37,6 +47,9 @@ export const merchants = pgTable("merchants", {
   // "Sports & Entertainment" | "Food" | "Misc" | "Kids"
   merchantSignals:   text("merchant_signals"),    // JSON: { applePayAffinity, affinityRationale, transactionProfile, marketingOpenness, outreachApproach }
   pastCampaignNotes: text("past_campaign_notes"), // Free text — BD/DS insights
+  // AI evaluation cache
+  competitorAnalysisCache:    text("competitor_analysis_cache"),    // JSON string
+  competitorCacheGeneratedAt: timestamp("competitor_cache_generated_at"),
   updatedAt:     timestamp("updated_at").defaultNow(),
   createdAt:     timestamp("created_at").defaultNow(),
 });
@@ -50,6 +63,11 @@ export const pairingScores = pgTable("pairing_scores", {
   campaignAngle:  text("campaign_angle").notNull(),
   rationale:      text("rationale"),
   createdAt:      timestamp("created_at").defaultNow(),
+  // AI pairing cache
+  pairingInfluencerCache: text("pairing_influencer_cache"),  // JSON string
+  pairingChannelCache:    text("pairing_channel_cache"),     // JSON string
+  pairingCompetitorCache: text("pairing_competitor_cache"),  // JSON string
+  pairingCacheGeneratedAt: timestamp("pairing_cache_generated_at"),
 }, (t) => ({
   uniq: unique().on(t.momentId, t.merchantId),
 }));
@@ -97,7 +115,7 @@ export const pitches = pgTable("pitches", {
   id:               text("id").primaryKey().$defaultFn(() => createId()),
   title:            text("title").notNull(),
   type:             text("type").notNull().default("moment_led"), // "moment_led" | "merchant_led"
-  status:           text("status").notNull().default("draft"),    // "draft" | "ready"
+  status:           text("status").notNull().default("draft"),    // "draft" | "ready" | "sent" | "approved" | "rejected"
   situation:        text("situation"),
   campaignConcept:  text("campaign_concept"),
   campaignHeadline: text("campaign_headline"),
@@ -107,6 +125,14 @@ export const pitches = pgTable("pitches", {
   nextSteps:        text("next_steps"),
   targetQuarter:    text("target_quarter"),
   attachments:      text("attachments"),         // JSON array {name, url, type}
+  // Phase 19: direct moment × merchant FK for auto-populated pitches
+  momentId:         text("moment_id").references(() => moments.id),
+  merchantId:       text("merchant_id").references(() => merchants.id),
+  businessRationale: text("business_rationale"),
+  offerMechanics:   text("offer_mechanics"),
+  additionalNotes:  text("additional_notes"),
+  sentAt:           timestamp("sent_at"),
+  approvedAt:       timestamp("approved_at"),
   createdAt:        timestamp("created_at").defaultNow(),
   updatedAt:        timestamp("updated_at").defaultNow(),
 });

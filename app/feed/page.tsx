@@ -9,6 +9,11 @@ interface FeedCandidate {
   hook: string; partners: string; status: string;
 }
 
+interface MomentSearchResult {
+  id: string; name: string; startDate: string; category: string;
+  description: string; relevanceScore: number; reason: string;
+}
+
 const CAT_COLORS: Record<string, { pill: string; color: string }> = {
   gather:  { pill: "#e8f5e9", color: "#248a3d" },
   improve: { pill: "#fce4ec", color: "#dc5078" },
@@ -46,6 +51,10 @@ export default function FeedPage() {
   const [minScore, setMinScore] = useState(3.0);
   const [priorityMerchants, setPriorityMerchants] = useState<string[]>([]);
   const [allMerchants, setAllMerchants] = useState<{ id: string; name: string }[]>([]);
+
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<MomentSearchResult[] | null>(null);
+  const [isSearching, setIsSearching] = useState(false);
 
   const loadFeed = useCallback(async () => {
     try {
@@ -105,6 +114,23 @@ export default function FeedPage() {
 
   function toggleCategory(cat: string) {
     setCategories(prev => prev.includes(cat) ? prev.filter(c => c !== cat) : [...prev, cat]);
+  }
+
+  async function handleSearch(e: React.FormEvent) {
+    e.preventDefault();
+    if (!searchQuery.trim()) { setSearchResults(null); return; }
+    setIsSearching(true);
+    try {
+      const res = await fetch("/api/feed/search", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ query: searchQuery }),
+      });
+      const data = await res.json();
+      setSearchResults(data.results ?? []);
+    } finally {
+      setIsSearching(false);
+    }
   }
 
   const pending = candidates.filter(c => c.status === "pending");
@@ -205,8 +231,56 @@ export default function FeedPage() {
         </div>
       )}
 
+      {/* AI Search bar */}
+      <form onSubmit={handleSearch} style={{ display: "flex", gap: 8, marginBottom: 20 }}>
+        <input
+          type="text"
+          value={searchQuery}
+          onChange={e => setSearchQuery(e.target.value)}
+          placeholder="Search moments with AI… e.g. 'back to school', 'Gen Z summer'"
+          style={{ flex: 1, padding: "9px 14px", borderRadius: 10, border: "1px solid #d2d2d7", fontSize: "0.85rem", fontFamily: "inherit", outline: "none" }}
+        />
+        <button type="submit" disabled={isSearching} className="btn btn-primary btn-sm" style={{ whiteSpace: "nowrap" }}>
+          {isSearching ? "Searching…" : "Search with AI"}
+        </button>
+        {searchResults && (
+          <button type="button" onClick={() => { setSearchResults(null); setSearchQuery(""); }} style={{ background: "none", border: "none", cursor: "pointer", fontSize: "0.82rem", color: "#86868b", fontFamily: "inherit" }}>
+            Clear
+          </button>
+        )}
+      </form>
+
+      {/* AI Search results */}
+      {searchResults !== null && (
+        <div style={{ marginBottom: 28 }}>
+          <p className="eyebrow" style={{ marginBottom: 12 }}>
+            {searchResults.length > 0 ? `${searchResults.length} RESULTS FOR "${searchQuery}"` : `NO RESULTS FOR "${searchQuery}"`}
+          </p>
+          {searchResults.map(r => {
+            const cat = CAT_COLORS[r.category] ?? CAT_COLORS.gather;
+            return (
+              <a key={r.id} href={`/moments/${r.id}`} style={{ textDecoration: "none" }}>
+                <div className="card" style={{ marginBottom: 10, padding: "16px 18px" }}>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      <span style={{ fontSize: "0.68rem", fontWeight: 700, padding: "2px 10px", borderRadius: 10, background: cat.pill, color: cat.color, textTransform: "uppercase", letterSpacing: "0.06em" }}>{r.category}</span>
+                      <h3 style={{ fontSize: "0.95rem", margin: 0 }}>{r.name}</h3>
+                    </div>
+                    <span style={{ fontSize: "0.75rem", fontWeight: 700, color: "#0071e3", background: "#e3f2fd", padding: "2px 8px", borderRadius: 8, whiteSpace: "nowrap" }}>{r.relevanceScore}% match</span>
+                  </div>
+                  <p style={{ fontSize: "0.8rem", color: "#86868b", marginBottom: 6 }}>{r.startDate}</p>
+                  <div style={{ fontSize: "0.82rem", color: "#248a3d", background: "rgba(52,199,89,0.07)", borderRadius: 8, padding: "8px 12px" }}>
+                    <strong>Why this matches:</strong> {r.reason}
+                  </div>
+                </div>
+              </a>
+            );
+          })}
+        </div>
+      )}
+
       {/* Pending candidates */}
-      {pending.length === 0 ? (
+      {searchResults === null && pending.length === 0 ? (
         <div style={{ textAlign: "center", padding: "60px 24px", border: "1px dashed #d2d2d7", borderRadius: 16 }}>
           <p className="eyebrow" style={{ marginBottom: 8 }}>NO SUGGESTIONS YET</p>
           <p style={{ fontSize: "0.9rem", color: "#86868b", marginBottom: 20, maxWidth: 340, margin: "0 auto 20px" }}>
@@ -217,7 +291,7 @@ export default function FeedPage() {
             {discovering ? "Discovering…" : "Discover Now"}
           </button>
         </div>
-      ) : (
+      ) : searchResults === null ? (
         <div>
           {pending.map(c => {
             const cat = CAT_COLORS[c.category] ?? CAT_COLORS.gather;
@@ -257,7 +331,7 @@ export default function FeedPage() {
             );
           })}
         </div>
-      )}
+      ) : null}
 
       {/* Dismissed section */}
       {dismissed.length > 0 && (

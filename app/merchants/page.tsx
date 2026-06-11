@@ -6,6 +6,7 @@ import { merchants, pairingScores } from "@/lib/db/schema";
 import { gte, asc } from "drizzle-orm";
 import { MerchantCard } from "@/components/merchant-card";
 import { MerchantFilterBar } from "@/components/merchant-filter-bar";
+import { MerchantSearch } from "@/components/merchant-search";
 
 export const metadata: Metadata = { title: "Merchants" };
 
@@ -62,6 +63,8 @@ export default async function MerchantsPage({
           + Add Merchant
         </Link>
       </div>
+
+      <MerchantSearch />
 
       <div className="mb-8">
         <Suspense>

@@ -15,6 +15,13 @@
       "when": 1781012557590,
       "tag": "0001_perpetual_menace",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1781200907560,
+      "tag": "0002_gorgeous_bushwacker",
+      "breakpoints": true
     }
   ]
 }

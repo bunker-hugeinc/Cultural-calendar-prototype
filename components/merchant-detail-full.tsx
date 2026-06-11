@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useCallback } from "react";
 import Link from "next/link";
+import { CacheFooter } from "@/components/CacheFooter";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -226,6 +227,27 @@ export function MerchantDetailFull({ merchant, initialPairings }: Props) {
   const [statusOpen, setStatusOpen] = useState(false);
   const statusRef = useRef<HTMLDivElement>(null);
 
+  const [competitorData, setCompetitorData] = useState<{
+    competitorsDetected: Array<{ brand: string; category: string; activationMethod: string; dominance: string }>;
+    overallRisk: string; keyInsight: string; whiteSpace: string;
+  } | null>(null);
+  const [competitorFromCache, setCompetitorFromCache] = useState(false);
+  const [competitorGeneratedAt, setCompetitorGeneratedAt] = useState<string | null>(null);
+  const [loadingCompetitor, setLoadingCompetitor] = useState(false);
+
+  const loadCompetitor = useCallback(async (refresh = false) => {
+    setLoadingCompetitor(true);
+    try {
+      const res = await fetch(`/api/merchants/${merchant.id}/competitor${refresh ? "?refresh=true" : ""}`);
+      const data = await res.json();
+      setCompetitorData(data);
+      setCompetitorFromCache(data.fromCache ?? false);
+      setCompetitorGeneratedAt(data.generatedAt ?? null);
+    } finally {
+      setLoadingCompetitor(false);
+    }
+  }, [merchant.id]);
+
   const [campaignNotes, setCampaignNotes] = useState(merchant.pastCampaignNotes ?? "");
   const [notesSaving, setNotesSaving] = useState(false);
   const notesTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -449,6 +471,64 @@ export function MerchantDetailFull({ merchant, initialPairings }: Props) {
             }}
           />
         </div>
+      </div>
+
+      {/* ── Section: Competitor Landscape ────────────────────────────────────── */}
+      <div style={{ marginBottom: 28 }}>
+        <p className="eyebrow" style={{ marginBottom: 12 }}>COMPETITOR LANDSCAPE</p>
+        {competitorData ? (
+          <div className="card-p" style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <span style={{
+                padding: "3px 10px", borderRadius: 20, fontSize: "0.75rem", fontWeight: 700,
+                background: competitorData.overallRisk === "high" ? "#ffe9e8" : competitorData.overallRisk === "medium" ? "#fff3e0" : competitorData.overallRisk === "low" ? "#fffde7" : "#e8f5e9",
+                color: competitorData.overallRisk === "high" ? "#cc2200" : competitorData.overallRisk === "medium" ? "#c47c00" : competitorData.overallRisk === "low" ? "#a36500" : "#248a3d",
+              }}>
+                {competitorData.overallRisk === "none" ? "No competitor presence" : `${competitorData.overallRisk} competitive risk`}
+              </span>
+            </div>
+            {competitorData.competitorsDetected.length > 0 && (
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                {competitorData.competitorsDetected.map((c, i) => (
+                  <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 10, fontSize: "0.85rem" }}>
+                    <span style={{
+                      flexShrink: 0, padding: "2px 8px", borderRadius: 6, fontSize: "0.72rem", fontWeight: 700,
+                      background: c.dominance === "dominant" ? "#ffe9e8" : c.dominance === "significant" ? "#fff3e0" : "#f5f5f7",
+                      color: c.dominance === "dominant" ? "#cc2200" : c.dominance === "significant" ? "#c47c00" : "#6e6e73",
+                    }}>{c.dominance}</span>
+                    <div>
+                      <span style={{ fontWeight: 600, color: "#1d1d1f" }}>{c.brand}</span>
+                      <span style={{ color: "#86868b", margin: "0 6px" }}>·</span>
+                      <span style={{ color: "#86868b", textTransform: "capitalize" }}>{c.category.replace(/_/g, " ")}</span>
+                      <p style={{ fontSize: "0.78rem", color: "#6e6e73", marginTop: 2 }}>{c.activationMethod}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, paddingTop: 12, borderTop: "1px solid #f0f0f5" }}>
+              <div>
+                <p className="eyebrow" style={{ marginBottom: 6 }}>KEY INSIGHT</p>
+                <p style={{ fontSize: "0.82rem", color: "#1d1d1f", lineHeight: 1.6 }}>{competitorData.keyInsight}</p>
+              </div>
+              <div>
+                <p className="eyebrow" style={{ color: "#248a3d", marginBottom: 6 }}>WHITE SPACE</p>
+                <p style={{ fontSize: "0.82rem", color: "#1d1d1f", lineHeight: 1.6 }}>{competitorData.whiteSpace}</p>
+              </div>
+            </div>
+            <CacheFooter fromCache={competitorFromCache} generatedAt={competitorGeneratedAt} onRegenerate={() => loadCompetitor(true)} isRegenerating={loadingCompetitor} />
+          </div>
+        ) : (
+          <button
+            onClick={() => loadCompetitor(false)}
+            disabled={loadingCompetitor}
+            className="btn btn-outline"
+            style={{ display: "inline-flex", alignItems: "center", gap: 6 }}
+          >
+            {loadingCompetitor && <span className="spinner" />}
+            {loadingCompetitor ? "Analyzing…" : "Analyze Competitor Landscape"}
+          </button>
+        )}
       </div>
 
       {/* ── Section 2: Top Moments ───────────────────────────────────────────── */}

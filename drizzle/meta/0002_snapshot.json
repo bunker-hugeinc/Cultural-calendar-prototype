@@ -1,0 +1,930 @@
+{
+  "id": "322f4d37-914e-437b-ba0c-10fa39dc8595",
+  "prevId": "e407e982-74f0-404f-986d-64058862d35e",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "public.feed_candidates": {
+      "name": "feed_candidates",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "start_date": {
+          "name": "start_date",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "end_date": {
+          "name": "end_date",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "category": {
+          "name": "category",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "score": {
+          "name": "score",
+          "type": "real",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "headline": {
+          "name": "headline",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "body": {
+          "name": "body",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "why": {
+          "name": "why",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "hook": {
+          "name": "hook",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "partners": {
+          "name": "partners",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "personas": {
+          "name": "personas",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "hashtags": {
+          "name": "hashtags",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "competing": {
+          "name": "competing",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'pending'"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.merchants": {
+      "name": "merchants",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "category": {
+          "name": "category",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "seasonal_notes": {
+          "name": "seasonal_notes",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "notes": {
+          "name": "notes",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "partner_status": {
+          "name": "partner_status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'existing'"
+        },
+        "partner_group": {
+          "name": "partner_group",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "merchant_signals": {
+          "name": "merchant_signals",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "past_campaign_notes": {
+          "name": "past_campaign_notes",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "competitor_analysis_cache": {
+          "name": "competitor_analysis_cache",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "competitor_cache_generated_at": {
+          "name": "competitor_cache_generated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "now()"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.moment_reviews": {
+      "name": "moment_reviews",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "feed_candidate_id": {
+          "name": "feed_candidate_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "campaign_name": {
+          "name": "campaign_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "last_year_campaign_url": {
+          "name": "last_year_campaign_url",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "inspiration_urls": {
+          "name": "inspiration_urls",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "notes": {
+          "name": "notes",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "target_quarter": {
+          "name": "target_quarter",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "priority_merchants": {
+          "name": "priority_merchants",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "submitted_at": {
+          "name": "submitted_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "now()"
+        },
+        "reviewed_at": {
+          "name": "reviewed_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "reviewed_by": {
+          "name": "reviewed_by",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "review_notes": {
+          "name": "review_notes",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'in_review'"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "moment_reviews_feed_candidate_id_feed_candidates_id_fk": {
+          "name": "moment_reviews_feed_candidate_id_feed_candidates_id_fk",
+          "tableFrom": "moment_reviews",
+          "tableTo": "feed_candidates",
+          "columnsFrom": [
+            "feed_candidate_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.moments": {
+      "name": "moments",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "start_date": {
+          "name": "start_date",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "end_date": {
+          "name": "end_date",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "category": {
+          "name": "category",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "hook": {
+          "name": "hook",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "quarter": {
+          "name": "quarter",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "score": {
+          "name": "score",
+          "type": "real",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "notes": {
+          "name": "notes",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "feed_candidate_id": {
+          "name": "feed_candidate_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "ecommerce_score": {
+          "name": "ecommerce_score",
+          "type": "real",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "audience_fit": {
+          "name": "audience_fit",
+          "type": "real",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "white_space_score": {
+          "name": "white_space_score",
+          "type": "real",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "score_rationale": {
+          "name": "score_rationale",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "channel_recommendations": {
+          "name": "channel_recommendations",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "competitor_analysis_cache": {
+          "name": "competitor_analysis_cache",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "opportunity_summary_cache": {
+          "name": "opportunity_summary_cache",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "influencer_recs_cache": {
+          "name": "influencer_recs_cache",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "channel_strategy_cache_data": {
+          "name": "channel_strategy_cache_data",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "score_cache_generated_at": {
+          "name": "score_cache_generated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "competitor_cache_generated_at": {
+          "name": "competitor_cache_generated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "influencer_cache_generated_at": {
+          "name": "influencer_cache_generated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "channel_cache_generated_at": {
+          "name": "channel_cache_generated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "opportunity_cache_generated_at": {
+          "name": "opportunity_cache_generated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.pairing_scores": {
+      "name": "pairing_scores",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "moment_id": {
+          "name": "moment_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "merchant_id": {
+          "name": "merchant_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "relevance_score": {
+          "name": "relevance_score",
+          "type": "real",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "campaign_angle": {
+          "name": "campaign_angle",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "rationale": {
+          "name": "rationale",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "now()"
+        },
+        "pairing_influencer_cache": {
+          "name": "pairing_influencer_cache",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "pairing_channel_cache": {
+          "name": "pairing_channel_cache",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "pairing_competitor_cache": {
+          "name": "pairing_competitor_cache",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "pairing_cache_generated_at": {
+          "name": "pairing_cache_generated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "pairing_scores_moment_id_moments_id_fk": {
+          "name": "pairing_scores_moment_id_moments_id_fk",
+          "tableFrom": "pairing_scores",
+          "tableTo": "moments",
+          "columnsFrom": [
+            "moment_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "pairing_scores_merchant_id_merchants_id_fk": {
+          "name": "pairing_scores_merchant_id_merchants_id_fk",
+          "tableFrom": "pairing_scores",
+          "tableTo": "merchants",
+          "columnsFrom": [
+            "merchant_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "pairing_scores_moment_id_merchant_id_unique": {
+          "name": "pairing_scores_moment_id_merchant_id_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "moment_id",
+            "merchant_id"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.pitch_merchants": {
+      "name": "pitch_merchants",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "pitch_id": {
+          "name": "pitch_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "merchant_id": {
+          "name": "merchant_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "is_primary": {
+          "name": "is_primary",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false,
+          "default": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "pitch_merchants_pitch_id_pitches_id_fk": {
+          "name": "pitch_merchants_pitch_id_pitches_id_fk",
+          "tableFrom": "pitch_merchants",
+          "tableTo": "pitches",
+          "columnsFrom": [
+            "pitch_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "pitch_merchants_merchant_id_merchants_id_fk": {
+          "name": "pitch_merchants_merchant_id_merchants_id_fk",
+          "tableFrom": "pitch_merchants",
+          "tableTo": "merchants",
+          "columnsFrom": [
+            "merchant_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.pitch_moments": {
+      "name": "pitch_moments",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "pitch_id": {
+          "name": "pitch_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "moment_id": {
+          "name": "moment_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "is_primary": {
+          "name": "is_primary",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false,
+          "default": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "pitch_moments_pitch_id_pitches_id_fk": {
+          "name": "pitch_moments_pitch_id_pitches_id_fk",
+          "tableFrom": "pitch_moments",
+          "tableTo": "pitches",
+          "columnsFrom": [
+            "pitch_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "pitch_moments_moment_id_moments_id_fk": {
+          "name": "pitch_moments_moment_id_moments_id_fk",
+          "tableFrom": "pitch_moments",
+          "tableTo": "moments",
+          "columnsFrom": [
+            "moment_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.pitches": {
+      "name": "pitches",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "title": {
+          "name": "title",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "type": {
+          "name": "type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'moment_led'"
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'draft'"
+        },
+        "situation": {
+          "name": "situation",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "campaign_concept": {
+          "name": "campaign_concept",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "campaign_headline": {
+          "name": "campaign_headline",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "key_messages": {
+          "name": "key_messages",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "channel_strategy": {
+          "name": "channel_strategy",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "influencer_strategy": {
+          "name": "influencer_strategy",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "next_steps": {
+          "name": "next_steps",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "target_quarter": {
+          "name": "target_quarter",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "attachments": {
+          "name": "attachments",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "moment_id": {
+          "name": "moment_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "merchant_id": {
+          "name": "merchant_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "business_rationale": {
+          "name": "business_rationale",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "offer_mechanics": {
+          "name": "offer_mechanics",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "additional_notes": {
+          "name": "additional_notes",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "sent_at": {
+          "name": "sent_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "approved_at": {
+          "name": "approved_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "pitches_moment_id_moments_id_fk": {
+          "name": "pitches_moment_id_moments_id_fk",
+          "tableFrom": "pitches",
+          "tableTo": "moments",
+          "columnsFrom": [
+            "moment_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "pitches_merchant_id_merchants_id_fk": {
+          "name": "pitches_merchant_id_merchants_id_fk",
+          "tableFrom": "pitches",
+          "tableTo": "merchants",
+          "columnsFrom": [
+            "merchant_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    }
+  },
+  "enums": {},
+  "schemas": {},
+  "sequences": {},
+  "roles": {},
+  "policies": {},
+  "views": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
+}
