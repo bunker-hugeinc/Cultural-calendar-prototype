@@ -246,7 +246,7 @@ export function CalendarGrid({ moments }: { moments: CalendarMoment[] }) {
           </div>
 
           {/* Month columns for this quarter */}
-          <div className="flex gap-3 overflow-x-auto pb-2 items-start">
+          <div className="flex gap-3 pb-2 items-start" style={{ overflowX: "auto", overflowY: "clip" }}>
             {q.months.map((month, mi) => {
               const key = format(month, "yyyy-MM");
               return (

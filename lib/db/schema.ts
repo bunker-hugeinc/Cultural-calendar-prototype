@@ -163,3 +163,29 @@ export const pitchMerchants = pgTable("pitch_merchants", {
   merchantId: text("merchant_id").notNull().references(() => merchants.id),
   isPrimary:  boolean("is_primary").default(false),
 });
+
+// ─── CREATIVE BRIEFS ──────────────────────────────────────────────────────────
+export const briefs = pgTable("briefs", {
+  id:         text("id").primaryKey().$defaultFn(() => createId()),
+  pitchId:    text("pitch_id").references(() => pitches.id),
+  momentId:   text("moment_id").references(() => moments.id),
+  merchantId: text("merchant_id").references(() => merchants.id),
+
+  // Brief content sections
+  toplineOverview:                text("topline_overview"),
+  businessObjectives:             text("business_objectives"),
+  targetAudience:                 text("target_audience"),
+  messagingHierarchy:             text("messaging_hierarchy"),
+  creativeTacticalConsiderations: text("creative_tactical_considerations"),
+  deliverables:                   text("deliverables"),
+  successMetrics:                 text("success_metrics"),
+  timingNotes:                    text("timing_notes"),
+  foundationalInsights:           text("foundational_insights"),
+
+  // State
+  status:          text("status").default("draft"),   // 'draft' | 'final'
+  generatedAt:     timestamp("generated_at"),
+  lastAutoSavedAt: timestamp("last_auto_saved_at"),
+  createdAt:       timestamp("created_at").defaultNow(),
+  updatedAt:       timestamp("updated_at").defaultNow(),
+});

@@ -18,26 +18,40 @@ export async function GET() {
       .from(pitchMerchants).where(inArray(pitchMerchants.pitchId, pitchIds)),
   ]);
 
-  const momentIds = [...new Set(momentLinks.map(l => l.momentId))];
-  const merchantIds = [...new Set(merchantLinks.map(l => l.merchantId))];
+  // IDs from join tables + direct FK columns
+  const allMomentIds = [...new Set([
+    ...momentLinks.map(l => l.momentId),
+    ...rows.map(r => r.momentId).filter(Boolean) as string[],
+  ])];
+  const allMerchantIds = [...new Set([
+    ...merchantLinks.map(l => l.merchantId),
+    ...rows.map(r => r.merchantId).filter(Boolean) as string[],
+  ])];
 
-  const [momentNames, merchantNames] = await Promise.all([
-    momentIds.length ? db.select({ id: moments.id, name: moments.name }).from(moments).where(inArray(moments.id, momentIds)) : [],
-    merchantIds.length ? db.select({ id: merchants.id, name: merchants.name }).from(merchants).where(inArray(merchants.id, merchantIds)) : [],
+  const [momentNameRows, merchantNameRows] = await Promise.all([
+    allMomentIds.length ? db.select({ id: moments.id, name: moments.name }).from(moments).where(inArray(moments.id, allMomentIds)) : [],
+    allMerchantIds.length ? db.select({ id: merchants.id, name: merchants.name }).from(merchants).where(inArray(merchants.id, allMerchantIds)) : [],
   ]);
 
-  const momentNameMap = new Map(momentNames.map(m => [m.id, m.name]));
-  const merchantNameMap = new Map(merchantNames.map(m => [m.id, m.name]));
+  const momentNameMap = new Map(momentNameRows.map(m => [m.id, m.name]));
+  const merchantNameMap = new Map(merchantNameRows.map(m => [m.id, m.name]));
 
   const enriched = rows.map(pitch => {
     const pm = momentLinks.filter(l => l.pitchId === pitch.id);
     const pmr = merchantLinks.filter(l => l.pitchId === pitch.id);
     const primaryMoment = pm.find(l => l.isPrimary) ?? pm[0];
     const primaryMerchant = pmr.find(l => l.isPrimary) ?? pmr[0];
+    // Fall back to direct FK columns for pitches created via the new auto-generate flow
+    const momentName = primaryMoment
+      ? (momentNameMap.get(primaryMoment.momentId) ?? null)
+      : (pitch.momentId ? momentNameMap.get(pitch.momentId) ?? null : null);
+    const merchantName = primaryMerchant
+      ? (merchantNameMap.get(primaryMerchant.merchantId) ?? null)
+      : (pitch.merchantId ? merchantNameMap.get(pitch.merchantId) ?? null : null);
     return {
       ...pitch,
-      primaryMomentName: primaryMoment ? (momentNameMap.get(primaryMoment.momentId) ?? null) : null,
-      primaryMerchantName: primaryMerchant ? (merchantNameMap.get(primaryMerchant.merchantId) ?? null) : null,
+      primaryMomentName: momentName,
+      primaryMerchantName: merchantName,
       momentCount: pm.length,
       merchantCount: pmr.length,
     };

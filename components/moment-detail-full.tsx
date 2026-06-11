@@ -13,6 +13,7 @@ interface Pairing {
   merchantId: string;
   merchantName: string;
   merchantCategory: string;
+  merchantPartnerStatus?: string | null;
   relevanceScore: number;
   campaignAngle: string;
   rationale: string | null;
@@ -183,6 +184,13 @@ export function MomentDetailFull({ moment, initialPairings }: Props) {
   const [competitorGeneratedAt, setCompetitorGeneratedAt] = useState<string | null>(null);
   const [loadingCompetitor, setLoadingCompetitor] = useState(false);
   const [buildingPitch, setBuildingPitch] = useState<string | null>(null);
+  const [showMultiMerchantModal, setShowMultiMerchantModal] = useState(false);
+  const [isCreatingPitches, setIsCreatingPitches] = useState(false);
+  const [createdCount, setCreatedCount] = useState(0);
+  const [approvedPitches, setApprovedPitches] = useState<any[]>([]);
+  const [moduleHeadline, setModuleHeadline] = useState("");
+  const [moduleSubhead, setModuleSubhead] = useState("");
+  const [isGeneratingHeadline, setIsGeneratingHeadline] = useState(false);
 
   // Parse stored JSON fields
   let rationale: ScoreRationale = {};
@@ -266,9 +274,24 @@ export function MomentDetailFull({ moment, initialPairings }: Props) {
     }
   }, [moment.id]);
 
+  // Fetch approved pitches for partnership preview
+  useEffect(() => {
+    fetch(`/api/moments/${moment.id}/approved-pitches`)
+      .then(r => r.json())
+      .then(data => setApprovedPitches(data.pitches ?? []));
+  }, [moment.id]);
+
   function buildPitchFromPairing(merchantId: string) {
     router.push(`/pitch/new?momentId=${moment.id}&merchantId=${merchantId}`);
   }
+
+  // Sort pairings: dismissed to bottom, then by relevanceScore desc
+  const sortedPairings = [...pairings].sort((a, b) => {
+    const aDismissed = a.merchantPartnerStatus === "dismissed" ? 1 : 0;
+    const bDismissed = b.merchantPartnerStatus === "dismissed" ? 1 : 0;
+    if (aDismissed !== bDismissed) return aDismissed - bDismissed;
+    return (b.relevanceScore ?? 0) - (a.relevanceScore ?? 0);
+  });
 
   const selectedMerchants = pairings.filter(p => selected.has(p.id));
   const sortedSelected = [...selectedMerchants].sort((a, b) => (b.relevanceScore ?? 0) - (a.relevanceScore ?? 0));
@@ -276,6 +299,38 @@ export function MomentDetailFull({ moment, initialPairings }: Props) {
   const pitchUrl = `/pitch/new?momentId=${moment.id}${
     primaryMerchantId ? `&merchantId=${primaryMerchantId}` : ""
   }`;
+
+  async function handleCreateAllPitches() {
+    setIsCreatingPitches(true);
+    setCreatedCount(0);
+    const sortedIds = [...selectedMerchants]
+      .sort((a, b) => (b.relevanceScore ?? 0) - (a.relevanceScore ?? 0))
+      .map(m => m.merchantId);
+
+    const res = await fetch("/api/pitch/build-multi", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ momentId: moment.id, merchantIds: sortedIds }),
+    });
+    const data = await res.json();
+
+    const pitchIds = (data.pitches ?? []).map((p: any) => p.id);
+    sessionStorage.setItem("pitchQueue", JSON.stringify(pitchIds));
+
+    router.push(`/pitch/${data.firstPitchId}`);
+  }
+
+  async function handleGenerateHeadline() {
+    setIsGeneratingHeadline(true);
+    try {
+      const res = await fetch(`/api/moments/${moment.id}/module-headline`);
+      const data = await res.json();
+      setModuleHeadline(data.headline ?? "");
+      setModuleSubhead(data.subhead ?? "");
+    } finally {
+      setIsGeneratingHeadline(false);
+    }
+  }
 
   function formatDate(dateStr: string) {
     const [y, m, d] = dateStr.split("-").map(Number);
@@ -475,7 +530,7 @@ export function MomentDetailFull({ moment, initialPairings }: Props) {
       {/* ── Section: Merchant Matches ─────────────────────────────────────── */}
       <div style={{ marginBottom: 28 }}>
         <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 12 }}>
-          <p className="eyebrow">MERCHANT MATCHES</p>
+          <p className="eyebrow">MERCHANT MATCHES <span style={{ fontWeight: 400, textTransform: "none", letterSpacing: 0, color: "#86868b" }}>(dismissed shown at bottom)</span></p>
           <span style={{ fontSize: "0.78rem", color: "#86868b" }}>
             {pairings.length} partner{pairings.length !== 1 ? "s" : ""} scored
           </span>
@@ -496,7 +551,7 @@ export function MomentDetailFull({ moment, initialPairings }: Props) {
                   </tr>
                 </thead>
                 <tbody>
-                  {pairings.map(p => (
+                  {sortedPairings.map(p => (
                     <MerchantRow
                       key={p.id}
                       pairing={p}
@@ -575,13 +630,111 @@ export function MomentDetailFull({ moment, initialPairings }: Props) {
             <span style={{ fontWeight: 700, color: "#1d1d1f" }}>{selected.size}</span>
             {" "}merchant{selected.size !== 1 ? "s" : ""} selected
           </span>
-          <Link href={pitchUrl} style={{
-            fontSize: "0.88rem", fontWeight: 600, color: "white",
-            background: "#1d1d1f", padding: "9px 20px", borderRadius: 10,
-            textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 6,
-          }}>
-            Build Pitch →
-          </Link>
+          <button
+            onClick={() => selected.size === 1 ? router.push(pitchUrl) : setShowMultiMerchantModal(true)}
+            style={{
+              fontSize: "0.88rem", fontWeight: 600, color: "white",
+              background: "#1d1d1f", padding: "9px 20px", borderRadius: 10,
+              border: "none", cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 6,
+            }}
+          >
+            Build Pitch{selected.size > 1 ? "es" : ""} →
+          </button>
+        </div>
+      )}
+
+      {/* ── Multi-merchant confirmation modal ─────────────────────────────── */}
+      {showMultiMerchantModal && (
+        <div style={{
+          position: "fixed", inset: 0, background: "rgba(0,0,0,0.4)", zIndex: 60,
+          display: "flex", alignItems: "center", justifyContent: "center", padding: 16,
+        }}>
+          <div style={{ background: "white", borderRadius: 20, padding: 24, maxWidth: 420, width: "100%", boxShadow: "0 20px 60px rgba(0,0,0,0.2)" }}>
+            <h3 style={{ fontSize: "1.1rem", fontWeight: 600, color: "#1d1d1f", marginBottom: 4 }}>
+              Create {selectedMerchants.length} Partnership Pitches
+            </h3>
+            <p style={{ fontSize: "0.85rem", color: "#6e6e73", marginBottom: 16 }}>
+              Each merchant receives their own tailored pitch — you&apos;ll send them separately.
+            </p>
+
+            <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 24 }}>
+              {[...selectedMerchants]
+                .sort((a, b) => (b.relevanceScore ?? 0) - (a.relevanceScore ?? 0))
+                .map((m, i) => (
+                  <div key={m.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: "0.88rem" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      <span style={{
+                        width: 22, height: 22, borderRadius: "50%", background: "#f5f5f7",
+                        fontSize: "0.7rem", display: "flex", alignItems: "center", justifyContent: "center", color: "#6e6e73", flexShrink: 0,
+                      }}>{i + 1}</span>
+                      <span style={{ fontWeight: 600, color: "#1d1d1f" }}>{m.merchantName}</span>
+                      <span style={{ color: "#86868b" }}>{m.merchantCategory}</span>
+                    </div>
+                    <span style={{ fontWeight: 700, color: "#1d1d1f" }}>{m.relevanceScore?.toFixed(1)}</span>
+                  </div>
+                ))}
+            </div>
+
+            <div style={{ display: "flex", gap: 10 }}>
+              <button
+                onClick={() => setShowMultiMerchantModal(false)}
+                style={{ flex: 1, padding: "10px 0", borderRadius: 10, border: "1px solid #e8e8ed", background: "white", fontSize: "0.88rem", cursor: "pointer", fontFamily: "inherit" }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleCreateAllPitches}
+                disabled={isCreatingPitches}
+                style={{ flex: 1, padding: "10px 0", borderRadius: 10, background: "#1d1d1f", color: "white", border: "none", fontSize: "0.88rem", fontWeight: 600, cursor: "pointer", fontFamily: "inherit", opacity: isCreatingPitches ? 0.6 : 1 }}
+              >
+                {isCreatingPitches
+                  ? `Creating ${createdCount} of ${selectedMerchants.length}…`
+                  : `Create ${selectedMerchants.length} Pitches →`}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Section: Partnership Module Preview ──────────────────────────────── */}
+      {approvedPitches.length > 0 && (
+        <div style={{ marginBottom: 28 }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
+            <div>
+              <p className="eyebrow">PARTNERSHIP MODULE PREVIEW</p>
+              <p style={{ fontSize: "0.82rem", color: "#86868b", marginTop: 2 }}>
+                What this campaign&apos;s promotional module could look like
+              </p>
+            </div>
+            <button
+              onClick={handleGenerateHeadline}
+              disabled={isGeneratingHeadline}
+              style={{
+                fontSize: "0.75rem", padding: "6px 12px", borderRadius: 8, border: "1px solid #e8e8ed",
+                background: "white", cursor: "pointer", fontFamily: "inherit", opacity: isGeneratingHeadline ? 0.6 : 1,
+              }}
+            >
+              {isGeneratingHeadline ? "Generating…" : "✨ Generate Headline"}
+            </button>
+          </div>
+
+          {moduleHeadline && (
+            <div style={{ marginBottom: 20 }}>
+              <h3 style={{ fontSize: "1.6rem", fontWeight: 700, color: "#1d1d1f", marginBottom: 4 }}>{moduleHeadline}</h3>
+              {moduleSubhead && <p style={{ fontSize: "1rem", color: "#6e6e73" }}>{moduleSubhead}</p>}
+            </div>
+          )}
+
+          <div style={{ display: "flex", gap: 16, overflowX: "auto", paddingBottom: 8, marginLeft: -4, paddingLeft: 4 }}>
+            {approvedPitches.map((pitch: any) => (
+              <MerchantPreviewCard
+                key={pitch.id}
+                merchantName={pitch.merchant?.name ?? ""}
+                tagline={pitch.offerMechanics?.split(".")[0] ?? ""}
+                category={pitch.merchant?.category ?? ""}
+              />
+            ))}
+          </div>
         </div>
       )}
 
@@ -615,6 +768,62 @@ export function MomentDetailFull({ moment, initialPairings }: Props) {
         </div>
       </div>
 
+    </div>
+  );
+}
+
+// ── Merchant Preview Card ─────────────────────────────────────────────────────
+
+function MerchantPreviewCard({
+  merchantName,
+  tagline,
+  category,
+}: {
+  merchantName: string;
+  tagline: string;
+  category: string;
+}) {
+  const domain = merchantName.toLowerCase().replace(/[^a-z0-9]/g, "") + ".com";
+  const logoUrl = `https://logo.clearbit.com/${domain}`;
+  const [logoError, setLogoError] = useState(false);
+
+  return (
+    <div style={{
+      flexShrink: 0, width: 224, background: "#f9f9fb", borderRadius: 16,
+      padding: 20, display: "flex", flexDirection: "column", gap: 12,
+      border: "1px solid #f0f0f5",
+    }}>
+      <div style={{
+        width: 56, height: 56, borderRadius: 14, background: "white", border: "1px solid #e8e8ed",
+        display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden",
+      }}>
+        {!logoError ? (
+          <img
+            src={logoUrl}
+            alt={merchantName}
+            style={{ width: 40, height: 40, objectFit: "contain" }}
+            onError={() => setLogoError(true)}
+          />
+        ) : (
+          <span style={{ fontSize: "1.3rem", fontWeight: 700, color: "#86868b" }}>
+            {merchantName[0]}
+          </span>
+        )}
+      </div>
+
+      <div>
+        <p style={{ fontWeight: 600, color: "#1d1d1f", fontSize: "0.88rem", marginBottom: 2 }}>{merchantName}</p>
+        <p style={{ color: "#6e6e73", fontSize: "0.75rem", lineHeight: 1.4, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
+          {tagline || `Pay with Apple Pay at ${merchantName}.`}
+        </p>
+      </div>
+
+      <button style={{
+        marginTop: "auto", padding: "8px 16px", background: "#1d1d1f", color: "white",
+        fontSize: "0.75rem", fontWeight: 600, borderRadius: 20, border: "none", cursor: "pointer", fontFamily: "inherit",
+      }}>
+        Shop now
+      </button>
     </div>
   );
 }
@@ -655,9 +864,16 @@ function MerchantRow({
           />
         </td>
         <td style={{ padding: "10px 14px", fontWeight: 600, fontSize: "0.88rem", color: "#1d1d1f" }}>
-          <Link href={`/merchants/${pairing.merchantId}`} onClick={e => e.stopPropagation()} style={{ color: "#1d1d1f", textDecoration: "none" }}>
-            {pairing.merchantName}
-          </Link>
+          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+            <Link href={`/merchants/${pairing.merchantId}`} onClick={e => e.stopPropagation()} style={{ color: "#1d1d1f", textDecoration: "none" }}>
+              {pairing.merchantName}
+            </Link>
+            {pairing.merchantPartnerStatus === "dismissed" && (
+              <span style={{ fontSize: "0.65rem", padding: "1px 6px", borderRadius: 6, background: "rgba(255,59,48,0.1)", color: "#cc2200", fontWeight: 700 }}>
+                Dismissed
+              </span>
+            )}
+          </div>
         </td>
         <td style={{ padding: "10px 14px", fontSize: "0.82rem", color: "#86868b" }}>{pairing.merchantCategory}</td>
         <td style={{ padding: "10px 14px", whiteSpace: "nowrap" }}>

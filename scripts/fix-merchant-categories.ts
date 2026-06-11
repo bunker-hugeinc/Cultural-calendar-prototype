@@ -3,6 +3,7 @@ import { merchants } from "../lib/db/schema";
 import { eq } from "drizzle-orm";
 
 const categoryFixes: { name: string; category: string }[] = [
+  { name: "Bed Bath & Beyond", category: "Home Goods Retail" },
   { name: "ESPN", category: "Media & Sports" },
   { name: "CVS", category: "Retail Pharmacy" },
   { name: "Dick's Sporting Goods", category: "Sporting Goods Retail" },

@@ -27,6 +27,7 @@ export default async function MomentDetailPage({
       merchantId: pairingScores.merchantId,
       merchantName: merchants.name,
       merchantCategory: merchants.category,
+      merchantPartnerStatus: merchants.partnerStatus,
       relevanceScore: pairingScores.relevanceScore,
       campaignAngle: pairingScores.campaignAngle,
       rationale: pairingScores.rationale,

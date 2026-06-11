@@ -143,6 +143,8 @@ export default function PitchDocumentPage() {
   const [copied, setCopied] = useState(false);
   const [pocData, setPocData] = useState<POCData | null>(null);
   const [isSearchingPOC, setIsSearchingPOC] = useState(false);
+  const [pitchQueue, setPitchQueue] = useState<string[]>([]);
+  const [currentPitchIndex, setCurrentPitchIndex] = useState(-1);
 
   const saveTimeouts = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
 
@@ -169,6 +171,19 @@ export default function PitchDocumentPage() {
         if (mch?.name) setMerchantName(mch.name);
       })
       .finally(() => setLoading(false));
+
+    // Load pitch queue from sessionStorage
+    try {
+      const stored = sessionStorage.getItem("pitchQueue");
+      if (stored) {
+        const queue: string[] = JSON.parse(stored);
+        const idx = queue.indexOf(id);
+        if (idx >= 0) {
+          setPitchQueue(queue);
+          setCurrentPitchIndex(idx);
+        }
+      }
+    } catch { /* ignore */ }
   }, [id]);
 
   // Auto-generate if ?generate=true
@@ -276,6 +291,37 @@ export default function PitchDocumentPage() {
 
   return (
     <div style={{ padding: "40px 24px", maxWidth: 800, margin: "0 auto" }}>
+
+      {/* ── Pitch queue nav bar ──────────────────────────────────────────── */}
+      {pitchQueue.length > 1 && (
+        <div style={{
+          background: "#eff6ff", border: "1px solid #dbeafe", borderRadius: 10,
+          padding: "10px 16px", display: "flex", alignItems: "center", justifyContent: "space-between",
+          marginBottom: 24, fontSize: "0.85rem",
+        }}>
+          <span style={{ color: "#1d4ed8" }}>
+            Pitch {currentPitchIndex + 1} of {pitchQueue.length} — {merchantName || displayMerchant}
+          </span>
+          <div style={{ display: "flex", gap: 12 }}>
+            {currentPitchIndex > 0 && (
+              <button
+                onClick={() => router.push(`/pitch/${pitchQueue[currentPitchIndex - 1]}`)}
+                style={{ background: "none", border: "none", cursor: "pointer", color: "#2563eb", fontSize: "0.85rem" }}
+              >
+                ← Previous
+              </button>
+            )}
+            {currentPitchIndex < pitchQueue.length - 1 && (
+              <button
+                onClick={() => router.push(`/pitch/${pitchQueue[currentPitchIndex + 1]}`)}
+                style={{ background: "none", border: "none", cursor: "pointer", color: "#2563eb", fontWeight: 600, fontSize: "0.85rem" }}
+              >
+                Next Pitch →
+              </button>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* ── Back + header controls ───────────────────────────────────────── */}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 24, flexWrap: "wrap", gap: 12 }}>
@@ -587,7 +633,7 @@ export default function PitchDocumentPage() {
         {pitch.status === "approved" ? (
           <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8 }}>
             <Link
-              href={pitch.momentId ? `/moments/${pitch.momentId}/brief` : "#"}
+              href={`/pitch/${id}/brief`}
               style={{
                 display: "block", width: "100%", maxWidth: 360, textAlign: "center",
                 padding: "12px 24px", background: "#1d1d1f", color: "white",
