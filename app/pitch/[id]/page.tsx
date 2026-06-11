@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useRef, useCallback } from "react";
-import { useParams, useRouter, useSearchParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 
 // ── Types ────────────────────────────────────────────────────────────────────
@@ -132,7 +132,7 @@ const STATUS_META: Record<string, { label: string; bg: string; color: string; bo
 export default function PitchDocumentPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
-  const searchParams = useSearchParams();
+
 
   const [pitch, setPitch] = useState<PitchData | null>(null);
   const [momentName, setMomentName] = useState("");
@@ -191,13 +191,16 @@ export default function PitchDocumentPage() {
     } catch { /* ignore */ }
   }, [id]);
 
-  // Auto-generate if ?generate=true
+  // Auto-generate if ?generate=true (read from window.location to avoid useSearchParams Suspense requirement)
   useEffect(() => {
-    if (!loading && pitch && searchParams.get("generate") === "true") {
-      handleGenerate();
-      router.replace(`/pitch/${id}`);
+    if (!loading && pitch && id) {
+      const shouldGenerate = new URLSearchParams(window.location.search).get("generate") === "true";
+      if (shouldGenerate) {
+        handleGenerate();
+        router.replace(`/pitch/${id}`);
+      }
     }
-  }, [loading, pitch]);
+  }, [loading, pitch, id]);
 
   async function handleGenerate() {
     setGenerating(true);
