@@ -1,10 +1,29 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 const MONO = `"SF Pro Mono","SFMono-Regular",ui-monospace,monospace`;
 const SANS = `-apple-system,"SF Pro Text",BlinkMacSystemFont,sans-serif`;
 const DISP = `"SF Pro Display",-apple-system,BlinkMacSystemFont,sans-serif`;
+
+const PROGRESS_STAGES = [
+  "Finding relevant creators…",
+  "Analyzing content niches…",
+  "Matching audience profiles…",
+  "Evaluating moment alignment…",
+  "Finalizing recommendations…",
+];
+
+function ProgressMessage() {
+  const [stage, setStage] = useState(0);
+  useEffect(() => {
+    const interval = setInterval(() => setStage(prev => (prev + 1) % PROGRESS_STAGES.length), 4000);
+    return () => clearInterval(interval);
+  }, []);
+  return (
+    <span style={{ fontFamily: SANS, fontSize: 12, color: "#6e6e73" }}>{PROGRESS_STAGES[stage]}</span>
+  );
+}
 
 interface CreatorType {
   type: string;
@@ -73,7 +92,7 @@ export function InfluencerPanel({ momentId, hasPairings }: InfluencerPanelProps)
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ animation: "spin .8s linear infinite" }}>
               <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
             </svg>
-            Thinking…
+            <ProgressMessage />
           </>
         ) : (
           <>

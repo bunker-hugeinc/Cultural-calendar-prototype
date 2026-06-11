@@ -40,12 +40,11 @@ const CAT_BORDER: Record<string, string> = {
   excite:  "rgba(0,113,227,0.25)",
 };
 
-// Score bar colour
-function scoreColor(score: number | null): string {
+function scoreTextColor(score: number | null): string {
   if (score === null) return "#d2d2d7";
-  if (score >= 7)     return "#34c759";
-  if (score >= 4)     return "#ff9f0a";
-  return                     "#ff3b30";
+  if (score >= 7)     return "#248a3d";
+  if (score >= 4)     return "#c47c00";
+  return                     "#cc2200";
 }
 
 // Date display for a moment
@@ -60,23 +59,17 @@ function momentDateLabel(m: CalendarMoment): string {
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
-function ScoreBar({ score }: { score: number | null }) {
-  const pct   = score !== null ? Math.round((score / 10) * 100) : 0;
-  const color = scoreColor(score);
+function ScoreBadge({ score }: { score: number | null }) {
+  if (score === null) return null;
+  const color = scoreTextColor(score);
+  const bg = score >= 7 ? "rgba(52,199,89,0.10)" : score >= 4 ? "rgba(255,159,10,0.10)" : "rgba(255,59,48,0.10)";
   return (
-    <div className="flex items-center gap-2">
-      <div className="flex-1 rounded-full overflow-hidden" style={{ height: 3, backgroundColor: "#e8e8ed" }}>
-        <div
-          className="h-full rounded-full transition-all"
-          style={{ width: `${pct}%`, backgroundColor: color }}
-        />
-      </div>
-      {score !== null && (
-        <span className="text-[11px] font-semibold tabular-nums shrink-0" style={{ color, minWidth: 22 }}>
-          {score.toFixed(1)}
-        </span>
-      )}
-    </div>
+    <span
+      className="text-[10px] font-bold tabular-nums px-1.5 py-0.5 rounded-full shrink-0"
+      style={{ color, backgroundColor: bg }}
+    >
+      {score.toFixed(1)}
+    </span>
   );
 }
 
@@ -102,8 +95,8 @@ function MomentCard({ m }: { m: CalendarMoment }) {
           {m.name}
         </p>
 
-        {/* Date + category pill */}
-        <div className="flex items-center gap-2 mb-2.5">
+        {/* Date + category pill + score badge */}
+        <div className="flex items-center gap-2 flex-wrap">
           <span className="text-[11px] text-[#86868b] tabular-nums">{momentDateLabel(m)}</span>
           <span
             className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full capitalize"
@@ -111,10 +104,8 @@ function MomentCard({ m }: { m: CalendarMoment }) {
           >
             {m.category}
           </span>
+          <ScoreBadge score={m.score} />
         </div>
-
-        {/* Score bar */}
-        <ScoreBar score={m.score} />
       </div>
     </Link>
   );
@@ -136,9 +127,9 @@ function MonthColumn({ month, moments, isNow }: MonthColProps) {
     <div className="min-w-[220px] flex-1">
       {/* Month header */}
       <div
-        className="sticky top-[48px] z-10 px-3 pt-3 pb-2 rounded-t-xl"
+        className="sticky top-[52px] z-10 px-3 pt-3 pb-2 rounded-t-xl"
         style={{
-          backgroundColor: isNow ? "rgba(0,113,227,0.05)" : "#f5f5f7",
+          backgroundColor: isNow ? "#edf4fe" : "#f5f5f7",
           borderBottom: `1px solid ${isNow ? "rgba(0,113,227,0.20)" : "#e8e8ed"}`,
         }}
       >

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { InfluencerPanel } from "@/components/influencer-panel";
@@ -72,6 +72,32 @@ interface MomentData {
 interface Props {
   moment: MomentData;
   initialPairings: Pairing[];
+}
+
+// ── Progress message ──────────────────────────────────────────────────────────
+
+const EVAL_STAGES = [
+  "Analyzing moment signals…",
+  "Scoring ecommerce potential…",
+  "Evaluating audience alignment…",
+  "Mapping competitor landscape…",
+  "Finalizing recommendations…",
+];
+
+function ProgressMessage({ stages }: { stages?: string[] }) {
+  const list = stages ?? EVAL_STAGES;
+  const [stage, setStage] = useState(0);
+  useEffect(() => {
+    const interval = setInterval(() => setStage(prev => (prev + 1) % list.length), 4000);
+    return () => clearInterval(interval);
+  }, [list.length]);
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+      <div style={{ width: 14, height: 14, border: "2px solid #0071e3", borderTopColor: "transparent", borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />
+      <span style={{ fontSize: "0.85rem", color: "#0071e3", fontWeight: 500 }}>{list[stage]}</span>
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+    </div>
+  );
 }
 
 // ── Score helpers ──────────────────────────────────────────────────────────────
@@ -194,8 +220,8 @@ export function MomentDetailFull({ moment, initialPairings }: Props) {
         setScoreError(data.error ?? "Scoring failed");
         return;
       }
-      // Refresh moment data + pairings
-      const refreshed = await fetch(`/api/moments/${moment.id}`).then(r => r.json());
+      // Refresh moment data + pairings (no-store to bypass Next.js route cache)
+      const refreshed = await fetch(`/api/moments/${moment.id}`, { cache: "no-store" }).then(r => r.json());
       if (refreshed.pairings) setPairings(refreshed.pairings);
 
       let newRationale: ScoreRationale = {};
@@ -256,9 +282,13 @@ export function MomentDetailFull({ moment, initialPairings }: Props) {
   }
 
   const selectedMerchants = pairings.filter(p => selected.has(p.id));
+  const sortedSelected = [...selectedMerchants].sort((a, b) => (b.relevanceScore ?? 0) - (a.relevanceScore ?? 0));
+  const primaryMerchantId = sortedSelected[0]?.merchantId ?? null;
   const pitchUrl = `/pitches/new?momentId=${moment.id}${
-    selectedMerchants.length > 0
-      ? "&merchantIds=" + selectedMerchants.map(p => p.merchantId).join(",")
+    primaryMerchantId ? `&primaryMerchantId=${primaryMerchantId}` : ""
+  }${
+    sortedSelected.length > 1
+      ? "&merchantIds=" + sortedSelected.slice(1).map(p => p.merchantId).join(",")
       : ""
   }`;
 
@@ -335,9 +365,8 @@ export function MomentDetailFull({ moment, initialPairings }: Props) {
         <p className="eyebrow" style={{ marginBottom: 12 }}>AI EVALUATION</p>
 
         {scoring && (
-          <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "14px 18px", background: "rgba(0,113,227,0.06)", border: "1px solid rgba(0,113,227,0.2)", borderRadius: 12, marginBottom: 12 }}>
-            <span className="spinner" style={{ color: "#0071e3" }} />
-            <span style={{ fontSize: "0.85rem", color: "#0071e3", fontWeight: 500 }}>Claude is evaluating ecommerce fit, audience reach, and competitive landscape…</span>
+          <div style={{ padding: "14px 18px", background: "rgba(0,113,227,0.06)", border: "1px solid rgba(0,113,227,0.2)", borderRadius: 12, marginBottom: 12 }}>
+            <ProgressMessage />
           </div>
         )}
 
@@ -401,7 +430,7 @@ export function MomentDetailFull({ moment, initialPairings }: Props) {
       </div>
 
       {/* ── Section 3: Competitor Landscape ─────────────────────────────────── */}
-      <div style={{ marginBottom: 28 }}>
+      <div style={{ marginBottom: 28, minHeight: 80 }}>
         <p className="eyebrow" style={{ marginBottom: 12 }}>COMPETITOR LANDSCAPE</p>
         {competitorData ? (
           <div className="card-p" style={{ display: "flex", flexDirection: "column", gap: 16 }}>
@@ -445,15 +474,15 @@ export function MomentDetailFull({ moment, initialPairings }: Props) {
             </div>
             <CacheFooter fromCache={competitorFromCache} generatedAt={competitorGeneratedAt} onRegenerate={() => loadCompetitor(true)} isRegenerating={loadingCompetitor} />
           </div>
+        ) : loadingCompetitor ? (
+          <ProgressMessage stages={["Scanning competitor activations…","Checking payment brand presence…","Assessing dominance levels…","Identifying white space…","Finalizing analysis…"]} />
         ) : (
           <button
             onClick={() => loadCompetitor(false)}
-            disabled={loadingCompetitor}
             className="btn btn-outline"
             style={{ display: "inline-flex", alignItems: "center", gap: 6 }}
           >
-            {loadingCompetitor && <span className="spinner" />}
-            {loadingCompetitor ? "Analyzing…" : "Analyze Competitor Landscape"}
+            Analyze Competitor Landscape
           </button>
         )}
       </div>
@@ -477,7 +506,6 @@ export function MomentDetailFull({ moment, initialPairings }: Props) {
                     <th style={{ padding: "10px 14px", textAlign: "left" }} className="eyebrow">Merchant</th>
                     <th style={{ padding: "10px 14px", textAlign: "left" }} className="eyebrow">Category</th>
                     <th style={{ padding: "10px 14px", textAlign: "left" }} className="eyebrow">Score</th>
-                    <th style={{ padding: "10px 14px", textAlign: "left" }} className="eyebrow">Offer Type</th>
                     <th style={{ padding: "10px 14px", textAlign: "left" }} className="eyebrow">Campaign Angle</th>
                     <th style={{ padding: "10px 12px" }} />
                   </tr>
@@ -497,20 +525,7 @@ export function MomentDetailFull({ moment, initialPairings }: Props) {
               </table>
             </div>
 
-            {selected.size > 0 && (
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 16px", background: "#1d1d1f", borderRadius: 12 }}>
-                <span style={{ fontSize: "0.85rem", color: "white" }}>
-                  {selected.size} merchant{selected.size !== 1 ? "s" : ""} selected
-                </span>
-                <Link href={pitchUrl} style={{
-                  fontSize: "0.85rem", fontWeight: 600, color: "white",
-                  background: "#0071e3", padding: "7px 16px", borderRadius: 8,
-                  textDecoration: "none",
-                }}>
-                  Build Pitch with Selected →
-                </Link>
-              </div>
-            )}
+            {/* Sticky selection bar — rendered at bottom of viewport */}
           </>
         ) : (
           <div className="card-p" style={{ textAlign: "center", padding: "24px", background: "rgba(0,113,227,0.04)", border: "1px solid rgba(0,113,227,0.15)" }}>
@@ -561,6 +576,29 @@ export function MomentDetailFull({ moment, initialPairings }: Props) {
           <InfluencerPanel momentId={moment.id} hasPairings={pairings.length > 0} />
         </div>
       </div>
+
+      {/* ── Fixed sticky selection bar ─────────────────────────────────────── */}
+      {selected.size > 0 && (
+        <div style={{
+          position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 50,
+          background: "white", borderTop: "1px solid #e8e8ed",
+          boxShadow: "0 -4px 24px rgba(0,0,0,0.08)",
+          padding: "12px 24px",
+          display: "flex", alignItems: "center", justifyContent: "space-between",
+        }}>
+          <span style={{ fontSize: "0.88rem", color: "#6e6e73" }}>
+            <span style={{ fontWeight: 700, color: "#1d1d1f" }}>{selected.size}</span>
+            {" "}merchant{selected.size !== 1 ? "s" : ""} selected
+          </span>
+          <Link href={pitchUrl} style={{
+            fontSize: "0.88rem", fontWeight: 600, color: "white",
+            background: "#1d1d1f", padding: "9px 20px", borderRadius: 10,
+            textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 6,
+          }}>
+            Build Pitch →
+          </Link>
+        </div>
+      )}
 
       {/* ── Section 6: Moment Context ────────────────────────────────────────── */}
       <div style={{ marginBottom: 28 }}>
@@ -657,17 +695,6 @@ function MerchantRow({
             )}
           </div>
         </td>
-        <td style={{ padding: "10px 14px" }}>
-          {offerType ? (
-            <span style={{
-              fontSize: "0.7rem", fontWeight: 600, padding: "2px 8px", borderRadius: 10,
-              background: "#f5f5f7", color: "#1d1d1f",
-              whiteSpace: "nowrap",
-            }}>
-              {offerType}
-            </span>
-          ) : <span style={{ color: "#d2d2d7" }}>—</span>}
-        </td>
         <td style={{ padding: "10px 14px", fontSize: "0.82rem", color: "#1d1d1f", lineHeight: 1.4 }}>{pairing.campaignAngle}</td>
         <td style={{ padding: "10px 12px" }} onClick={e => e.stopPropagation()}>
           <button
@@ -682,7 +709,7 @@ function MerchantRow({
       {expanded && rationaleText && (
         <tr style={{ borderBottom: "1px solid #f0f0f5", background: selected ? "rgba(0,113,227,0.04)" : "#fafafa" }}>
           <td />
-          <td colSpan={5} style={{ padding: "8px 14px 14px", fontSize: "0.8rem", color: "#6e6e73", lineHeight: 1.6 }}>
+          <td colSpan={4} style={{ padding: "8px 14px 14px", fontSize: "0.8rem", color: "#6e6e73", lineHeight: 1.6 }}>
             {rationaleText}
           </td>
         </tr>

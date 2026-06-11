@@ -189,6 +189,15 @@ export function PitchDetailClient({ pitch, allMoments, allMerchants }: Props) {
         setInfluencers(data.influencers);
         showToast("Influencer strategy generated");
       }
+      if (section === "all") {
+        if (data.situation) setSituation(data.situation);
+        if (data.headline) setHeadline(data.headline);
+        if (data.description) setDescription(data.description);
+        if (data.keyMessages) setKeyMessages(data.keyMessages);
+        if (data.channels) setChannels(data.channels);
+        if (data.influencers) setInfluencers(data.influencers);
+        showToast("All pitch sections generated");
+      }
     } finally {
       setGen(g => ({ ...g, [section]: false }));
     }

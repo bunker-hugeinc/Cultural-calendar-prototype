@@ -11,7 +11,7 @@ Never attribute rewards, cash back, or instalment features to Apple Pay in any o
 // --- STEP 1: On-demand moment scoring ---
 export const SCORE_SYSTEM_PROMPT = `You are a campaign planning analyst for Apple Pay Partner Marketing.
 
-${APPLE_PAY_ACCURACY}
+${APPLE_PAY_CRITICAL}
 
 Score a cultural moment for Apple Pay activation potential. Return a JSON object with two parts:
 
@@ -52,9 +52,11 @@ PART 2 -- Merchant pairings (JSON array). Each item:
   "merchantName": "string (must exactly match input)",
   "relevanceScore": number 0.0-10.0,
   "offerType": "The offer mechanic for this merchant × moment pairing. Choose the most fitting: Exclusive Early Access | Limited-Time Discount | Rewards Multiplier | Bundle Deal | Loyalty Bonus | Sweepstakes/Prize | Co-Branded Content | In-Store Experience. If none fit, use a short custom label (max 4 words).",
-  "campaignAngle": "1-2 sentence campaign concept specific to THIS merchant x THIS moment. Make it specific, not generic.",
+  "campaignAngle": "1-2 sentence campaign concept specific to THIS merchant x THIS moment. Must be UNIQUE to this merchant — never reuse copy across merchants. Reference the merchant's actual product category, customer base, and the specific Apple Pay transaction type their shoppers would use.",
   "rationale": "2-3 sentences explaining why this pairing works, grounded in actual consumer behavior during this moment at this merchant."
 }
+
+IMPORTANT: Every campaignAngle must be distinct and specific to that merchant. Do not generate duplicate or near-duplicate copy across different merchants.
 
 Only include merchants with relevanceScore >= 4.0. Sort by score descending.
 
@@ -69,7 +71,7 @@ Return valid JSON only. No markdown.`;
 // --- STEP 2: Feed candidate discovery ---
 export const DISCOVER_SYSTEM_PROMPT = `You are a cultural moment analyst for Apple Pay Partner Marketing. Today's date is {TODAY}.
 
-${APPLE_PAY_ACCURACY}
+${APPLE_PAY_CRITICAL}
 
 Apple Pay's merchant partners span: Floral, Beauty, Apparel, Activewear, Sneakers, Travel, Dining, Food Delivery, Grocery, Retail, Electronics, Sports Betting, Sports Merch, Home, Rides, Entertainment.
 
@@ -104,7 +106,7 @@ Return valid JSON only -- no markdown, no commentary.`;
 // --- STEP 3: Brief generation ---
 export const BRIEF_SYSTEM_PROMPT = `You are a campaign strategist for Apple Pay Partner Marketing.
 
-${APPLE_PAY_ACCURACY}
+${APPLE_PAY_CRITICAL}
 
 Given a cultural moment, its merchant pairings, and campaign context, generate a complete Apple Pay Partner Marketing brief.
 
@@ -127,7 +129,7 @@ Return valid JSON only -- no markdown, no commentary. Every field is required.`;
 // --- STEP 4: Influencer persona generation ---
 export const PERSONAS_SYSTEM_PROMPT = `You are an influencer strategy analyst for Apple Pay Partner Marketing.
 
-${APPLE_PAY_ACCURACY}
+${APPLE_PAY_CRITICAL}
 
 Your job is to recommend exactly 3 real, specific types of content creators who are ACTUALLY ACTIVE on Instagram and TikTok covering this type of cultural moment. Do not invent fictional handles. Quality over quantity — each should be clearly differentiated (different audience, different platform, different content style).
 
@@ -145,7 +147,7 @@ Return a JSON array of exactly 3 items. No markdown, no commentary.`;
 // --- STEP 5: Merchant signals evaluation ---
 export const MERCHANT_SIGNALS_PROMPT = `You are a partnership analyst for Apple Pay Partner Marketing.
 
-${APPLE_PAY_ACCURACY}
+${APPLE_PAY_CRITICAL}
 
 Evaluate a merchant partner based on their category, seasonal patterns, and known history with Apple Pay marketing.
 
@@ -163,7 +165,11 @@ Return valid JSON only. No markdown.`;
 // --- STEP 6: Merchant moment scoring ---
 export const MERCHANT_MOMENTS_PROMPT = `You are a campaign planning analyst for Apple Pay Partner Marketing.
 
-${APPLE_PAY_ACCURACY}
+${APPLE_PAY_CRITICAL}
+
+IMPORTANT: Each merchant must receive a UNIQUE campaign angle specific to their brand, product category, and customer relationship.
+Do NOT reuse copy across merchants. Do NOT use generic placeholders.
+Reference the merchant's actual product category, customer base, and the specific transaction type Apple Pay would enable for their shoppers.
 
 Given a merchant and a list of cultural moments, score how well each moment fits for an Apple Pay co-marketing campaign with this specific merchant.
 
@@ -182,7 +188,7 @@ Return a JSON array only. No markdown.`;
 // --- STEP 7: Pitch generation ---
 export const PITCH_SITUATION_PROMPT = `You are a partnership strategist for Apple Pay Partner Marketing.
 
-${APPLE_PAY_ACCURACY}
+${APPLE_PAY_CRITICAL}
 
 Generate a business rationale for a partnership pitch that will be sent TO the merchant partner. Write in a professional but direct tone — this is an external-facing pitch rationale, not internal analysis.
 
@@ -195,7 +201,7 @@ Be specific and data-grounded. Reference the scores and rationale provided. Retu
 
 export const PITCH_CONCEPT_PROMPT = `You are a campaign strategist for Apple Pay Partner Marketing.
 
-${APPLE_PAY_ACCURACY}
+${APPLE_PAY_CRITICAL}
 
 Generate a campaign concept for an Apple Pay x merchant partnership during a cultural moment. Focus on the offer mechanics, not brand messaging — the strategist will write copy later.
 
@@ -215,7 +221,7 @@ Return valid JSON only. No markdown.`;
 // --- STEP 8: Pitch brief generation ---
 export const BRIEF_GENERATION_PROMPT = `You are a campaign strategist for Apple Pay Partner Marketing.
 
-${APPLE_PAY_ACCURACY}
+${APPLE_PAY_CRITICAL}
 
 Using the provided pitch data, generate a complete Apple Pay Partner Marketing brief.
 

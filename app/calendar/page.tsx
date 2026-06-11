@@ -233,20 +233,10 @@ export default function CalendarPage() {
           ))}
         </div>
 
-        {/* Score legend */}
+        {/* Legend */}
         {!loading && moments.length > 0 && (
           <div className="flex items-center gap-3">
-            <span className="text-[11px] text-apple-gray-400 font-medium tracking-wide uppercase">Score</span>
-            {[
-              { color: "#34c759", label: "≥ 7" },
-              { color: "#ff9f0a", label: "4 – 6" },
-              { color: "#ff3b30", label: "< 4" },
-            ].map(s => (
-              <span key={s.label} className="flex items-center gap-1">
-                <span className="w-2 h-2 rounded-full" style={{ backgroundColor: s.color }} />
-                <span className="text-[11px] text-apple-gray-400">{s.label}</span>
-              </span>
-            ))}
+            <span className="text-[11px] text-apple-gray-400 font-medium tracking-wide uppercase">Color = type · Badge = AI score</span>
           </div>
         )}
       </div>

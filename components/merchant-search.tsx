@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 
 interface MerchantMatch {
@@ -12,6 +13,7 @@ interface MerchantRec {
 }
 
 export function MerchantSearch() {
+  const router = useRouter();
   const [query, setQuery] = useState("");
   const [matches, setMatches] = useState<MerchantMatch[] | null>(null);
   const [recommendations, setRecommendations] = useState<MerchantRec[]>([]);
@@ -46,6 +48,7 @@ export function MerchantSearch() {
         body: JSON.stringify({ name: rec.name, category: rec.category, rationale: rec.rationale }),
       });
       setAddedIndices(prev => new Set([...prev, index]));
+      router.refresh();
     } finally {
       setAddingIndex(null);
     }

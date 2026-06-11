@@ -3,7 +3,7 @@ import { db } from "@/lib/db";
 import { pitches, pitchMoments, pitchMerchants, moments, merchants } from "@/lib/db/schema";
 import { eq, inArray } from "drizzle-orm";
 import { callClaude, parseJSON } from "@/lib/ai";
-import { PITCH_SITUATION_PROMPT, PITCH_CONCEPT_PROMPT } from "@/lib/prompts";
+import { PITCH_SITUATION_PROMPT, PITCH_CONCEPT_PROMPT, APPLE_PAY_CRITICAL } from "@/lib/prompts";
 
 export const maxDuration = 60;
 
@@ -150,29 +150,66 @@ Outreach Approach: ${signals.outreachApproach ?? ""}`;
   }
 
   if (section === "all") {
-    // Run situation + concept + channels sequentially
     const results: Record<string, unknown> = {};
 
-    const sitRaw = await callClaude({ system: PITCH_SITUATION_PROMPT, user: `${momentCtx}\n\n${merchantCtx}`, model: "claude-sonnet-4-6", maxTokens: 512, temperature: 0.3 });
+    // Run situation + concept in parallel, then channels + influencers
+    const [sitRaw, conRaw] = await Promise.all([
+      callClaude({ system: PITCH_SITUATION_PROMPT, user: `${momentCtx}\n\n${merchantCtx}`, model: "claude-sonnet-4-6", maxTokens: 512, temperature: 0.3 }),
+      callClaude({ system: PITCH_CONCEPT_PROMPT, user: `${momentCtx}\n\n${merchantCtx}`, model: "claude-sonnet-4-6", maxTokens: 512, temperature: 0.4 }),
+    ]);
+
     results.situation = sitRaw.trim();
 
-    const conRaw = await callClaude({ system: PITCH_CONCEPT_PROMPT, user: `${momentCtx}\n\n${merchantCtx}`, model: "claude-sonnet-4-6", maxTokens: 512, temperature: 0.4 });
+    let concept: { headline: string; description: string; keyMessages: string[] } | null = null;
     try {
-      const concept = parseJSON<{ headline: string; description: string; keyMessages: string[] }>(conRaw);
+      concept = parseJSON<{ headline: string; description: string; keyMessages: string[] }>(conRaw);
       results.headline = concept.headline;
       results.description = concept.description;
       results.keyMessages = concept.keyMessages;
+    } catch { /* concept stays null */ }
 
-      await db.update(pitches).set({
-        situation: sitRaw.trim(),
+    // Channels
+    let channels: unknown = null;
+    if (moment?.channelRecommendations) {
+      try { channels = JSON.parse(moment.channelRecommendations); } catch { /* */ }
+    }
+    if (!channels) {
+      try {
+        const chRaw = await callClaude({
+          system: `${APPLE_PAY_CRITICAL}\n\nYou are a campaign strategist for Apple Pay Partner Marketing. Return a JSON array of 4 channel recommendations (apple_owned, partner_owned, external, influencer). Each: { channel, channelLabel, recommended: boolean, rationale, suggestedFormat }. Return valid JSON only.`,
+          user: `${momentCtx}\n\n${merchantCtx}`,
+          model: "claude-haiku-4-5-20251001",
+          maxTokens: 1024,
+          temperature: 0.3,
+        });
+        channels = parseJSON(chRaw);
+      } catch { /* */ }
+    }
+    if (channels) results.channels = channels;
+
+    // Influencers
+    let influencers: unknown = null;
+    if (primaryMomentId) {
+      try {
+        const infRes = await fetch(`${process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"}/api/moments/${primaryMomentId}/personas`, { method: "POST" });
+        const infData = await infRes.json();
+        if (infData.personas) influencers = infData.personas;
+      } catch { /* */ }
+    }
+    if (influencers) results.influencers = influencers;
+
+    // Persist everything
+    await db.update(pitches).set({
+      situation: sitRaw.trim(),
+      ...(concept ? {
         campaignHeadline: concept.headline,
         campaignConcept: concept.description,
         keyMessages: JSON.stringify(concept.keyMessages),
-        updatedAt: new Date(),
-      }).where(eq(pitches.id, id));
-    } catch {
-      await db.update(pitches).set({ situation: sitRaw.trim(), updatedAt: new Date() }).where(eq(pitches.id, id));
-    }
+      } : {}),
+      ...(channels ? { channelStrategy: JSON.stringify(channels) } : {}),
+      ...(influencers ? { influencerStrategy: JSON.stringify(influencers) } : {}),
+      updatedAt: new Date(),
+    }).where(eq(pitches.id, id));
 
     return NextResponse.json(results);
   }

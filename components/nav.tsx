@@ -15,7 +15,6 @@ export function Nav() {
     { href: "/calendar",  label: "Calendar"  },
     { href: "/merchants", label: "Merchants" },
     { href: "/pitches",   label: "Pitches"   },
-    { href: "/pitch",     label: "AI Pitches" },
     { href: "/feed",      label: "Feed"      },
   ];
 
