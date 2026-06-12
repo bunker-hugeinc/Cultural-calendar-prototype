@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { CalendarTimeline } from "@/components/calendar-timeline";
 import { CalendarGrid } from "@/components/calendar-grid";
@@ -126,23 +126,43 @@ export default function CalendarPage() {
     localStorage.setItem("cultural-calendar-view", view);
   }, [view]);
 
-  // Fetch moments
-  useEffect(() => {
-    fetch("/api/moments")
+  // Load moments + suggestions (reused on mount and when returning to the tab)
+  const loadData = useCallback(() => {
+    fetch("/api/moments", { cache: "no-store" })
       .then(r => r.json())
       .then((data: CalendarMoment[]) => {
         setMoments(Array.isArray(data) ? data : []);
         setLoading(false);
       })
       .catch(() => setLoading(false));
-    // Fetch pending feed candidates for Suggested Moments section
-    fetch("/api/feed")
+    fetch("/api/feed", { cache: "no-store" })
       .then(r => r.json())
       .then((rows: SuggestedCandidate[]) => {
         if (Array.isArray(rows)) setSuggested(rows.filter(c => (c as { status?: string }).status === "pending").slice(0, 6));
       })
       .catch(() => {});
   }, []);
+
+  // Fetch on mount + whenever the calendar regains focus (so newly added
+  // moments show up when you navigate back without a full reload).
+  useEffect(() => {
+    loadData();
+    const onFocus = () => loadData();
+    window.addEventListener("focus", onFocus);
+    document.addEventListener("visibilitychange", onFocus);
+    return () => {
+      window.removeEventListener("focus", onFocus);
+      document.removeEventListener("visibilitychange", onFocus);
+    };
+  }, [loadData]);
+
+  async function handleRemoveMoment(id: string) {
+    if (!window.confirm("Remove this moment from the calendar? This deletes the moment and its pitches.")) return;
+    const prev = moments;
+    setMoments(p => p.filter(m => m.id !== id)); // optimistic
+    const res = await fetch(`/api/moments/${id}`, { method: "DELETE" });
+    if (!res.ok) { setMoments(prev); window.alert("Couldn't remove that moment. Please try again."); }
+  }
 
   const filteredMoments = categoryFilter
     ? moments.filter(m => m.category === categoryFilter)
@@ -258,7 +278,7 @@ export default function CalendarPage() {
         </div>
       ) : (
         <div className="py-6">
-          <CalendarGrid moments={filteredMoments} />
+          <CalendarGrid moments={filteredMoments} onRemove={handleRemoveMoment} />
         </div>
       )}
 

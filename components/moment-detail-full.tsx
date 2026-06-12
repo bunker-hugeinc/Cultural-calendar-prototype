@@ -406,6 +406,18 @@ export function MomentDetailFull({ moment, initialPairings, initialPitches = [] 
           </Link>
           <button
             className="btn btn-outline"
+            style={{ color: "#cc2200" }}
+            onClick={async () => {
+              if (!window.confirm("Remove this moment from the calendar? This deletes the moment and its pitches.")) return;
+              const res = await fetch(`/api/moments/${moment.id}`, { method: "DELETE" });
+              if (res.ok) router.push("/calendar");
+              else window.alert("Couldn't remove that moment. Please try again.");
+            }}
+          >
+            Remove
+          </button>
+          <button
+            className="btn btn-outline"
             onClick={handleScore}
             disabled={scoring}
             style={{ opacity: scoring ? 0.6 : 1, display: "inline-flex", alignItems: "center", gap: 6 }}

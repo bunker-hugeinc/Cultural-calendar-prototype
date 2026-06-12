@@ -1,7 +1,9 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { dedupeBy } from "@/lib/dedupe";
 
 interface FeedCandidate {
   id: string; name: string; startDate: string; endDate: string | null;
@@ -12,6 +14,11 @@ interface FeedCandidate {
 interface MomentSearchResult {
   id: string; name: string; startDate: string; category: string;
   description: string; relevanceScore: number; reason: string;
+}
+
+interface DiscoveredMoment {
+  name: string; startDate: string; endDate: string | null;
+  category: "gather" | "improve" | "excite"; score: number; why: string;
 }
 
 const CAT_COLORS: Record<string, { pill: string; color: string }> = {
@@ -39,6 +46,7 @@ function ScoreChip({ score }: { score: number }) {
 const QUARTERS_DEFAULT = { timeWindow: "6m", categories: ["gather", "improve", "excite"] as string[], minScore: 3.0 };
 
 export default function FeedPage() {
+  const router = useRouter();
   const [candidates, setCandidates] = useState<FeedCandidate[]>([]);
   const [loading, setLoading] = useState(true);
   const [discovering, setDiscovering] = useState(false);
@@ -54,6 +62,8 @@ export default function FeedPage() {
 
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<MomentSearchResult[] | null>(null);
+  const [discovered, setDiscovered] = useState<DiscoveredMoment[]>([]);
+  const [addingMoment, setAddingMoment] = useState<string | null>(null);
   const [isSearching, setIsSearching] = useState(false);
 
   const loadFeed = useCallback(async () => {
@@ -118,7 +128,7 @@ export default function FeedPage() {
 
   async function handleSearch(e: React.FormEvent) {
     e.preventDefault();
-    if (!searchQuery.trim()) { setSearchResults(null); return; }
+    if (!searchQuery.trim()) { setSearchResults(null); setDiscovered([]); return; }
     setIsSearching(true);
     try {
       const res = await fetch("/api/feed/search", {
@@ -128,12 +138,42 @@ export default function FeedPage() {
       });
       const data = await res.json();
       setSearchResults(data.results ?? []);
+      setDiscovered(Array.isArray(data.discovered) ? data.discovered : []);
     } finally {
       setIsSearching(false);
     }
   }
 
-  const pending = candidates.filter(c => c.status === "pending");
+  // Add a Claude-discovered moment (not yet in the DB) straight to the calendar.
+  async function handleAddDiscovered(d: DiscoveredMoment) {
+    setAddingMoment(d.name);
+    try {
+      const res = await fetch("/api/moments", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: d.name,
+          startDate: d.startDate,
+          endDate: d.endDate,
+          category: d.category,
+          description: d.why,
+          score: d.score,
+        }),
+      });
+      if (!res.ok) { showToast("Couldn't add that moment. Please try again."); return; }
+      const created = await res.json();
+      router.push(`/moments/${created.id}`);
+    } finally {
+      setAddingMoment(null);
+    }
+  }
+
+  // Collapse near-duplicate pending suggestions (keep the higher-scoring one).
+  const pending = dedupeBy(
+    candidates.filter(c => c.status === "pending"),
+    c => c.name,
+    (a, b) => (b.score > a.score ? b : a),
+  );
   const added = candidates.filter(c => c.status === "added");
   const dismissed = candidates.filter(c => c.status === "dismissed");
 
@@ -244,7 +284,7 @@ export default function FeedPage() {
           {isSearching ? "Searching…" : "Search with AI"}
         </button>
         {searchResults && (
-          <button type="button" onClick={() => { setSearchResults(null); setSearchQuery(""); }} style={{ background: "none", border: "none", cursor: "pointer", fontSize: "0.82rem", color: "#86868b", fontFamily: "inherit" }}>
+          <button type="button" onClick={() => { setSearchResults(null); setDiscovered([]); setSearchQuery(""); }} style={{ background: "none", border: "none", cursor: "pointer", fontSize: "0.82rem", color: "#86868b", fontFamily: "inherit" }}>
             Clear
           </button>
         )}
@@ -253,9 +293,14 @@ export default function FeedPage() {
       {/* AI Search results */}
       {searchResults !== null && (
         <div style={{ marginBottom: 28 }}>
-          <p className="eyebrow" style={{ marginBottom: 12 }}>
-            {searchResults.length > 0 ? `${searchResults.length} RESULTS FOR "${searchQuery}"` : `NO RESULTS FOR "${searchQuery}"`}
-          </p>
+          {searchResults.length > 0 && (
+            <p className="eyebrow" style={{ marginBottom: 12 }}>
+              {searchResults.length} ON THE CALENDAR FOR &quot;{searchQuery}&quot;
+            </p>
+          )}
+          {searchResults.length === 0 && discovered.length === 0 && (
+            <p className="eyebrow" style={{ marginBottom: 12 }}>NO RESULTS FOR &quot;{searchQuery}&quot;</p>
+          )}
           {searchResults.map(r => {
             const cat = CAT_COLORS[r.category] ?? CAT_COLORS.gather;
             return (
@@ -276,6 +321,39 @@ export default function FeedPage() {
               </a>
             );
           })}
+
+          {/* Claude-discovered moments not yet on the calendar */}
+          {discovered.length > 0 && (
+            <>
+              <p className="eyebrow" style={{ margin: "20px 0 12px" }}>
+                ✨ DISCOVERED BY AI — NOT ON YOUR CALENDAR YET
+              </p>
+              {discovered.map((d, i) => {
+                const cat = CAT_COLORS[d.category] ?? CAT_COLORS.gather;
+                return (
+                  <div key={`${d.name}-${i}`} className="card" style={{ marginBottom: 10, padding: "16px 18px", border: "1px solid #cde3ff", background: "#f7fbff" }}>
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8, gap: 8 }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
+                        <span style={{ fontSize: "0.68rem", fontWeight: 700, padding: "2px 10px", borderRadius: 10, background: cat.pill, color: cat.color, textTransform: "uppercase", letterSpacing: "0.06em" }}>{d.category}</span>
+                        <h3 style={{ fontSize: "0.95rem", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{d.name}</h3>
+                      </div>
+                      <ScoreChip score={d.score} />
+                    </div>
+                    <p style={{ fontSize: "0.8rem", color: "#86868b", marginBottom: 8 }}>{formatRange(d.startDate, d.endDate)}</p>
+                    <p style={{ fontSize: "0.82rem", color: "#1d1d1f", lineHeight: 1.5, marginBottom: 12 }}>{d.why}</p>
+                    <button
+                      className="btn btn-primary btn-sm"
+                      onClick={() => handleAddDiscovered(d)}
+                      disabled={addingMoment === d.name}
+                      style={{ display: "inline-flex", alignItems: "center", gap: 6 }}
+                    >
+                      {addingMoment === d.name ? <><span className="spinner" /> Adding…</> : "+ Add to Calendar"}
+                    </button>
+                  </div>
+                );
+              })}
+            </>
+          )}
         </div>
       )}
 

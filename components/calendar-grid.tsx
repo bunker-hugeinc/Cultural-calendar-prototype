@@ -73,7 +73,7 @@ function ScoreBadge({ score }: { score: number | null }) {
   );
 }
 
-function MomentCard({ m }: { m: CalendarMoment }) {
+function MomentCard({ m, onRemove }: { m: CalendarMoment; onRemove?: (id: string) => void }) {
   const color  = CAT_COLOR[m.category]   ?? "#86868b";
   const bg     = CAT_BG[m.category]      ?? "rgba(134,134,139,0.08)";
   const border = CAT_BORDER[m.category]  ?? "rgba(134,134,139,0.20)";
@@ -84,13 +84,23 @@ function MomentCard({ m }: { m: CalendarMoment }) {
       className="block no-underline group"
     >
       <div
-        className="rounded-xl p-3 transition-shadow hover:shadow-sm"
+        className="rounded-xl p-3 transition-shadow hover:shadow-sm relative"
         style={{ backgroundColor: bg, border: `1px solid ${border}` }}
       >
+        {onRemove && (
+          <button
+            onClick={e => { e.preventDefault(); e.stopPropagation(); onRemove(m.id); }}
+            title="Remove from calendar"
+            className="absolute top-1.5 right-1.5 opacity-0 group-hover:opacity-100 transition-opacity"
+            style={{ background: "rgba(255,255,255,0.85)", border: "1px solid #e8e8ed", borderRadius: 6, width: 20, height: 20, lineHeight: 1, fontSize: 12, color: "#cc2200", cursor: "pointer" }}
+          >
+            ✕
+          </button>
+        )}
         {/* Name */}
         <p
           className="text-[13px] font-semibold leading-snug mb-1.5 group-hover:text-[#0071e3] transition-colors"
-          style={{ color: "#1d1d1f" }}
+          style={{ color: "#1d1d1f", paddingRight: onRemove ? 18 : 0 }}
         >
           {m.name}
         </p>
@@ -126,9 +136,10 @@ interface MonthColProps {
   month:   Date;
   moments: CalendarMoment[];
   isNow:   boolean;
+  onRemove?: (id: string) => void;
 }
 
-function MonthColumn({ month, moments, isNow }: MonthColProps) {
+function MonthColumn({ month, moments, isNow, onRemove }: MonthColProps) {
   const qLabel = fiscalQLabel(month);
   const label  = format(month, "MMMM yyyy");
 
@@ -173,7 +184,7 @@ function MonthColumn({ month, moments, isNow }: MonthColProps) {
             <span className="text-[11px] text-[#d2d2d7]">—</span>
           </div>
         ) : (
-          moments.map(m => <MomentCard key={m.id} m={m} />)
+          moments.map(m => <MomentCard key={m.id} m={m} onRemove={onRemove} />)
         )}
       </div>
     </div>
@@ -182,7 +193,7 @@ function MonthColumn({ month, moments, isNow }: MonthColProps) {
 
 // ─── Main component ───────────────────────────────────────────────────────────
 
-export function CalendarGrid({ moments }: { moments: CalendarMoment[] }) {
+export function CalendarGrid({ moments, onRemove }: { moments: CalendarMoment[]; onRemove?: (id: string) => void }) {
   const { months, byMonth, nowKey } = useMemo(() => {
     const today    = new Date();
     const nowKey   = format(today, "yyyy-MM");
@@ -264,6 +275,7 @@ export function CalendarGrid({ moments }: { moments: CalendarMoment[] }) {
                   month={month}
                   moments={byMonth[key] ?? []}
                   isNow={key === nowKey}
+                  onRemove={onRemove}
                 />
               );
             })}

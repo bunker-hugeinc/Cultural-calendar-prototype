@@ -4,7 +4,8 @@ import { merchants, moments, feedCandidates } from "@/lib/db/schema";
 import { callClaude, parseJSON } from "@/lib/ai";
 import { DISCOVER_SYSTEM_PROMPT } from "@/lib/prompts";
 import { createId } from "@paralleldrive/cuid2";
-import { sql, ne } from "drizzle-orm";
+import { sql } from "drizzle-orm";
+import { isLikelyDuplicate } from "@/lib/dedupe";
 
 export const maxDuration = 60;
 
@@ -160,22 +161,23 @@ Focus on real, specific events that will actually occur in the time window above
   candidates = candidates.filter(c => c.startDate > cutoff);
 
   // ── Deduplication ───────────────────────────────────────────────────────────
+  // Include dismissed candidates too, so dismissed items aren't re-suggested as
+  // brand-new pending duplicates.
   const [existingCandidates, existingMoments] = await Promise.all([
-    db.select({ name: feedCandidates.name }).from(feedCandidates)
-      .where(ne(feedCandidates.status, "dismissed")),
+    db.select({ name: feedCandidates.name }).from(feedCandidates),
     db.select({ name: moments.name }).from(moments),
   ]);
-  const allExistingNames = new Set([
-    ...existingCandidates.map(r => r.name.toLowerCase().trim()),
-    ...existingMoments.map(r => r.name.toLowerCase().trim()),
-  ]);
+  const existingNames: string[] = [
+    ...existingCandidates.map(r => r.name),
+    ...existingMoments.map(r => r.name),
+  ];
 
-  // Deduplicate against DB and within batch
-  const seen = new Set<string>();
+  // Fuzzy/normalized dedup against the DB and within this batch (catches near
+  // variants like "College Football Playoff" vs "...National Championship").
+  const acceptedNames: string[] = [];
   candidates = candidates.filter(c => {
-    const key = c.name.toLowerCase().trim();
-    if (allExistingNames.has(key) || seen.has(key)) return false;
-    seen.add(key);
+    if (isLikelyDuplicate(c.name, existingNames) || isLikelyDuplicate(c.name, acceptedNames)) return false;
+    acceptedNames.push(c.name);
     return true;
   });
 

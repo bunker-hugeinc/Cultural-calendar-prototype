@@ -2,18 +2,14 @@ import Link from "next/link";
 import { db } from "@/lib/db";
 import { pitches, pitchMoments, pitchMerchants, moments, merchants } from "@/lib/db/schema";
 import { desc, inArray } from "drizzle-orm";
+import { PitchListClient, type PitchRow } from "@/components/pitch-list-client";
 
 export const dynamic = "force-dynamic";
-
-function formatDate(d: Date | null) {
-  if (!d) return "";
-  return new Date(d).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
-}
 
 export default async function PitchesPage() {
   const rows = await db.select().from(pitches).orderBy(desc(pitches.updatedAt));
 
-  let enriched: Array<typeof rows[0] & { primaryMomentName: string | null; primaryMerchantName: string | null }> = [];
+  let enriched: PitchRow[] = [];
 
   if (rows.length > 0) {
     const pitchIds = rows.map(p => p.id);
@@ -48,7 +44,12 @@ export default async function PitchesPage() {
       const primaryMoment = pm.find(l => l.isPrimary) ?? pm[0];
       const primaryMerchant = pmr.find(l => l.isPrimary) ?? pmr[0];
       return {
-        ...pitch,
+        id: pitch.id,
+        title: pitch.title,
+        type: pitch.type,
+        status: pitch.status,
+        targetQuarter: pitch.targetQuarter,
+        updatedAt: pitch.updatedAt ? pitch.updatedAt.toISOString() : null,
         primaryMomentName: primaryMoment
           ? (momentNameMap.get(primaryMoment.momentId) ?? null)
           : (pitch.momentId ? momentNameMap.get(pitch.momentId) ?? null : null),
@@ -88,52 +89,7 @@ export default async function PitchesPage() {
           </div>
         </div>
       ) : (
-        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-          {enriched.map(pitch => (
-            <Link key={pitch.id} href={`/pitch/${pitch.id}`} style={{ textDecoration: "none" }}>
-              <div className="card-p" style={{ display: "flex", alignItems: "center", gap: 16, cursor: "pointer" }}>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-                    <h3 style={{ fontSize: "0.95rem", fontWeight: 600, color: "#1d1d1f", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                      {pitch.title}
-                    </h3>
-                  </div>
-                  <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
-                    {pitch.primaryMomentName && (
-                      <span style={{ fontSize: "0.75rem", color: "#6e6e73" }}>📅 {pitch.primaryMomentName}</span>
-                    )}
-                    {pitch.primaryMerchantName && (
-                      <span style={{ fontSize: "0.75rem", color: "#6e6e73" }}>🏪 {pitch.primaryMerchantName}</span>
-                    )}
-                    {pitch.targetQuarter && (
-                      <span style={{ fontSize: "0.75rem", color: "#86868b" }}>{pitch.targetQuarter}</span>
-                    )}
-                  </div>
-                </div>
-                <div style={{ display: "flex", gap: 8, alignItems: "center", flexShrink: 0 }}>
-                  <span style={{
-                    fontSize: "0.65rem", fontWeight: 700, padding: "2px 8px", borderRadius: 10,
-                    background: pitch.type === "moment_led" ? "#e3f2fd" : "#e8f5e9",
-                    color: pitch.type === "moment_led" ? "#0071e3" : "#248a3d",
-                  }}>
-                    {pitch.type === "moment_led" ? "Moment-Led" : "Merchant-Led"}
-                  </span>
-                  <span style={{
-                    fontSize: "0.65rem", fontWeight: 700, padding: "2px 8px", borderRadius: 10,
-                    background: pitch.status === "ready" ? "rgba(52,199,89,0.12)" : "#f5f5f7",
-                    color: pitch.status === "ready" ? "#248a3d" : "#86868b",
-                  }}>
-                    {pitch.status === "ready" ? "Ready" : "Draft"}
-                  </span>
-                  <span style={{ fontSize: "0.75rem", color: "#86868b" }}>
-                    {formatDate(pitch.updatedAt)}
-                  </span>
-                  <span style={{ fontSize: "0.82rem", color: "#0071e3", fontWeight: 500 }}>Open →</span>
-                </div>
-              </div>
-            </Link>
-          ))}
-        </div>
+        <PitchListClient initialPitches={enriched} />
       )}
     </div>
   );

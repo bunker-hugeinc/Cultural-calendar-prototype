@@ -1,9 +1,10 @@
 export const dynamic = 'force-dynamic';
 
 import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
-import { moments, pairingScores, merchants } from "@/lib/db/schema";
-import { eq } from "drizzle-orm";
+import { moments, pairingScores, merchants, pitches, briefs, pitchMoments } from "@/lib/db/schema";
+import { eq, inArray } from "drizzle-orm";
 
 export async function GET(
   _req: Request,
@@ -87,6 +88,22 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
+
+  // Delete dependents in FK-safe order (pitches/briefs/pitchMoments reference
+  // moments without ON DELETE CASCADE; pairingScores cascades automatically).
+  const momentPitches = await db.select({ id: pitches.id }).from(pitches).where(eq(pitches.momentId, id));
+  const pitchIds = momentPitches.map(p => p.id);
+
+  if (pitchIds.length > 0) {
+    await db.delete(briefs).where(inArray(briefs.pitchId, pitchIds));
+  }
+  await db.delete(briefs).where(eq(briefs.momentId, id));
+  await db.delete(pitchMoments).where(eq(pitchMoments.momentId, id));
+  await db.delete(pitches).where(eq(pitches.momentId, id));
   await db.delete(moments).where(eq(moments.id, id));
+
+  revalidatePath("/calendar");
+  revalidatePath("/pitch");
+  revalidatePath("/");
   return new NextResponse(null, { status: 204 });
 }

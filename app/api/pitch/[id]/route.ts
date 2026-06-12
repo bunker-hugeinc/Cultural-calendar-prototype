@@ -65,12 +65,13 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
 export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const [pitch] = await db.select({ status: pitches.status }).from(pitches).where(eq(pitches.id, id)).limit(1);
+  const [pitch] = await db.select({ momentId: pitches.momentId }).from(pitches).where(eq(pitches.id, id)).limit(1);
   if (!pitch) return NextResponse.json({ error: "Not found" }, { status: 404 });
-  if (pitch.status !== "draft") {
-    return NextResponse.json({ error: "Only draft pitches can be deleted" }, { status: 400 });
-  }
+  // Delete dependent briefs first (no cascade on briefs.pitchId), then the pitch.
   await db.delete(briefs).where(eq(briefs.pitchId, id));
   await db.delete(pitches).where(eq(pitches.id, id));
+  revalidatePath("/pitch");
+  revalidatePath("/");
+  if (pitch.momentId) revalidatePath(`/moments/${pitch.momentId}`);
   return NextResponse.json({ success: true });
 }
