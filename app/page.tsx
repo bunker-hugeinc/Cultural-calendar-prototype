@@ -3,6 +3,8 @@ import { moments, merchants, pitches, feedCandidates } from "@/lib/db/schema";
 import { eq, gte, lte, desc, and } from "drizzle-orm";
 import Link from "next/link";
 
+export const dynamic = "force-dynamic";
+
 function todayStr() {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;

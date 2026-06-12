@@ -24,24 +24,23 @@ export function CalendarView({ initialMoments, initialFeed }: CalendarViewProps)
   const handleApprove = useCallback(async (candidateId: string, candidateName: string) => {
     const res = await fetch(`/api/feed/${candidateId}/approve`, { method: "POST" });
     if (!res.ok) return;
-    const { momentId } = await res.json();
+    // The approve route returns { moment: newMoment } — use the real saved record.
+    const { moment } = await res.json();
+    if (!moment?.id) return;
 
-    // Optimistically add to Gantt
-    const candidate = feed.find(c => c.id === candidateId);
-    if (candidate) {
-      setMoments(prev => [...prev, {
-        id: momentId,
-        name: candidate.name,
-        startDate: candidate.startDate,
-        endDate: candidate.endDate,
-        category: candidate.category,
-      }]);
-    }
+    // Optimistically add the saved moment to the Gantt
+    setMoments(prev => [...prev, {
+      id: moment.id,
+      name: moment.name,
+      startDate: moment.startDate,
+      endDate: moment.endDate,
+      category: moment.category,
+    }]);
 
     // Update feed status
     setFeed(prev => prev.map(c => c.id === candidateId ? { ...c, status: "added" } : c));
     showToast(`${candidateName} added to calendar`);
-  }, [feed]);
+  }, []);
 
   const handleDismiss = useCallback(async (candidateId: string) => {
     const res = await fetch(`/api/feed/${candidateId}/dismiss`, { method: "POST" });

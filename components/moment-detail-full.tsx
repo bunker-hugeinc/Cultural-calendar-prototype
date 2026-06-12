@@ -293,6 +293,15 @@ export function MomentDetailFull({ moment, initialPairings, initialPitches = [] 
       .then(data => setApprovedPitches(data.pitches ?? []));
   }, [moment.id]);
 
+  // Refetch ALL pitches for this moment on mount so newly created pitches and
+  // status changes always show, regardless of route caching.
+  useEffect(() => {
+    fetch(`/api/moments/${moment.id}/pitches`)
+      .then(r => r.ok ? r.json() : null)
+      .then(data => { if (data?.pitches) setMomentPitches(data.pitches); })
+      .catch(() => { /* keep server-provided initialPitches */ });
+  }, [moment.id]);
+
 
   function buildPitchFromPairing(merchantId: string) {
     router.push(`/pitch/new?momentId=${moment.id}&merchantId=${merchantId}`);

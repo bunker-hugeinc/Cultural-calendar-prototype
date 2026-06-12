@@ -69,6 +69,11 @@ ${body._appendNotes}`
       ecommerceScore: body.ecommerceScore != null ? parseFloat(body.ecommerceScore) : undefined,
       audienceFit: body.audienceFit != null ? parseFloat(body.audienceFit) : undefined,
       whiteSpaceScore: body.whiteSpaceScore != null ? parseFloat(body.whiteSpaceScore) : undefined,
+      // Persist generated detail so it isn't lost when a moment is saved
+      // (the feed → calendar flow sends these). Only overwrite when provided.
+      scoreRationale: body.scoreRationale ?? undefined,
+      channelRecommendations: body.channelRecommendations ?? undefined,
+      quarter: body.quarter ?? undefined,
       updatedAt: new Date(),
     })
     .where(eq(moments.id, id))

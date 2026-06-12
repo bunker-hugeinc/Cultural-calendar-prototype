@@ -5,6 +5,8 @@ import { moments, pairingScores, merchants, pitches } from "@/lib/db/schema";
 import { eq, desc } from "drizzle-orm";
 import { MomentDetailFull } from "@/components/moment-detail-full";
 
+export const dynamic = "force-dynamic";
+
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const { id } = await params;
   const moment = await db.query.moments.findFirst({ where: eq(moments.id, id) });

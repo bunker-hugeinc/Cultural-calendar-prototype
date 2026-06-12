@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import { pitches, briefs } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
@@ -50,6 +51,14 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   } catch (err) {
     console.error("[pitch PATCH] update failed", { id, fields: Object.keys(updates), err });
     return NextResponse.json({ error: "Save failed" }, { status: 500 });
+  }
+  // When status changes, refresh the views that display it. (Skip on plain
+  // field autosaves so we don't thrash the cache on every keystroke.)
+  if ("status" in body) {
+    revalidatePath("/pitch");
+    revalidatePath("/");
+    const [row] = await db.select({ momentId: pitches.momentId }).from(pitches).where(eq(pitches.id, id)).limit(1);
+    if (row?.momentId) revalidatePath(`/moments/${row.momentId}`);
   }
   return NextResponse.json({ success: true });
 }
