@@ -541,9 +541,14 @@ export function MomentDetailFull({ moment, initialPairings, initialPitches = [] 
       </div>
 
       {/* ── Section: Partnership Pitches ────────────────────────────────────── */}
-      {momentPitches.length > 0 && (
-        <div style={{ marginBottom: 28 }}>
-          <p className="eyebrow" style={{ marginBottom: 12 }}>PARTNERSHIP PITCHES</p>
+      <div style={{ marginBottom: 28 }}>
+        <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 12 }}>
+          <p className="eyebrow">PARTNERSHIP PITCHES</p>
+          <span style={{ fontSize: "0.78rem", color: "#86868b" }}>{momentPitches.length} total</span>
+        </div>
+        {momentPitches.length === 0 ? (
+          <p style={{ fontSize: "0.85rem", color: "#aeaeb2" }}>No pitches yet for this moment.</p>
+        ) : (
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
             {momentPitches.map((pitch: any) => (
               <Link
@@ -575,8 +580,8 @@ export function MomentDetailFull({ moment, initialPairings, initialPitches = [] 
               </Link>
             ))}
           </div>
-        </div>
-      )}
+        )}
+      </div>
 
       {/* ── Section: Merchant Matches ─────────────────────────────────────── */}
       <div style={{ marginBottom: 28 }}>

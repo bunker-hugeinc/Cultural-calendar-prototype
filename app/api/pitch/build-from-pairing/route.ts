@@ -100,6 +100,8 @@ Return a JSON object — all fields written as if Apple Pay is reaching out TO t
       influencerStrategy: sections.influencerStrategy ?? null,
       channelStrategy: sections.channelStrategy ?? null,
       additionalNotes: sections.additionalNotes ?? null,
+      momentSnapshotData: JSON.stringify(moment),
+      merchantSnapshotData: JSON.stringify(merchant),
     }).returning();
     pitchId = newPitch.id;
   }

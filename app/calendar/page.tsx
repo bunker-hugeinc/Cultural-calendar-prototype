@@ -73,6 +73,7 @@ export interface CalendarMoment {
   whiteSpaceScore: number | null;
   description: string;
   hook: string | null;
+  pitchCount?: number;
 }
 
 // ─── Icons ────────────────────────────────────────────────────────────────────

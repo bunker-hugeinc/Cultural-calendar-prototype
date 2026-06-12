@@ -142,6 +142,17 @@ export const pitches = pgTable("pitches", {
   pocSearchResults: text("poc_search_results"),
   pocSearchedAt:    timestamp("poc_searched_at"),
   pocSearchQuery:   text("poc_search_query"),
+  // Phase 25: editable POC fields
+  pocName:     text("poc_name"),
+  pocTitle:    text("poc_title"),
+  pocEmail:    text("poc_email"),
+  pocLinkedIn: text("poc_linkedin"),
+  // Phase 25: additional editable fields
+  internalNotes:  text("internal_notes"),
+  campaignTiming: text("campaign_timing"),
+  // Phase 25: moment + merchant snapshots captured at pitch creation time
+  momentSnapshotData:   text("moment_snapshot_data"),   // JSON string
+  merchantSnapshotData: text("merchant_snapshot_data"),  // JSON string
   // Phase 21: document state
   documentGeneratedAt: timestamp("document_generated_at"),
   lastAutoSavedAt:     timestamp("last_auto_saved_at"),

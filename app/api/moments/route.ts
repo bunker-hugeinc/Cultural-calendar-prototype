@@ -2,11 +2,33 @@ export const dynamic = 'force-dynamic';
 
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { moments } from "@/lib/db/schema";
-import { asc } from "drizzle-orm";
+import { moments, pitches } from "@/lib/db/schema";
+import { asc, eq, sql } from "drizzle-orm";
 
 export async function GET() {
-  const rows = await db.select().from(moments).orderBy(asc(moments.startDate));
+  const rows = await db
+    .select({
+      id: moments.id,
+      name: moments.name,
+      startDate: moments.startDate,
+      endDate: moments.endDate,
+      category: moments.category,
+      description: moments.description,
+      hook: moments.hook,
+      quarter: moments.quarter,
+      score: moments.score,
+      ecommerceScore: moments.ecommerceScore,
+      audienceFit: moments.audienceFit,
+      whiteSpaceScore: moments.whiteSpaceScore,
+      scoreRationale: moments.scoreRationale,
+      channelRecommendations: moments.channelRecommendations,
+      notes: moments.notes,
+      createdAt: moments.createdAt,
+      updatedAt: moments.updatedAt,
+      pitchCount: sql<number>`(SELECT COUNT(*) FROM pitches WHERE pitches.moment_id = ${moments.id})`.as("pitch_count"),
+    })
+    .from(moments)
+    .orderBy(asc(moments.startDate));
   return NextResponse.json(rows);
 }
 

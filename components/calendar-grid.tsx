@@ -95,7 +95,7 @@ function MomentCard({ m }: { m: CalendarMoment }) {
           {m.name}
         </p>
 
-        {/* Date + category pill + score badge */}
+        {/* Date + category pill + score badge + pitch count */}
         <div className="flex items-center gap-2 flex-wrap">
           <span className="text-[11px] text-[#86868b] tabular-nums">{momentDateLabel(m)}</span>
           <span
@@ -105,6 +105,15 @@ function MomentCard({ m }: { m: CalendarMoment }) {
             {m.category}
           </span>
           <ScoreBadge score={m.score} />
+          {(m.pitchCount ?? 0) > 0 && (
+            <span
+              className="text-[10px] font-bold px-1.5 py-0.5 rounded-full"
+              style={{ background: "#0071e3", color: "white" }}
+              title={`${m.pitchCount} pitch${(m.pitchCount ?? 0) !== 1 ? "es" : ""}`}
+            >
+              {m.pitchCount} pitch{(m.pitchCount ?? 0) !== 1 ? "es" : ""}
+            </span>
+          )}
         </div>
       </div>
     </Link>

@@ -40,12 +40,22 @@ export default function PitchListPage() {
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
 
-  useEffect(() => {
+  function loadPitches() {
     fetch("/api/pitches")
       .then(r => r.json())
       .then(setPitches)
       .finally(() => setLoading(false));
-  }, []);
+  }
+
+  useEffect(() => { loadPitches(); }, []);
+
+  async function handleDelete(id: string) {
+    if (!window.confirm("Delete this draft pitch? This cannot be undone.")) return;
+    const res = await fetch(`/api/pitch/${id}`, { method: "DELETE" });
+    if (res.ok) {
+      setPitches(prev => prev.filter(p => p.id !== id));
+    }
+  }
 
   const groups: Record<string, PitchRow[]> = { approved: [], sent: [], draft: [], ready: [], rejected: [] };
   for (const p of pitches) {
@@ -171,11 +181,19 @@ export default function PitchListPage() {
                       }}>
                         {meta.label}
                       </span>
+                      {pitch.status === "draft" && (
+                        <button
+                          onClick={e => { e.preventDefault(); handleDelete(pitch.id); }}
+                          style={{ fontSize: "0.78rem", color: "#cc2200", background: "none", border: "none", cursor: "pointer", flexShrink: 0 }}
+                        >
+                          Delete
+                        </button>
+                      )}
                       <Link
                         href={`/pitch/${pitch.id}`}
                         style={{ fontSize: "0.82rem", color: "#0071e3", fontWeight: 600, flexShrink: 0, textDecoration: "none" }}
                       >
-                        Continue →
+                        {pitch.status === "draft" ? "Edit →" : "View →"}
                       </Link>
                     </div>
                   );

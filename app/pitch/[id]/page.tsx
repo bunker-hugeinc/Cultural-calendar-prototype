@@ -13,15 +13,24 @@ interface PitchData {
   targetQuarter: string | null;
   momentId: string | null;
   merchantId: string | null;
+  campaignHeadline: string | null;
   businessRationale: string | null;
   offerMechanics: string | null;
   additionalNotes: string | null;
+  internalNotes: string | null;
+  campaignTiming: string | null;
   channelStrategy: string | null;
   influencerStrategy: string | null;
   audienceReachNarrative: string | null;
   transactionOpportunityNarrative: string | null;
   coMarketingValueNarrative: string | null;
   pocSearchResults: string | null;
+  pocName: string | null;
+  pocTitle: string | null;
+  pocEmail: string | null;
+  pocLinkedIn: string | null;
+  momentSnapshotData: string | null;
+  merchantSnapshotData: string | null;
   documentGeneratedAt: string | null;
   approvedAt: string | null;
   sentAt: string | null;
@@ -269,6 +278,12 @@ export default function PitchDocumentPage() {
     };
   }, [id]);
 
+  async function handleDeletePitch() {
+    if (!window.confirm("Delete this draft pitch? This cannot be undone.")) return;
+    const res = await fetch(`/api/pitch/${id}`, { method: "DELETE" });
+    if (res.ok) router.push("/pitch");
+  }
+
   async function updateStatus(newStatus: string) {
     setStatusUpdating(true);
     const updates: Record<string, string> = { status: newStatus };
@@ -375,6 +390,14 @@ export default function PitchDocumentPage() {
               Saved {lastSaved.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
             </span>
           )}
+          {pitch.status === "draft" && (
+            <button
+              onClick={handleDeletePitch}
+              style={{ fontSize: "0.78rem", color: "#cc2200", background: "none", border: "none", cursor: "pointer" }}
+            >
+              Delete draft
+            </button>
+          )}
           <span style={{
             fontSize: "0.72rem", fontWeight: 700, padding: "3px 10px", borderRadius: 20,
             background: statusMeta.bg, color: statusMeta.color, border: `1px solid ${statusMeta.border}`,
@@ -418,6 +441,19 @@ export default function PitchDocumentPage() {
             </span>
           )}
         </p>
+        {/* Partnership headline — editable tagline shown on the pitch */}
+        <input
+          type="text"
+          value={pitch.campaignHeadline ?? ""}
+          onChange={e => handleEdit("campaignHeadline", e.target.value)}
+          onBlur={e => handleBlur("campaignHeadline", e.target.value)}
+          placeholder="Partnership headline (optional)"
+          style={{
+            marginTop: 10, width: "100%", fontSize: "1rem", fontWeight: 600,
+            fontFamily: "inherit", color: "#1d1d1f", background: "transparent",
+            border: "none", borderBottom: "1px dashed #d2d2d7", outline: "none", padding: "4px 0",
+          }}
+        />
       </div>
 
       {/* ── Regenerate button ────────────────────────────────────────────── */}
@@ -509,6 +545,18 @@ export default function PitchDocumentPage() {
         />
       </div>
 
+      {/* ── Campaign Timing ───────────────────────────────────────────────── */}
+      <div className="card-p" style={{ marginBottom: 20 }}>
+        <p className="eyebrow" style={{ marginBottom: 8 }}>CAMPAIGN TIMING</p>
+        <EditableTextarea
+          value={pitch.campaignTiming ?? ""}
+          onChange={v => handleEdit("campaignTiming", v)}
+          onBlur={v => handleBlur("campaignTiming", v)}
+          placeholder="Key dates, exclusivity windows, go-live timeline…"
+          minRows={2}
+        />
+      </div>
+
       {/* ── Notes (optional) ─────────────────────────────────────────────── */}
       <div className="card-p" style={{ marginBottom: 20 }}>
         <p className="eyebrow" style={{ marginBottom: 8 }}>NOTES</p>
@@ -517,6 +565,19 @@ export default function PitchDocumentPage() {
           onChange={v => handleEdit("additionalNotes", v)}
           onBlur={v => handleBlur("additionalNotes", v)}
           placeholder="Add any additional notes or context…"
+          minRows={2}
+        />
+      </div>
+
+      {/* ── Internal Notes (not included in export) ───────────────────────── */}
+      <div className="card-p" style={{ marginBottom: 20, background: "#fffbeb", border: "1px solid #fde68a" }}>
+        <p className="eyebrow" style={{ marginBottom: 4, color: "#92400e" }}>INTERNAL NOTES</p>
+        <p style={{ fontSize: "0.72rem", color: "#b45309", marginBottom: 8 }}>Not included in pitch export</p>
+        <EditableTextarea
+          value={pitch.internalNotes ?? ""}
+          onChange={v => handleEdit("internalNotes", v)}
+          onBlur={v => handleBlur("internalNotes", v)}
+          placeholder="Team-only context, caveats, BD notes…"
           minRows={2}
         />
       </div>
@@ -604,6 +665,36 @@ export default function PitchDocumentPage() {
             </button>
           </div>
         )}
+      </div>
+
+      {/* ── POC Direct Edit ──────────────────────────────────────────────── */}
+      <div className="card-p" style={{ marginBottom: 20 }}>
+        <p className="eyebrow" style={{ marginBottom: 8 }}>SELECTED CONTACT</p>
+        <p style={{ fontSize: "0.72rem", color: "#86868b", marginBottom: 12 }}>Edit the confirmed contact details for this pitch</p>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+          {[
+            { label: "Name", field: "pocName" as const, placeholder: "Contact name" },
+            { label: "Title", field: "pocTitle" as const, placeholder: "Job title" },
+            { label: "Email", field: "pocEmail" as const, placeholder: "email@company.com" },
+            { label: "LinkedIn", field: "pocLinkedIn" as const, placeholder: "linkedin.com/in/…" },
+          ].map(({ label, field, placeholder }) => (
+            <div key={field}>
+              <p style={{ fontSize: "0.68rem", fontWeight: 700, color: "#6e6e73", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 4 }}>{label}</p>
+              <input
+                type="text"
+                value={(pitch[field] as string | null) ?? ""}
+                onChange={e => handleEdit(field, e.target.value)}
+                onBlur={e => handleBlur(field, e.target.value)}
+                placeholder={placeholder}
+                style={{
+                  width: "100%", fontSize: "0.85rem", fontFamily: "inherit",
+                  background: "transparent", border: "none", borderBottom: "1px dashed #d2d2d7",
+                  outline: "none", padding: "4px 0", color: "#1d1d1f",
+                }}
+              />
+            </div>
+          ))}
+        </div>
       </div>
 
       {/* ── Export + Status ───────────────────────────────────────────────── */}
@@ -717,6 +808,38 @@ export default function PitchDocumentPage() {
           </div>
         )}
       </div>
+
+      {/* ── Source context ────────────────────────────────────────────────── */}
+      {(pitch.momentSnapshotData || pitch.merchantSnapshotData) && (() => {
+        let mmt: any = null;
+        let mch: any = null;
+        try { if (pitch.momentSnapshotData) mmt = JSON.parse(pitch.momentSnapshotData); } catch {}
+        try { if (pitch.merchantSnapshotData) mch = JSON.parse(pitch.merchantSnapshotData); } catch {}
+        if (!mmt && !mch) return null;
+        return (
+          <details style={{ marginTop: 32, borderTop: "1px solid #e8e8ed", paddingTop: 16 }}>
+            <summary style={{ fontSize: "0.82rem", fontWeight: 600, color: "#86868b", cursor: "pointer" }}>
+              Source context (moment + merchant at time of pitch)
+            </summary>
+            <div style={{ marginTop: 16, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20, fontSize: "0.82rem", color: "#6e6e73" }}>
+              {mmt && (
+                <div>
+                  <p style={{ fontWeight: 600, color: "#1d1d1f", marginBottom: 4 }}>Moment: {mmt.name}</p>
+                  <p style={{ lineHeight: 1.6 }}>{mmt.description}</p>
+                  {mmt.score != null && <p style={{ marginTop: 6, fontSize: "0.72rem", color: "#aeaeb2" }}>Score: {mmt.score}/10</p>}
+                </div>
+              )}
+              {mch && (
+                <div>
+                  <p style={{ fontWeight: 600, color: "#1d1d1f", marginBottom: 4 }}>Merchant: {mch.name}</p>
+                  <p style={{ lineHeight: 1.6 }}>{mch.category}</p>
+                  {mch.notes && <p style={{ marginTop: 6, lineHeight: 1.5 }}>{mch.notes}</p>}
+                </div>
+              )}
+            </div>
+          </details>
+        );
+      })()}
 
     </div>
   );
