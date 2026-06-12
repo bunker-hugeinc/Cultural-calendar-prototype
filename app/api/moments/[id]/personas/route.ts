@@ -20,6 +20,21 @@ export interface InfluencerPersona {
   whyThisMoment: string;
 }
 
+// Return previously-saved influencer suggestions (so they aren't regenerated every visit).
+export async function GET(
+  _req: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { id } = await params;
+  const moment = await db.query.moments.findFirst({ where: eq(moments.id, id) });
+  if (!moment) return NextResponse.json({ error: "Not found" }, { status: 404 });
+  let personas: InfluencerPersona[] = [];
+  if (moment.influencerRecsCache) {
+    try { personas = JSON.parse(moment.influencerRecsCache); } catch { /* ignore */ }
+  }
+  return NextResponse.json({ personas, generatedAt: moment.influencerCacheGeneratedAt });
+}
+
 export async function POST(
   _req: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -77,6 +92,11 @@ Generate exactly 3 specific influencer personas for this exact moment and these 
       console.error("[personas] JSON parse failed:", raw.slice(0, 500));
       return NextResponse.json({ error: "AI returned invalid JSON", raw: raw.slice(0, 500) }, { status: 502 });
     }
+
+    // Persist so the panel can reload it without regenerating.
+    await db.update(moments)
+      .set({ influencerRecsCache: JSON.stringify(personas), influencerCacheGeneratedAt: new Date() })
+      .where(eq(moments.id, id));
 
     return NextResponse.json({ personas });
   } catch (err) {

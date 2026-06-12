@@ -43,6 +43,14 @@ export function InfluencerPanel({ momentId, hasPairings }: InfluencerPanelProps)
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Load previously-saved suggestions so they aren't regenerated every visit.
+  useEffect(() => {
+    fetch(`/api/moments/${momentId}/personas`)
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (Array.isArray(d?.personas) && d.personas.length) setCreators(d.personas); })
+      .catch(() => { /* ignore */ });
+  }, [momentId]);
+
   async function handleSuggest() {
     setLoading(true);
     setError(null);

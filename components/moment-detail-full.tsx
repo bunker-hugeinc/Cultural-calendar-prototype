@@ -434,57 +434,37 @@ export function MomentDetailFull({ moment, initialPairings, initialPitches = [] 
         </div>
       )}
 
-      {/* ── Section: Pitches for this moment (prominent, near top) ───────────── */}
+      {/* ── Section: Moment Context ─────────────────────────────────────────── */}
       <div style={{ marginBottom: 28 }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12, gap: 12 }}>
-          <div style={{ display: "flex", alignItems: "baseline", gap: 10 }}>
-            <p className="eyebrow">PITCHES FOR THIS MOMENT</p>
-            <span style={{ fontSize: "0.78rem", color: "#86868b" }}>{momentPitches.length} total</span>
+        <p className="eyebrow" style={{ marginBottom: 12 }}>MOMENT CONTEXT</p>
+        <div className="card-p" style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+          <div>
+            <p className="eyebrow" style={{ marginBottom: 6 }}>Description</p>
+            <p style={{ fontSize: "0.9rem", color: "#1d1d1f", lineHeight: 1.6 }}>{moment.description}</p>
           </div>
-          <a href="#merchant-matches" className="btn btn-outline btn-sm" style={{ textDecoration: "none", whiteSpace: "nowrap" }}>
-            + New pitch for this moment
-          </a>
+          {hookPills.length > 0 && (
+            <div style={{ borderTop: "1px solid #f0f0f5", paddingTop: 16 }}>
+              <p className="eyebrow" style={{ marginBottom: 8 }}>Hook Type</p>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                {hookPills.map(h => (
+                  <span key={h} style={{
+                    fontSize: "0.78rem", padding: "3px 10px", borderRadius: 10,
+                    background: "#f5f5f7", color: "#1d1d1f", border: "1px solid #e8e8ed",
+                  }}>{h}</span>
+                ))}
+              </div>
+            </div>
+          )}
+          {moment.notes && (
+            <div style={{ borderTop: "1px solid #f0f0f5", paddingTop: 16 }}>
+              <p className="eyebrow" style={{ marginBottom: 6 }}>Notes</p>
+              <p style={{ fontSize: "0.9rem", color: "#6e6e73", lineHeight: 1.6 }}>{moment.notes}</p>
+            </div>
+          )}
         </div>
-        {momentPitches.length === 0 ? (
-          <div className="card-p" style={{ textAlign: "center", color: "#86868b", fontSize: "0.85rem" }}>
-            No pitches yet. Pick a merchant in <a href="#merchant-matches" style={{ color: "#0071e3", textDecoration: "none" }}>Merchant Matches</a> and build one.
-          </div>
-        ) : (
-          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            {momentPitches.map((pitch: any) => (
-              <Link
-                key={pitch.id}
-                href={`/pitch/${pitch.id}`}
-                style={{
-                  display: "flex", alignItems: "center", justifyContent: "space-between",
-                  padding: "12px 16px", background: "white", borderRadius: 10,
-                  border: "1px solid #e8e8ed", textDecoration: "none", fontSize: "0.875rem",
-                }}
-              >
-                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                  <span style={{
-                    width: 8, height: 8, borderRadius: "50%", flexShrink: 0,
-                    background: pitch.status === "approved" ? "#34c759"
-                      : pitch.status === "sent" ? "#0071e3"
-                      : pitch.status === "rejected" ? "#ff3b30"
-                      : "#d2d2d7",
-                  }} />
-                  <span style={{ fontWeight: 600, color: "#1d1d1f" }}>{pitch.merchantName ?? "No merchant"}</span>
-                  {pitch.targetQuarter && (
-                    <span style={{ color: "#86868b" }}>{pitch.targetQuarter}</span>
-                  )}
-                </div>
-                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  <span style={{ fontSize: "0.75rem", color: "#86868b", textTransform: "capitalize" }}>{pitch.status}</span>
-                  <span style={{ color: "#0071e3", fontWeight: 500 }}>Open →</span>
-                </div>
-              </Link>
-            ))}
-          </div>
-        )}
       </div>
 
-      {/* ── Section 2: AI Evaluation ────────────────────────────────────────── */}
+      {/* ── Section: AI Evaluation ──────────────────────────────────────────── */}
       <div style={{ marginBottom: 28 }}>
         <p className="eyebrow" style={{ marginBottom: 12 }}>AI EVALUATION</p>
 
@@ -549,6 +529,56 @@ export function MomentDetailFull({ moment, initialPairings, initialPitches = [] 
               {scoring && <span className="spinner" />}
               {scoring ? "Claude is evaluating…" : "Evaluate with Claude"}
             </button>
+          </div>
+        )}
+      </div>
+
+      {/* ── Section: Partnership Pitches ────────────────────────────────────── */}
+      <div style={{ marginBottom: 28 }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12, gap: 12 }}>
+          <div style={{ display: "flex", alignItems: "baseline", gap: 10 }}>
+            <p className="eyebrow">PARTNERSHIP PITCHES</p>
+            <span style={{ fontSize: "0.78rem", color: "#86868b" }}>{momentPitches.length} total</span>
+          </div>
+          <a href="#merchant-matches" className="btn btn-outline btn-sm" style={{ textDecoration: "none", whiteSpace: "nowrap" }}>
+            + New pitch for this moment
+          </a>
+        </div>
+        {momentPitches.length === 0 ? (
+          <div className="card-p" style={{ textAlign: "center", color: "#86868b", fontSize: "0.85rem" }}>
+            No pitches yet. Pick a merchant in <a href="#merchant-matches" style={{ color: "#0071e3", textDecoration: "none" }}>Merchant Matches</a> and build one.
+          </div>
+        ) : (
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {momentPitches.map((pitch: any) => (
+              <Link
+                key={pitch.id}
+                href={`/pitch/${pitch.id}`}
+                style={{
+                  display: "flex", alignItems: "center", justifyContent: "space-between",
+                  padding: "12px 16px", background: "white", borderRadius: 10,
+                  border: "1px solid #e8e8ed", textDecoration: "none", fontSize: "0.875rem",
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  <span style={{
+                    width: 8, height: 8, borderRadius: "50%", flexShrink: 0,
+                    background: pitch.status === "approved" ? "#34c759"
+                      : pitch.status === "sent" ? "#0071e3"
+                      : pitch.status === "rejected" ? "#ff3b30"
+                      : "#d2d2d7",
+                  }} />
+                  <span style={{ fontWeight: 600, color: "#1d1d1f" }}>{pitch.merchantName ?? "No merchant"}</span>
+                  {pitch.targetQuarter && (
+                    <span style={{ color: "#86868b" }}>{pitch.targetQuarter}</span>
+                  )}
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <span style={{ fontSize: "0.75rem", color: "#86868b", textTransform: "capitalize" }}>{pitch.status}</span>
+                  <span style={{ color: "#0071e3", fontWeight: 500 }}>Open →</span>
+                </div>
+              </Link>
+            ))}
           </div>
         )}
       </div>
@@ -665,6 +695,14 @@ export function MomentDetailFull({ moment, initialPairings, initialPitches = [] 
         )}
       </div>
 
+      {/* ── Section: Influencer Strategy ────────────────────────────────────── */}
+      <div style={{ marginBottom: 28 }}>
+        <p className="eyebrow" style={{ marginBottom: 12 }}>INFLUENCER STRATEGY</p>
+        <div className="card-p">
+          <InfluencerPanel momentId={moment.id} hasPairings={pairings.length > 0} />
+        </div>
+      </div>
+
       {/* ── Section: Channel Recommendations ──────────────────────────────── */}
       {liveScores.channels.length > 0 && (
         <div style={{ marginBottom: 28 }}>
@@ -692,14 +730,6 @@ export function MomentDetailFull({ moment, initialPairings, initialPitches = [] 
           </div>
         </div>
       )}
-
-      {/* ── Section 5: Influencer Strategy ──────────────────────────────────── */}
-      <div style={{ marginBottom: 28 }}>
-        <p className="eyebrow" style={{ marginBottom: 12 }}>INFLUENCER STRATEGY</p>
-        <div className="card-p">
-          <InfluencerPanel momentId={moment.id} hasPairings={pairings.length > 0} />
-        </div>
-      </div>
 
       {/* ── Fixed sticky selection bar ─────────────────────────────────────── */}
       {selected.size > 0 && (
@@ -821,36 +851,6 @@ export function MomentDetailFull({ moment, initialPairings, initialPitches = [] 
           </div>
         </div>
       )}
-
-      {/* ── Section 6: Moment Context ────────────────────────────────────────── */}
-      <div style={{ marginBottom: 28 }}>
-        <p className="eyebrow" style={{ marginBottom: 12 }}>MOMENT CONTEXT</p>
-        <div className="card-p" style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-          <div>
-            <p className="eyebrow" style={{ marginBottom: 6 }}>Description</p>
-            <p style={{ fontSize: "0.9rem", color: "#1d1d1f", lineHeight: 1.6 }}>{moment.description}</p>
-          </div>
-          {hookPills.length > 0 && (
-            <div style={{ borderTop: "1px solid #f0f0f5", paddingTop: 16 }}>
-              <p className="eyebrow" style={{ marginBottom: 8 }}>Hook Type</p>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-                {hookPills.map(h => (
-                  <span key={h} style={{
-                    fontSize: "0.78rem", padding: "3px 10px", borderRadius: 10,
-                    background: "#f5f5f7", color: "#1d1d1f", border: "1px solid #e8e8ed",
-                  }}>{h}</span>
-                ))}
-              </div>
-            </div>
-          )}
-          {moment.notes && (
-            <div style={{ borderTop: "1px solid #f0f0f5", paddingTop: 16 }}>
-              <p className="eyebrow" style={{ marginBottom: 6 }}>Notes</p>
-              <p style={{ fontSize: "0.9rem", color: "#6e6e73", lineHeight: 1.6 }}>{moment.notes}</p>
-            </div>
-          )}
-        </div>
-      </div>
 
     </div>
   );
