@@ -391,9 +391,16 @@ export default function PitchDocumentPage() {
 
       {/* ── Back + header controls ───────────────────────────────────────── */}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 24, flexWrap: "wrap", gap: 12 }}>
-        <Link href="/pitch" style={{ fontSize: "0.82rem", color: "#86868b", textDecoration: "none" }}>
-          ← Pitches
-        </Link>
+        <div style={{ display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
+          <Link href="/pitch" style={{ fontSize: "0.82rem", color: "#86868b", textDecoration: "none" }}>
+            ← Pitches
+          </Link>
+          {pitch.momentId && (
+            <Link href={`/moments/${pitch.momentId}`} style={{ fontSize: "0.82rem", color: "#0071e3", textDecoration: "none", fontWeight: 500 }}>
+              + New pitch for this moment
+            </Link>
+          )}
+        </div>
         <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
           {saveState === "saving" && (
             <span style={{ fontSize: "0.72rem", color: "#86868b" }}>Saving…</span>
