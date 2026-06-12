@@ -105,17 +105,24 @@ export default function BriefPage() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ pitchId }),
         });
-        const generated = await genRes.json();
-        if (generated?.error) {
-          setGenerateError(
-            generated.error.includes("api-key") || generated.error.includes("API key") || generated.error.includes("x-api-key")
-              ? "Add ANTHROPIC_API_KEY to .env.local to enable AI generation."
-              : generated.error
-          );
+        if (!genRes.ok) {
+          let errMsg = `Server error (${genRes.status})`;
+          try {
+            const body = await genRes.json();
+            errMsg = body.error || body.message || errMsg;
+          } catch {
+            if (genRes.status === 502) errMsg = "Request timed out — the AI call took too long. Please try again.";
+            else if (genRes.status === 500) errMsg = "Server error — check that ANTHROPIC_API_KEY is set in Vercel environment variables.";
+          }
+          if (errMsg.includes("api-key") || errMsg.includes("API key") || errMsg.includes("x-api-key"))
+            errMsg = "Add ANTHROPIC_API_KEY to .env.local to enable AI generation.";
+          setGenerateError(errMsg);
+          setGenerating(false);
         } else {
+          const generated = await genRes.json();
           setBrief(generated);
+          setGenerating(false);
         }
-        setGenerating(false);
       }
     }
     init();
@@ -286,10 +293,18 @@ export default function BriefPage() {
                   headers: { "Content-Type": "application/json" },
                   body: JSON.stringify({ pitchId, forceRefresh: true }),
                 });
-                const generated = await genRes.json();
-                if (generated?.error) {
-                  setGenerateError(generated.error);
+                if (!genRes.ok) {
+                  let errMsg = `Server error (${genRes.status})`;
+                  try {
+                    const body = await genRes.json();
+                    errMsg = body.error || body.message || errMsg;
+                  } catch {
+                    if (genRes.status === 502) errMsg = "Request timed out — the AI call took too long. Please try again.";
+                    else if (genRes.status === 500) errMsg = "Server error — check that ANTHROPIC_API_KEY is set in Vercel environment variables.";
+                  }
+                  setGenerateError(errMsg);
                 } else {
+                  const generated = await genRes.json();
                   setBrief(generated);
                 }
                 setGenerating(false);

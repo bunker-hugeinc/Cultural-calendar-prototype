@@ -1,11 +1,12 @@
+export const dynamic = 'force-dynamic';
+export const maxDuration = 300;
+
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { feedCandidates, merchants } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { callClaude, parseJSON } from "@/lib/ai";
 import { SCORE_SYSTEM_PROMPT } from "@/lib/prompts";
-
-export const maxDuration = 60;
 
 // Evaluates a feed candidate with Claude without creating a moment record.
 // Returns scores + merchant pairings for display only.

@@ -30,10 +30,18 @@ export function ScoreButton({ momentId, hasPairings, onScored }: ScoreButtonProp
     setLoading(true);
     try {
       const res = await fetch(`/api/moments/${momentId}/score`, { method: "POST" });
-      const data = await res.json();
       if (!res.ok) {
-        showToast(data.error ?? "Scoring failed", false);
+        let errMsg = `Scoring failed (${res.status})`;
+        try {
+          const body = await res.json();
+          errMsg = body.error || body.message || errMsg;
+        } catch {
+          if (res.status === 502) errMsg = "Request timed out — please try again.";
+          else if (res.status === 500) errMsg = "Server error — check ANTHROPIC_API_KEY in Vercel.";
+        }
+        showToast(errMsg, false);
       } else {
+        const data = await res.json();
         onScored(data.pairings, data.scored);
         showToast(`Scored against ${data.scored} merchants`, true);
       }

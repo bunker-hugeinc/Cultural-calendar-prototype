@@ -5,7 +5,7 @@ import { eq } from "drizzle-orm";
 import { callClaude } from "@/lib/ai";
 import { extractJSONSafe } from "@/lib/json-utils";
 export const dynamic = "force-dynamic";
-export const maxDuration = 60;
+export const maxDuration = 300;
 
 export async function POST(req: NextRequest) {
   try {

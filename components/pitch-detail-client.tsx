@@ -168,8 +168,19 @@ export function PitchDetailClient({ pitch, allMoments, allMerchants }: Props) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ section }),
       });
+      if (!res.ok) {
+        let errMsg = `Generation failed (${res.status})`;
+        try {
+          const body = await res.json();
+          errMsg = body.error || body.message || errMsg;
+        } catch {
+          if (res.status === 502) errMsg = "Request timed out — the AI call took too long. Please try again.";
+          else if (res.status === 500) errMsg = "Server error — check that ANTHROPIC_API_KEY is set in Vercel environment variables.";
+        }
+        showToast(errMsg, "error");
+        return;
+      }
       const data = await res.json();
-      if (!res.ok) { showToast(data.error ?? "Generation failed", "error"); return; }
 
       if (section === "situation" && data.situation) {
         setSituation(data.situation);
