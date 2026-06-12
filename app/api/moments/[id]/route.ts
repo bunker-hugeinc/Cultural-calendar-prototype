@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { moments, pairingScores, merchants } from "@/lib/db/schema";
@@ -41,7 +43,9 @@ export async function PUT(
     const existing = await db.query.moments.findFirst({ where: eq(moments.id, id) });
     if (!existing) return NextResponse.json({ error: "Not found" }, { status: 404 });
     const newNotes = existing.notes
-      ? `${existing.notes}\n\n${body._appendNotes}`
+      ? `${existing.notes}
+
+${body._appendNotes}`
       : body._appendNotes;
     const [updated] = await db
       .update(moments)
