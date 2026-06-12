@@ -1,6 +1,3 @@
-export const dynamic = 'force-dynamic';
-export const maxDuration = 60;
-
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { pitches, pitchMoments, pitchMerchants, moments, merchants, pairingScores } from "@/lib/db/schema";

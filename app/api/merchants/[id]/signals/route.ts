@@ -1,6 +1,3 @@
-export const dynamic = 'force-dynamic';
-export const maxDuration = 60;
-
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { merchants } from "@/lib/db/schema";
