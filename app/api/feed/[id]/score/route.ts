@@ -24,24 +24,44 @@ export async function POST(
 
   const allMerchants = await db.select().from(merchants);
 
-  const userMessage = `Moment: ${candidate.name}
+  const BATCH_SIZE = 15;
+  const momentContext = `Moment: ${candidate.name}
 Dates: ${candidate.startDate}${candidate.endDate ? ` to ${candidate.endDate}` : ""}
 Category: ${candidate.category}
 Description: ${candidate.body}
-Hook type: ${candidate.hook ?? "unspecified"}
+Hook type: ${candidate.hook ?? "unspecified"}`;
 
-Merchants:
-${allMerchants.map(m => `- ${m.name} (${m.category}): ${m.seasonalNotes ?? ""}`).join("\n")}`;
+  const batches: typeof allMerchants[] = [];
+  for (let i = 0; i < allMerchants.length; i += BATCH_SIZE) {
+    batches.push(allMerchants.slice(i, i + BATCH_SIZE));
+  }
 
-  const raw = await callClaude({
-    system: SCORE_SYSTEM_PROMPT,
-    user: userMessage,
-    model: "claude-haiku-4-5-20251001",
-    maxTokens: 6000,
-    temperature: 0.2,
-  });
+  const MERCHANT_ONLY_SYSTEM = `${SCORE_SYSTEM_PROMPT}
 
-  let result: {
+For this call you are scoring ONLY the merchantPairings array — do NOT re-score the moment. Return:
+{ "merchantPairings": [ ...PART 2 ] }`;
+
+  const [firstRaw, ...restRaws] = await Promise.all([
+    callClaude({
+      system: SCORE_SYSTEM_PROMPT,
+      user: `${momentContext}\n\nMerchants:\n${batches[0].map(m => `- ${m.name} (${m.category}): ${m.seasonalNotes ?? ""}`).join("\n")}`,
+      model: "claude-haiku-4-5-20251001",
+      maxTokens: 8192,
+      temperature: 0.2,
+    }),
+    ...batches.slice(1).map(batch =>
+      callClaude({
+        system: MERCHANT_ONLY_SYSTEM,
+        user: `${momentContext}\n\nMerchants:\n${batch.map(m => `- ${m.name} (${m.category}): ${m.seasonalNotes ?? ""}`).join("\n")}`,
+        model: "claude-haiku-4-5-20251001",
+        maxTokens: 4096,
+        temperature: 0.2,
+      })
+    ),
+  ]);
+
+  type MerchantPairing = { merchantName: string; relevanceScore: number; campaignAngle: string; rationale: string };
+  type ScoreResult = {
     momentEvaluation: {
       ecommerceScore: number; ecommerceRationale: string;
       audienceFit: number; audienceRationale: string;
@@ -49,13 +69,26 @@ ${allMerchants.map(m => `- ${m.name} (${m.category}): ${m.seasonalNotes ?? ""}`)
       whiteSpaceAnalysis: string; overallRationale: string;
       channelRecommendations: unknown[];
     };
-    merchantPairings: { merchantName: string; relevanceScore: number; campaignAngle: string; rationale: string }[];
+    merchantPairings: MerchantPairing[];
   };
 
+  let result: ScoreResult;
   try {
-    result = parseJSON(raw);
+    result = parseJSON<ScoreResult>(firstRaw);
   } catch {
-    return NextResponse.json({ error: "AI returned invalid JSON" }, { status: 502 });
+    console.error("[feed/score] JSON parse failed:", firstRaw.slice(0, 500));
+    return NextResponse.json({ error: "AI returned invalid JSON", raw: firstRaw.slice(0, 500) }, { status: 502 });
+  }
+
+  for (const raw of restRaws) {
+    try {
+      const extra = parseJSON<{ merchantPairings: MerchantPairing[] }>(raw);
+      if (Array.isArray(extra?.merchantPairings)) {
+        result.merchantPairings.push(...extra.merchantPairings);
+      }
+    } catch {
+      console.warn("[feed/score] Skipping unparseable batch:", raw.slice(0, 200));
+    }
   }
 
   // Enrich pairings with merchant IDs for later use

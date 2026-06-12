@@ -65,29 +65,62 @@ export async function POST(
 
   const allMerchants = await db.select().from(merchants);
 
-  const userMessage = `Moment: ${moment.name}
+  const BATCH_SIZE = 15;
+  const momentContext = `Moment: ${moment.name}
 Dates: ${moment.startDate}${moment.endDate ? ` to ${moment.endDate}` : ""}
 Category: ${moment.category}
 Description: ${moment.description}
-Hook type: ${moment.hook ?? "unspecified"}
+Hook type: ${moment.hook ?? "unspecified"}`;
 
-Merchants:
-${allMerchants.map(m => `- ${m.name} (${m.category}): ${m.seasonalNotes ?? ""}`).join("\n")}`;
+  // Score moment evaluation + first batch together, remaining batches in parallel
+  const batches: typeof allMerchants[] = [];
+  for (let i = 0; i < allMerchants.length; i += BATCH_SIZE) {
+    batches.push(allMerchants.slice(i, i + BATCH_SIZE));
+  }
 
-  const raw = await callClaude({
-    system: SCORE_SYSTEM_PROMPT,
-    user: userMessage,
-    model: "claude-haiku-4-5-20251001",
-    maxTokens: 6000,
-    temperature: 0.2,
-  });
+  // First batch includes the moment evaluation; subsequent batches are merchant-only
+  const MERCHANT_ONLY_SYSTEM = `${SCORE_SYSTEM_PROMPT}
+
+For this call you are scoring ONLY the merchantPairings array — do NOT re-score the moment. Return:
+{ "merchantPairings": [ ...PART 2 ] }`;
+
+  const [firstRaw, ...restRaws] = await Promise.all([
+    callClaude({
+      system: SCORE_SYSTEM_PROMPT,
+      user: `${momentContext}\n\nMerchants:\n${batches[0].map(m => `- ${m.name} (${m.category}): ${m.seasonalNotes ?? ""}`).join("\n")}`,
+      model: "claude-haiku-4-5-20251001",
+      maxTokens: 8192,
+      temperature: 0.2,
+    }),
+    ...batches.slice(1).map(batch =>
+      callClaude({
+        system: MERCHANT_ONLY_SYSTEM,
+        user: `${momentContext}\n\nMerchants:\n${batch.map(m => `- ${m.name} (${m.category}): ${m.seasonalNotes ?? ""}`).join("\n")}`,
+        model: "claude-haiku-4-5-20251001",
+        maxTokens: 4096,
+        temperature: 0.2,
+      })
+    ),
+  ]);
 
   let result: ScoreResponse;
   try {
-    result = parseJSON<ScoreResponse>(raw);
+    result = parseJSON<ScoreResponse>(firstRaw);
   } catch {
-    console.error("[score] JSON parse failed:", raw.slice(0, 500));
-    return NextResponse.json({ error: "AI returned invalid JSON", raw: raw.slice(0, 500) }, { status: 502 });
+    console.error("[score] JSON parse failed on first batch:", firstRaw.slice(0, 500));
+    return NextResponse.json({ error: "AI returned invalid JSON", raw: firstRaw.slice(0, 500) }, { status: 502 });
+  }
+
+  // Merge merchant pairings from additional batches
+  for (const raw of restRaws) {
+    try {
+      const extra = parseJSON<{ merchantPairings: MerchantPairing[] }>(raw);
+      if (Array.isArray(extra?.merchantPairings)) {
+        result.merchantPairings.push(...extra.merchantPairings);
+      }
+    } catch {
+      console.warn("[score] Skipping unparseable batch:", raw.slice(0, 200));
+    }
   }
 
   const { momentEvaluation, merchantPairings } = result;
