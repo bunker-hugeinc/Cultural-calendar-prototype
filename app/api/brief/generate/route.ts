@@ -4,97 +4,126 @@ import { briefs, pitches, moments, merchants } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { callClaude } from "@/lib/ai";
 import { extractJSONSafe } from "@/lib/json-utils";
+
 export const dynamic = "force-dynamic";
-export const maxDuration = 300;
+export const maxDuration = 60;
 
 export async function POST(req: NextRequest) {
   try {
-  const body = await req.json();
-  const { pitchId, forceRefresh } = body;
+    const { pitchId } = await req.json();
+    if (!pitchId) return NextResponse.json({ error: "pitchId required" }, { status: 400 });
 
-  // Return existing brief if already generated (unless forceRefresh)
-  const existing = await db.select().from(briefs)
-    .where(eq(briefs.pitchId, pitchId)).limit(1);
-  if (existing[0] && !forceRefresh) return NextResponse.json(existing[0]);
+    const pitchRows = await db
+      .select()
+      .from(pitches)
+      .leftJoin(merchants, eq(pitches.merchantId, merchants.id))
+      .leftJoin(moments, eq(pitches.momentId, moments.id))
+      .where(eq(pitches.id, pitchId))
+      .limit(1);
 
-  const [pitch] = await db.select().from(pitches).where(eq(pitches.id, pitchId)).limit(1);
-  if (!pitch) return NextResponse.json({ error: "Pitch not found" }, { status: 404 });
+    if (!pitchRows[0]) return NextResponse.json({ error: "Pitch not found" }, { status: 404 });
 
-  const [moment] = pitch.momentId
-    ? await db.select().from(moments).where(eq(moments.id, pitch.momentId)).limit(1)
-    : [null];
-  const [merchant] = pitch.merchantId
-    ? await db.select().from(merchants).where(eq(merchants.id, pitch.merchantId!)).limit(1)
-    : [null];
+    const pitch = pitchRows[0].pitches;
+    const merchant = pitchRows[0].merchants;
+    const moment = pitchRows[0].moments;
 
-  const system = `CRITICAL: This tool is for Apple Pay only — NOT Apple Card, NOT Apple Cash.
+    const systemPrompt = `You are a campaign strategist for Apple Pay Partner Marketing.
+
+Given a cultural moment, its approved merchant partner, and the pitch details, generate a complete Apple Pay Partner Marketing brief.
+
+CRITICAL: This tool is for Apple Pay only — NOT Apple Card, NOT Apple Cash.
 NEVER mention: rewards, cash back, 2%, Daily Cash, APR, interest rates, credit limits.
 Apple Pay is a contactless payment method accepted wherever NFC or online checkout supports it.
 Apple Pay's value proposition: speed, security, privacy, broad merchant acceptance.
 
-You are writing a Creative Brief for an Apple Pay partnership campaign.
-This brief will be handed off to creative agencies and execution partners.
-Write with the precision and clarity of a senior marketing strategist.
-Return ONLY valid JSON. No markdown outside the JSON.`;
+Return a JSON object with exactly these fields — no markdown, no commentary:
 
-  const prompt = `Generate a complete Creative Brief for this approved Apple Pay partnership.
-
-MOMENT: ${moment?.name ?? "TBD"}
-DATE: ${moment?.startDate ?? "TBD"}
-CATEGORY: ${moment?.category ?? "N/A"}
-MOMENT DESCRIPTION: ${moment?.description ?? "N/A"}
-OPPORTUNITY SUMMARY: ${moment?.opportunitySummaryCache ?? "N/A"}
-
-MERCHANT PARTNER: ${merchant?.name ?? "TBD"}
-MERCHANT CATEGORY: ${merchant?.category ?? "N/A"}
-
-APPROVED PITCH CONTENT:
-Partnership Overview: ${pitch.businessRationale ?? "N/A"}
-Proposed Activation: ${pitch.offerMechanics ?? "N/A"}
-Channel Strategy: ${pitch.channelStrategy ?? "N/A"}
-Influencer Strategy: ${pitch.influencerStrategy ?? "N/A"}
-Target Quarter: ${pitch.targetQuarter ?? "N/A"}
-
-Return a JSON object:
 {
-  "toplineOverview": "<2-3 sentences. The single most important thing to know about this campaign — what it is, who it's for, and what it needs to achieve.>",
-  "businessObjectives": "<3-4 sentences. What Apple Pay needs this campaign to accomplish. Frame in terms of payment adoption, merchant partnership activation, and audience reach. Be specific to this moment and merchant.>",
-  "targetAudience": "<3-4 sentences. Describe the primary audience for this activation — demographics, psychographics, their relationship to both the moment and the merchant. Include any secondary audiences.>",
-  "foundationalInsights": "<2-3 sentences. The core insight that makes this moment × merchant pairing powerful for Apple Pay. What behavior or cultural truth does this activation tap into?>",
-  "messagingHierarchy": "<3-4 sentences. Primary message (what Apple Pay wants people to feel or do), secondary messages (supporting proof points), and the tone. Be specific to the moment.>",
-  "creativeTacticalConsiderations": "<3-4 sentences. Specific creative directions, constraints, or opportunities. Include any Apple brand guidelines relevant to this activation, visual/tonal direction, and what to avoid.>",
-  "deliverables": "<Bulleted list as a single string, newline-separated. List the expected creative deliverables: social assets, video specs, OOH if relevant, in-app assets, co-branded materials.>",
-  "successMetrics": "<2-3 sentences. How this campaign's performance will be measured. Include both quantitative metrics (impressions, transaction lift, tap-to-pay adoption) and qualitative outcomes.>",
-  "timingNotes": "<1-2 sentences. Key timing considerations, deadlines relative to the moment date, and any production lead times to flag.>"
-}`;
+  "toplineOverview": "2–3 sentence TL;DR of what this campaign is doing and why now. Be specific to the moment and merchant.",
+  "businessObjectives": ["string", "string"],
+  "audience": "1–2 sentences describing the primary audience including relevant behavioral insight.",
+  "deliverables": ["string", "string"],
+  "successMetrics": ["string", "string"],
+  "timingNotes": "1–2 sentences on timing rationale based on the moment dates. Note any production lead time implications.",
+  "additionalReferences": [],
+  "foundationalInsights": "2–3 sentences of audience insight specific to this moment and merchant. Reference real behavioral patterns (habit inertia, convenience gaps, trust barriers).",
+  "messagingHierarchy": ["Pillar label — 1-sentence rationale", "Pillar label — rationale"],
+  "creativeTacticalConsiderations": ["string", "string"]
+}
 
-  const text = await callClaude({
-    system,
-    user: prompt,
-    model: "claude-sonnet-4-6",
-    maxTokens: 2000,
-  });
+businessObjectives: 2–3 bullets on the business problem this campaign solves. Focus on Apple Pay adoption, spending uplift, or partner co-marketing goals.
+deliverables: list what would be produced (e.g. "2 Discovery Cards (UK, FR, DE)", "Partner co-branded social assets").
+successMetrics: 2–3 KPIs from: CID Provisions, Engagement Rate, CTR, Partner Redemptions, Spend Uplift, ROAS, App Opens, Wallet Adds.
+messagingHierarchy: ordered list of 3–5 message pillars, most to least important. Each: "Label — 1-sentence rationale."
+creativeTacticalConsiderations: 2–4 must-haves or watch-outs specific to this moment and merchant.`;
 
-  const sections: Record<string, string> = extractJSONSafe(text, {});
+    const userMessage = `Moment: ${moment?.name ?? "Unknown"}
+Dates: ${moment?.startDate ?? ""}${moment?.endDate ? ` to ${moment.endDate}` : ""}
+Category: ${moment?.category ?? ""}
+Description: ${moment?.description ?? ""}
 
-  let brief;
-  if (existing[0] && forceRefresh) {
-    [brief] = await db.update(briefs).set({
-      ...sections,
+Merchant Partner: ${merchant?.name ?? "Unknown"}
+Merchant Category: ${merchant?.category ?? ""}
+
+Partnership Angle: ${pitch.businessRationale ?? ""}
+Offer Mechanics: ${pitch.offerMechanics ?? ""}
+ROI Narrative: ${pitch.roiNarrative ?? ""}
+Audience Reach: ${pitch.audienceReachNarrative ?? ""}
+Target Quarter: ${pitch.targetQuarter ?? ""}`;
+
+    const raw = await callClaude({
+      system: systemPrompt,
+      user: userMessage,
+      model: "claude-sonnet-4-6",
+      maxTokens: 2048,
+      temperature: 0.3,
+    });
+
+    const content = extractJSONSafe<Record<string, unknown> | null>(raw, null);
+    if (!content) return NextResponse.json({ error: "AI returned invalid JSON. Try again." }, { status: 500 });
+
+    const existingBrief = await db.select().from(briefs).where(eq(briefs.pitchId, pitchId)).limit(1);
+
+    const str = (v: unknown) => (typeof v === "string" ? v : "");
+    const arr = (v: unknown) => JSON.stringify(Array.isArray(v) ? v : []);
+
+    const briefData = {
+      toplineOverview: str(content.toplineOverview),
+      businessObjectives: arr(content.businessObjectives),
+      audience: str(content.audience),
+      deliverables: arr(content.deliverables),
+      successMetrics: arr(content.successMetrics),
+      timingNotes: str(content.timingNotes),
+      additionalReferences: arr(content.additionalReferences),
+      foundationalInsights: str(content.foundationalInsights),
+      messagingHierarchy: arr(content.messagingHierarchy),
+      creativeTacticalConsiderations: arr(content.creativeTacticalConsiderations),
       generatedAt: new Date(),
       updatedAt: new Date(),
-    }).where(eq(briefs.id, existing[0].id)).returning();
-  } else {
-    [brief] = await db.insert(briefs).values({
-      pitchId,
-      momentId: pitch.momentId,
-      merchantId: pitch.merchantId,
-      ...sections,
-      generatedAt: new Date(),
-    }).returning();
-  }
+    };
 
-  return NextResponse.json(brief);
+    let briefId: string;
+    if (existingBrief[0]) {
+      await db.update(briefs).set(briefData).where(eq(briefs.pitchId, pitchId));
+      briefId = existingBrief[0].id;
+    } else {
+      briefId = crypto.randomUUID();
+      await db.insert(briefs).values({
+        id: briefId,
+        pitchId,
+        momentId: pitch.momentId,
+        merchantId: pitch.merchantId,
+        ...briefData,
+        status: "draft",
+      });
+    }
+
+    return NextResponse.json({
+      id: briefId,
+      pitchId,
+      ...content,
+      generatedAt: new Date().toISOString(),
+    });
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);
     console.error("[brief/generate]", msg);

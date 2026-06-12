@@ -182,16 +182,22 @@ export const briefs = pgTable("briefs", {
   momentId:   text("moment_id").references(() => moments.id),
   merchantId: text("merchant_id").references(() => merchants.id),
 
-  // Brief content sections
-  toplineOverview:                text("topline_overview"),
-  businessObjectives:             text("business_objectives"),
-  targetAudience:                 text("target_audience"),
-  messagingHierarchy:             text("messaging_hierarchy"),
-  creativeTacticalConsiderations: text("creative_tactical_considerations"),
-  deliverables:                   text("deliverables"),
-  successMetrics:                 text("success_metrics"),
-  timingNotes:                    text("timing_notes"),
+  // Section 1 — Campaign logistics
+  toplineOverview:    text("topline_overview"),
+  businessObjectives: text("business_objectives"),    // JSON array string
+  audience:           text("audience"),
+  deliverables:       text("deliverables"),            // JSON array string
+  successMetrics:     text("success_metrics"),         // JSON array string
+  timingNotes:        text("timing_notes"),
+  additionalReferences: text("additional_references"), // JSON array string
+
+  // Section 2 — Content and message detail
   foundationalInsights:           text("foundational_insights"),
+  messagingHierarchy:             text("messaging_hierarchy"),              // JSON array string
+  creativeTacticalConsiderations: text("creative_tactical_considerations"), // JSON array string
+
+  // Legacy columns — kept so existing rows aren't broken
+  targetAudience: text("target_audience"),
 
   // State
   status:          text("status").default("draft"),   // 'draft' | 'final'
