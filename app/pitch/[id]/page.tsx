@@ -150,6 +150,7 @@ export default function PitchDocumentPage() {
   const [generating, setGenerating] = useState(false);
   const [generateError, setGenerateError] = useState<string | null>(null);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
+  const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [statusUpdating, setStatusUpdating] = useState(false);
   const [copied, setCopied] = useState(false);
   const [pocData, setPocData] = useState<POCData | null>(null);
@@ -238,14 +239,23 @@ export default function PitchDocumentPage() {
   }
 
   async function savePitchFields(fields: Record<string, string>) {
-    await fetch(`/api/pitch/${id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ...fields, lastAutoSavedAt: new Date().toISOString() }),
-    });
-    setLastSaved(new Date());
-    Object.keys(fields).forEach(k => delete pendingChanges.current[k]);
-    if (Object.keys(pendingChanges.current).length === 0) hasPending.current = false;
+    setSaveState("saving");
+    try {
+      const res = await fetch(`/api/pitch/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...fields, lastAutoSavedAt: new Date().toISOString() }),
+      });
+      if (!res.ok) throw new Error(`Save failed (${res.status})`);
+      setLastSaved(new Date());
+      setSaveState("saved");
+      // Only clear pending on confirmed success, so failed edits stay queued.
+      Object.keys(fields).forEach(k => delete pendingChanges.current[k]);
+      if (Object.keys(pendingChanges.current).length === 0) hasPending.current = false;
+    } catch (err) {
+      console.error("[pitch save] failed", err);
+      setSaveState("error");
+    }
   }
 
   const handleEdit = useCallback((field: keyof PitchData, value: string) => {
@@ -385,7 +395,15 @@ export default function PitchDocumentPage() {
           ← Pitches
         </Link>
         <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
-          {lastSaved && (
+          {saveState === "saving" && (
+            <span style={{ fontSize: "0.72rem", color: "#86868b" }}>Saving…</span>
+          )}
+          {saveState === "error" && (
+            <span style={{ fontSize: "0.72rem", color: "#cc2200", fontWeight: 600 }}>
+              ⚠ Save failed — changes not stored
+            </span>
+          )}
+          {saveState !== "error" && saveState !== "saving" && lastSaved && (
             <span style={{ fontSize: "0.72rem", color: "#86868b" }}>
               Saved {lastSaved.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
             </span>

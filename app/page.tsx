@@ -101,7 +101,7 @@ export default async function DashboardPage() {
         {[
           { label: "Moments on calendar", value: allMoments.length, href: "/calendar" },
           { label: "Merchants in catalog", value: allMerchants.length, href: "/merchants" },
-          { label: "Pitches in progress",  value: allPitches.length,   href: "/pitches" },
+          { label: "Pitches in progress",  value: allPitches.length,   href: "/pitch" },
           { label: "AI suggestions pending", value: pendingFeed.length, href: "/feed" },
         ].map(({ label, value, href }) => (
           <a key={label} href={href} style={{ textDecoration: "none", flex: 1, minWidth: 140 }}>
@@ -159,17 +159,17 @@ export default async function DashboardPage() {
         <div>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 16 }}>
             <h2 style={{ fontSize: "1.1rem", fontWeight: 700 }}>Recent pitches</h2>
-            <Link href="/pitches" style={{ fontSize: "0.85rem", color: "#0071e3", textDecoration: "none" }}>View all →</Link>
+            <Link href="/pitch" style={{ fontSize: "0.85rem", color: "#0071e3", textDecoration: "none" }}>View all →</Link>
           </div>
           {recentPitches.length === 0 ? (
             <div className="card-apple" style={{ padding: "24px 20px", textAlign: "center" }}>
               <p style={{ fontSize: "0.9rem", color: "#86868b", marginBottom: 12 }}>No pitches yet.</p>
-              <Link href="/pitches/new" className="btn btn-outline btn-sm">Create first pitch →</Link>
+              <Link href="/calendar" className="btn btn-outline btn-sm">Create first pitch →</Link>
             </div>
           ) : (
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               {recentPitches.map(p => (
-                <Link key={p.id} href={`/pitches/${p.id}`} style={{ textDecoration: "none" }}>
+                <Link key={p.id} href={`/pitch/${p.id}`} style={{ textDecoration: "none" }}>
                   <div className="card-apple" style={{ padding: "14px 18px", display: "flex", alignItems: "center", gap: 12 }}>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ fontWeight: 600, fontSize: "0.9rem", color: "#1d1d1f", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{p.title}</div>

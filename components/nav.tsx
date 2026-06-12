@@ -14,7 +14,7 @@ export function Nav() {
     { href: "/",          label: "Dashboard" },
     { href: "/calendar",  label: "Calendar"  },
     { href: "/merchants", label: "Merchants" },
-    { href: "/pitches",   label: "Pitches"   },
+    { href: "/pitch",     label: "Pitches"   },
     { href: "/feed",      label: "Feed"      },
   ];
 

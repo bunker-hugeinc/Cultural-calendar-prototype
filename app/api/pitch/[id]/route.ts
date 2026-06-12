@@ -30,11 +30,27 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     "pocName", "pocTitle", "pocEmail", "pocLinkedIn",
     "internalNotes", "campaignTiming",
   ];
+  // Timestamp columns must be Date objects, not strings. The client sends these
+  // as ISO strings; drizzle calls .toISOString() on the value, which throws on a
+  // string and silently fails the entire update. Coerce them to Date here.
+  const timestampFields = new Set(["sentAt", "approvedAt", "lastAutoSavedAt", "exportedAt"]);
   const updates: any = { updatedAt: new Date() };
   for (const key of allowed) {
-    if (key in body) updates[key] = body[key];
+    if (key in body) {
+      if (timestampFields.has(key)) {
+        const v = body[key];
+        updates[key] = v == null ? null : (v instanceof Date ? v : new Date(v));
+      } else {
+        updates[key] = body[key];
+      }
+    }
   }
-  await db.update(pitches).set(updates).where(eq(pitches.id, id));
+  try {
+    await db.update(pitches).set(updates).where(eq(pitches.id, id));
+  } catch (err) {
+    console.error("[pitch PATCH] update failed", { id, fields: Object.keys(updates), err });
+    return NextResponse.json({ error: "Save failed" }, { status: 500 });
+  }
   return NextResponse.json({ success: true });
 }
 
