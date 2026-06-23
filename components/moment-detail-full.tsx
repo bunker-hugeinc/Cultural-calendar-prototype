@@ -68,6 +68,18 @@ interface MomentData {
   scoreRationale: string | null;
   channelRecommendations: string | null;
   notes: string | null;
+  approvedOffer?: string | null;
+  approvedMerchantId?: string | null;
+  approvedPitchId?: string | null;
+}
+
+interface DirectPartner {
+  id: string;
+  merchantId: string;
+  merchantName: string;
+  addedBy: string | null;
+  notes: string | null;
+  activationType: string | null;
 }
 
 interface PitchSummary {
@@ -84,6 +96,8 @@ interface Props {
   moment: MomentData;
   initialPairings: Pairing[];
   initialPitches?: PitchSummary[];
+  allMerchants?: { id: string; name: string }[];
+  initialDirectPartners?: DirectPartner[];
 }
 
 // ── Progress message ──────────────────────────────────────────────────────────
@@ -183,7 +197,7 @@ interface CompetitorData {
   whiteSpace: string;
 }
 
-export function MomentDetailFull({ moment, initialPairings, initialPitches = [] }: Props) {
+export function MomentDetailFull({ moment, initialPairings, initialPitches = [], allMerchants = [], initialDirectPartners = [] }: Props) {
   const router = useRouter();
   const [pairings, setPairings] = useState<Pairing[]>(initialPairings);
   const [scoring, setScoring] = useState(false);
@@ -203,6 +217,14 @@ export function MomentDetailFull({ moment, initialPairings, initialPitches = [] 
   const [moduleHeadline, setModuleHeadline] = useState("");
   const [moduleSubhead, setModuleSubhead] = useState("");
   const [isGeneratingHeadline, setIsGeneratingHeadline] = useState(false);
+
+  // Add partner directly state
+  const [showAddPartner, setShowAddPartner] = useState(false);
+  const [selectedMerchantId, setSelectedMerchantId] = useState("");
+  const [addPartnerActivationType, setAddPartnerActivationType] = useState("follow_up");
+  const [addPartnerNotes, setAddPartnerNotes] = useState("");
+  const [addingPartner, setAddingPartner] = useState(false);
+  const [directPartners, setDirectPartners] = useState<DirectPartner[]>(initialDirectPartners);
 
   // Parse stored JSON fields
   let rationale: ScoreRationale = {};
@@ -354,6 +376,39 @@ export function MomentDetailFull({ moment, initialPairings, initialPitches = [] 
     }
   }
 
+  async function handleAddPartner() {
+    if (!selectedMerchantId) return;
+    setAddingPartner(true);
+    try {
+      const res = await fetch(`/api/moments/${moment.id}/add-merchant`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          merchantId: selectedMerchantId,
+          activationType: addPartnerActivationType,
+          notes: addPartnerNotes || null,
+        }),
+      });
+      if (res.ok) {
+        const merchantName = allMerchants.find(m => m.id === selectedMerchantId)?.name ?? "";
+        setDirectPartners(prev => [...prev, {
+          id: crypto.randomUUID(),
+          merchantId: selectedMerchantId,
+          merchantName,
+          addedBy: "direct",
+          notes: addPartnerNotes || null,
+          activationType: addPartnerActivationType,
+        }]);
+        setShowAddPartner(false);
+        setSelectedMerchantId("");
+        setAddPartnerNotes("");
+        setAddPartnerActivationType("follow_up");
+      }
+    } finally {
+      setAddingPartner(false);
+    }
+  }
+
   function formatDate(dateStr: string) {
     const [y, m, d] = dateStr.split("-").map(Number);
     return new Date(y, m - 1, d).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
@@ -427,6 +482,22 @@ export function MomentDetailFull({ moment, initialPairings, initialPitches = [] 
           </button>
         </div>
       </div>
+
+      {/* ── Approved Offer banner (Update 2) ────────────────────────────────── */}
+      {moment.approvedOffer && (
+        <div style={{ background: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: 12, padding: "14px 18px", marginBottom: 20, display: "flex", alignItems: "flex-start", gap: 12 }}>
+          <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#22c55e", marginTop: 6, flexShrink: 0 }} />
+          <div>
+            <p style={{ fontSize: "0.72rem", fontWeight: 700, color: "#16a34a", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 4 }}>Approved Offer</p>
+            <p style={{ fontSize: "0.88rem", color: "#14532d", lineHeight: 1.6 }}>{moment.approvedOffer}</p>
+            {moment.approvedPitchId && (
+              <a href={`/pitch/${moment.approvedPitchId}`} style={{ fontSize: "0.78rem", color: "#16a34a", textDecoration: "none", display: "block", marginTop: 4 }}>
+                View approved pitch →
+              </a>
+            )}
+          </div>
+        </div>
+      )}
 
       {scoreError && (
         <div style={{ marginBottom: 16, padding: "10px 16px", background: "#fff5f5", border: "1px solid #ffc7c5", borderRadius: 10, fontSize: "0.85rem", color: "#cc2200" }}>
@@ -535,16 +606,44 @@ export function MomentDetailFull({ moment, initialPairings, initialPitches = [] 
 
       {/* ── Section: Partnership Pitches ────────────────────────────────────── */}
       <div style={{ marginBottom: 28 }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12, gap: 12 }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12, gap: 12, flexWrap: "wrap" }}>
           <div style={{ display: "flex", alignItems: "baseline", gap: 10 }}>
             <p className="eyebrow">PARTNERSHIP PITCHES</p>
-            <span style={{ fontSize: "0.78rem", color: "#86868b" }}>{momentPitches.length} total</span>
+            <span style={{ fontSize: "0.78rem", color: "#86868b" }}>{momentPitches.length + directPartners.filter(d => d.addedBy === "direct").length} total</span>
           </div>
-          <a href="#merchant-matches" className="btn btn-outline btn-sm" style={{ textDecoration: "none", whiteSpace: "nowrap" }}>
-            + New pitch for this moment
-          </a>
+          <div style={{ display: "flex", gap: 8 }}>
+            <button
+              className="btn btn-outline btn-sm"
+              onClick={() => setShowAddPartner(true)}
+              style={{ whiteSpace: "nowrap" }}
+            >
+              Add partner directly
+            </button>
+            <a href="#merchant-matches" className="btn btn-outline btn-sm" style={{ textDecoration: "none", whiteSpace: "nowrap" }}>
+              + New pitch for this moment
+            </a>
+          </div>
         </div>
-        {momentPitches.length === 0 ? (
+
+        {/* Direct partners (no pitch) */}
+        {directPartners.filter(p => p.addedBy === "direct").map(partner => (
+          <div key={partner.id} style={{
+            display: "flex", alignItems: "center", justifyContent: "space-between",
+            padding: "12px 16px", background: "white", borderRadius: 10,
+            border: "1px solid #e8e8ed", fontSize: "0.875rem", marginBottom: 8,
+          }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <span style={{ width: 8, height: 8, borderRadius: "50%", flexShrink: 0, background: "#a855f7" }} />
+              <span style={{ fontWeight: 600, color: "#1d1d1f" }}>{partner.merchantName}</span>
+              {partner.notes && <span style={{ color: "#86868b", fontSize: "0.78rem" }}>{partner.notes}</span>}
+            </div>
+            <span style={{ fontSize: "0.72rem", fontWeight: 600, padding: "2px 8px", borderRadius: 20, background: "#f3e8ff", color: "#7e22ce" }}>
+              Direct partner
+            </span>
+          </div>
+        ))}
+
+        {momentPitches.length === 0 && directPartners.filter(d => d.addedBy === "direct").length === 0 ? (
           <div className="card-p" style={{ textAlign: "center", color: "#86868b", fontSize: "0.85rem" }}>
             No pitches yet. Pick a merchant in <a href="#merchant-matches" style={{ color: "#0071e3", textDecoration: "none" }}>Merchant Matches</a> and build one.
           </div>
@@ -582,6 +681,68 @@ export function MomentDetailFull({ moment, initialPairings, initialPitches = [] 
           </div>
         )}
       </div>
+
+      {/* ── Add partner modal ──────────────────────────────────────────────── */}
+      {showAddPartner && (
+        <div style={{
+          position: "fixed", inset: 0, background: "rgba(0,0,0,0.4)", zIndex: 60,
+          display: "flex", alignItems: "center", justifyContent: "center", padding: 16,
+        }}>
+          <div style={{ background: "white", borderRadius: 20, padding: 24, maxWidth: 380, width: "100%", boxShadow: "0 20px 60px rgba(0,0,0,0.2)" }}>
+            <h3 style={{ fontSize: "1rem", fontWeight: 600, color: "#1d1d1f", marginBottom: 6 }}>Add merchant partner</h3>
+            <p style={{ fontSize: "0.82rem", color: "#86868b", marginBottom: 20, lineHeight: 1.5 }}>
+              For follow-up activations — skip the pitch flow and associate a merchant directly.
+            </p>
+
+            <label style={{ display: "block", fontSize: "0.82rem", fontWeight: 500, marginBottom: 4 }}>Merchant</label>
+            <select
+              value={selectedMerchantId}
+              onChange={e => setSelectedMerchantId(e.target.value)}
+              style={{ width: "100%", border: "1px solid #e8e8ed", borderRadius: 8, padding: "8px 10px", fontSize: "0.88rem", marginBottom: 14, fontFamily: "inherit" }}
+            >
+              <option value="">Select a merchant…</option>
+              {allMerchants.map(m => (
+                <option key={m.id} value={m.id}>{m.name}</option>
+              ))}
+            </select>
+
+            <label style={{ display: "block", fontSize: "0.82rem", fontWeight: 500, marginBottom: 4 }}>Activation type</label>
+            <select
+              value={addPartnerActivationType}
+              onChange={e => setAddPartnerActivationType(e.target.value)}
+              style={{ width: "100%", border: "1px solid #e8e8ed", borderRadius: 8, padding: "8px 10px", fontSize: "0.88rem", marginBottom: 14, fontFamily: "inherit" }}
+            >
+              <option value="follow_up">Follow-up activation</option>
+              <option value="new">New activation (no pitch needed)</option>
+            </select>
+
+            <label style={{ display: "block", fontSize: "0.82rem", fontWeight: 500, marginBottom: 4 }}>Notes (optional)</label>
+            <input
+              type="text"
+              value={addPartnerNotes}
+              onChange={e => setAddPartnerNotes(e.target.value)}
+              placeholder="e.g. Follow-up from 2025 FIFA activation"
+              style={{ width: "100%", border: "1px solid #e8e8ed", borderRadius: 8, padding: "8px 10px", fontSize: "0.88rem", marginBottom: 20, fontFamily: "inherit", boxSizing: "border-box" }}
+            />
+
+            <div style={{ display: "flex", gap: 10 }}>
+              <button
+                onClick={handleAddPartner}
+                disabled={!selectedMerchantId || addingPartner}
+                style={{ flex: 1, background: "#1d1d1f", color: "white", border: "none", borderRadius: 20, padding: "10px 0", fontSize: "0.88rem", fontWeight: 600, cursor: selectedMerchantId ? "pointer" : "not-allowed", opacity: selectedMerchantId ? 1 : 0.5, fontFamily: "inherit" }}
+              >
+                {addingPartner ? "Adding…" : "Add partner"}
+              </button>
+              <button
+                onClick={() => { setShowAddPartner(false); setSelectedMerchantId(""); setAddPartnerNotes(""); }}
+                style={{ flex: 1, background: "white", color: "#1d1d1f", border: "1px solid #e8e8ed", borderRadius: 20, padding: "10px 0", fontSize: "0.88rem", cursor: "pointer", fontFamily: "inherit" }}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── Section 3: Competitor Landscape ─────────────────────────────────── */}
       <div style={{ marginBottom: 28, minHeight: 80 }}>

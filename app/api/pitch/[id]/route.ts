@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
-import { pitches, briefs } from "@/lib/db/schema";
+import { pitches, briefs, moments } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 export const dynamic = "force-dynamic";
 
@@ -57,8 +57,19 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   if ("status" in body) {
     revalidatePath("/pitch");
     revalidatePath("/");
-    const [row] = await db.select({ momentId: pitches.momentId }).from(pitches).where(eq(pitches.id, id)).limit(1);
-    if (row?.momentId) revalidatePath(`/moments/${row.momentId}`);
+    const [row] = await db.select().from(pitches).where(eq(pitches.id, id)).limit(1);
+    if (row?.momentId) {
+      revalidatePath(`/moments/${row.momentId}`);
+      // When approved, write offer details back to the moment
+      if (body.status === "approved" && row.momentId) {
+        await db.update(moments).set({
+          approvedOffer: row.offerMechanics ?? null,
+          approvedMerchantId: row.merchantId ?? null,
+          approvedPitchId: id,
+          updatedAt: new Date(),
+        }).where(eq(moments.id, row.momentId));
+      }
+    }
   }
   return NextResponse.json({ success: true });
 }

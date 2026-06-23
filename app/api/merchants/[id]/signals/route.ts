@@ -3,7 +3,7 @@ import { db } from "@/lib/db";
 import { merchants } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { callClaude, parseJSON } from "@/lib/ai";
-import { MERCHANT_SIGNALS_PROMPT } from "@/lib/prompts";
+import { MERCHANT_SIGNALS_PROMPT, isBlockedMerchant } from "@/lib/prompts";
 
 export const maxDuration = 60;
 
@@ -26,6 +26,18 @@ export async function POST(
   const { id } = await params;
   const merchant = await db.query.merchants.findFirst({ where: eq(merchants.id, id) });
   if (!merchant) return NextResponse.json({ error: "Not found" }, { status: 404 });
+
+  if (isBlockedMerchant(merchant.name)) {
+    return NextResponse.json({
+      signals: {
+        applePayAffinity: 0,
+        affinityRationale: `${merchant.name} does not accept Apple Pay for online or in-app checkout and is ineligible for partnership.`,
+        transactionProfile: "Ineligible",
+        marketingOpenness: "Ineligible",
+        outreachApproach: "Do not pursue — merchant does not accept Apple Pay.",
+      },
+    });
+  }
 
   const user = `Merchant: ${merchant.name}
 Category: ${merchant.category}

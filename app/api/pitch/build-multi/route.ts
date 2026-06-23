@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { pitches, moments, merchants } from "@/lib/db/schema";
+import { pitches, moments, merchants, momentMerchants } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
+import { createId } from "@paralleldrive/cuid2";
 import { callClaude } from "@/lib/ai";
 import { extractJSONSafe } from "@/lib/json-utils";
 export const dynamic = "force-dynamic";
@@ -76,10 +77,10 @@ export async function POST(req: NextRequest) {
     validMerchants.map(merchant => generatePitchForMerchant(moment, merchant, targetQuarter))
   );
 
-  // Insert all pitches
+  // Insert all pitches and associate merchants
   const created = await Promise.all(
-    validMerchants.map((merchant, i) =>
-      db.insert(pitches).values({
+    validMerchants.map(async (merchant, i) => {
+      const [pitch] = await db.insert(pitches).values({
         title: `Apple Pay × ${merchant.name} — ${moment.name}`,
         type: "moment_led",
         status: "draft",
@@ -88,8 +89,16 @@ export async function POST(req: NextRequest) {
         targetQuarter,
         ...pitchData[i],
         documentGeneratedAt: new Date(),
-      }).returning().then(r => r[0])
-    )
+      }).returning();
+      await db.insert(momentMerchants).values({
+        id: createId(),
+        momentId,
+        merchantId: merchant.id,
+        addedBy: "pitch",
+        activationType: "new",
+      }).onConflictDoNothing();
+      return pitch;
+    })
   );
 
   return NextResponse.json({

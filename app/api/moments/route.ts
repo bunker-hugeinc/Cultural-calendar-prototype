@@ -25,6 +25,7 @@ export async function GET() {
       notes: moments.notes,
       createdAt: moments.createdAt,
       updatedAt: moments.updatedAt,
+      approvedOffer: moments.approvedOffer,
       pitchCount: sql<number>`(SELECT COUNT(*) FROM pitches WHERE pitches.moment_id = ${moments.id})`.as("pitch_count"),
     })
     .from(moments)

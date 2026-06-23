@@ -74,6 +74,7 @@ export interface CalendarMoment {
   description: string;
   hook: string | null;
   pitchCount?: number;
+  approvedOffer?: string | null;
 }
 
 // ─── Icons ────────────────────────────────────────────────────────────────────

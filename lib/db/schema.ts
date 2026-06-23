@@ -29,6 +29,10 @@ export const moments = pgTable("moments", {
   influencerCacheGeneratedAt: timestamp("influencer_cache_generated_at"),
   channelCacheGeneratedAt:   timestamp("channel_cache_generated_at"),
   opportunityCacheGeneratedAt: timestamp("opportunity_cache_generated_at"),
+  // Phase 27: approved offer fields (written when a pitch is approved)
+  approvedOffer:      text("approved_offer"),
+  approvedMerchantId: text("approved_merchant_id"),
+  approvedPitchId:    text("approved_pitch_id"),
   createdAt:   timestamp("created_at").defaultNow(),
   updatedAt:   timestamp("updated_at").defaultNow(),
 });
@@ -174,6 +178,19 @@ export const pitchMerchants = pgTable("pitch_merchants", {
   merchantId: text("merchant_id").notNull().references(() => merchants.id),
   isPrimary:  boolean("is_primary").default(false),
 });
+
+// ─── MOMENT MERCHANTS (direct partner association) ────────────────────────────
+export const momentMerchants = pgTable("moment_merchants", {
+  id:             text("id").primaryKey().$defaultFn(() => createId()),
+  momentId:       text("moment_id").notNull().references(() => moments.id, { onDelete: "cascade" }),
+  merchantId:     text("merchant_id").notNull().references(() => merchants.id, { onDelete: "cascade" }),
+  addedAt:        timestamp("added_at").defaultNow(),
+  addedBy:        text("added_by"),        // 'pitch' | 'direct'
+  notes:          text("notes"),
+  activationType: text("activation_type"), // 'follow_up' | 'new'
+}, (table) => ({
+  uniq: unique().on(table.momentId, table.merchantId),
+}));
 
 // ─── CREATIVE BRIEFS ──────────────────────────────────────────────────────────
 export const briefs = pgTable("briefs", {

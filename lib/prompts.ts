@@ -3,6 +3,29 @@ NEVER mention: rewards, cash back, 2%, Daily Cash, APR, interest rates, credit l
 Apple Pay is a contactless payment method accepted wherever NFC or online checkout supports it.
 Apple Pay's value proposition: speed, security, privacy, broad merchant acceptance.`;
 
+export const APPLE_PAY_ACCEPTANCE_RULE = `
+CRITICAL ELIGIBILITY CHECK: The merchant must currently accept Apple Pay as a payment method either on their website checkout (online) OR in their iOS app (in-app purchase). If the merchant does NOT accept Apple Pay, they are INELIGIBLE for partnership scoring.
+
+Known Apple Pay non-acceptors to automatically exclude:
+- Amazon / Amazon Prime / Amazon Prime Day (does not accept Apple Pay online)
+- Walmart.com (in-store Walmart Pay is different — online checkout does not support Apple Pay)
+
+NEVER recommend Apple, Apple Inc., the Apple Store, or any Apple product line as a merchant partner. Apple Pay is an Apple product — Apple cannot be both the product and the merchant partner.
+
+If a moment is primarily associated with a retailer known not to accept Apple Pay, lower the white space score significantly and note the ineligibility.`;
+
+// Merchant blocklists (used for hard filtering in scoring routes)
+export const APPLE_PAY_NON_ACCEPTORS = ["amazon", "amazon prime", "walmart.com"];
+export const ALWAYS_EXCLUDE_MERCHANTS = ["apple", "apple inc", "apple store", "apple.com"];
+
+export function isBlockedMerchant(name: string): boolean {
+  const lower = name.toLowerCase();
+  return (
+    APPLE_PAY_NON_ACCEPTORS.some(b => lower.includes(b)) ||
+    ALWAYS_EXCLUDE_MERCHANTS.some(ex => lower === ex || lower.startsWith("apple "))
+  );
+}
+
 const APPLE_PAY_ACCURACY = `IMPORTANT — Apple Pay product accuracy:
 Apple Pay = contactless tap-to-pay payment method, secure one-tap online/in-app checkout, Wallet integration.
 Apple Pay does NOT include cash back, percentage rewards, or instalments — those are Apple Card features.
@@ -12,6 +35,7 @@ Never attribute rewards, cash back, or instalment features to Apple Pay in any o
 export const SCORE_SYSTEM_PROMPT = `You are a campaign planning analyst for Apple Pay Partner Marketing.
 
 ${APPLE_PAY_CRITICAL}
+${APPLE_PAY_ACCEPTANCE_RULE}
 
 Score a cultural moment for Apple Pay activation potential. Return a JSON object with two parts:
 
@@ -72,6 +96,7 @@ Return valid JSON only. No markdown.`;
 export const DISCOVER_SYSTEM_PROMPT = `You are a cultural moment analyst for Apple Pay Partner Marketing. Today's date is {TODAY}.
 
 ${APPLE_PAY_CRITICAL}
+${APPLE_PAY_ACCEPTANCE_RULE}
 
 Apple Pay's merchant partners span: Floral, Beauty, Apparel, Activewear, Sneakers, Travel, Dining, Food Delivery, Grocery, Retail, Electronics, Sports Betting, Sports Merch, Home, Rides, Entertainment.
 
@@ -79,6 +104,19 @@ Apple Pay uses three campaign categories:
 - gather: moments that bring people together (events, celebrations, gatherings)
 - improve: moments focused on self-improvement, wellness, or personal finance
 - excite: high-energy, culturally significant tentpole moments
+
+EXCITE moments must meet one of these criteria to be included:
+- Season start / kickoff (first 1–2 weeks of a major sports season or tournament)
+- Playoffs, semifinals, or finals of a major competition
+- Championship events (Super Bowl, World Cup Final, Grand Slam final, etc.)
+- Annual tentpole events (Coachella, Oscars, Grammy Awards, etc.)
+
+DO NOT include as Excite moments:
+- Regular season games or matches (beyond the opening week)
+- Mid-season events without a clear cultural spike
+- Full competition seasons framed as a single ongoing moment (e.g., "UEFA Champions League season" spanning September–May)
+
+If a competition has both a season start AND a finals, create two separate moments — do not combine them into one "season" moment.
 
 You will be given a time window, category preferences, and priority merchants. Generate real, specific upcoming cultural moments that will actually occur in that time window -- not generic placeholders.
 
@@ -148,6 +186,7 @@ Return a JSON array of exactly 3 items. No markdown, no commentary.`;
 export const MERCHANT_SIGNALS_PROMPT = `You are a partnership analyst for Apple Pay Partner Marketing.
 
 ${APPLE_PAY_CRITICAL}
+${APPLE_PAY_ACCEPTANCE_RULE}
 
 Evaluate a merchant partner based on their category, seasonal patterns, and known history with Apple Pay marketing.
 
@@ -166,6 +205,7 @@ Return valid JSON only. No markdown.`;
 export const MERCHANT_MOMENTS_PROMPT = `You are a campaign planning analyst for Apple Pay Partner Marketing.
 
 ${APPLE_PAY_CRITICAL}
+${APPLE_PAY_ACCEPTANCE_RULE}
 
 IMPORTANT: Each merchant must receive a UNIQUE campaign angle specific to their brand, product category, and customer relationship.
 Do NOT reuse copy across merchants. Do NOT use generic placeholders.
@@ -259,10 +299,13 @@ ${entityType === "moment"
   : `MERCHANT: ${entityData.name}\nCategory: ${entityData.category ?? "N/A"}\nDescription: ${entityData.description ?? "N/A"}`
 }
 
-COMPETITOR CATEGORIES TO EVALUATE:
-1. Card networks & issuers: Mastercard, Visa, Citi, Discover, American Express, Chase, Bank of America, Capital One, BMO, Wells Fargo, PNC, US Bank, and similar
-2. Digital wallets & P2P: Google Pay, PayPal, Venmo, Zelle, CashApp, and similar
-3. Buy Now Pay Later (BNPL): Affirm, Klarna, Afterpay, and similar
+Analyze the moment/merchant and see if it is dominated by an Apple Pay competitor in topic, formal sponsorship, or partnership. They can be:
+
+* Major card networks or issuers like Mastercard, Citi, Discover, American Express, Chase, Bank of America, Capital One, BMO, Wells Fargo, PNC, US Bank, and others
+* Digital wallets and peer-to-peer options like Google Pay, PayPal, Venmo, Zelle, Samsung Pay/Wallet, Amazon Pay, Alipay, Cash App, and others
+* Buy now pay later brands like Affirm, Klarna, and Afterpay
+
+Note at a high level how they activate within the moment/merchant and how often.
 
 For each competitor you detect, note:
 - How they activate (title sponsorship, presenting sponsor, co-branded content, digital integration, merchant partnership, advertising, event naming rights)
@@ -274,6 +317,9 @@ Return a JSON object:
     {
       "brand": "<brand name>",
       "category": "card_network_issuer" | "digital_wallet" | "bnpl",
+      // card_network_issuer: Mastercard, Visa, Amex, Chase, Citi, etc.
+      // digital_wallet: Google Pay, PayPal, Venmo, Zelle, Samsung Pay/Wallet, Amazon Pay, Alipay, Cash App
+      // bnpl: Affirm, Klarna, Afterpay
       "activationMethod": "<how they activate>",
       "dominance": "dominant" | "significant" | "minor"
     }

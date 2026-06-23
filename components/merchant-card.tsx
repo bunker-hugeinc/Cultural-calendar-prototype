@@ -1,5 +1,16 @@
 import Link from "next/link";
 
+const APPLE_PAY_NON_ACCEPTORS = ["amazon", "amazon prime", "walmart.com"];
+const ALWAYS_EXCLUDE = ["apple", "apple inc", "apple store", "apple.com"];
+
+function isBlockedMerchant(name: string): boolean {
+  const lower = name.toLowerCase();
+  return (
+    APPLE_PAY_NON_ACCEPTORS.some(b => lower.includes(b)) ||
+    ALWAYS_EXCLUDE.some(ex => lower === ex || lower.startsWith("apple "))
+  );
+}
+
 interface MerchantCardProps {
   id: string;
   name: string;
@@ -20,6 +31,7 @@ const STATUS_STYLES: Record<string, { pill: string; label: string }> = {
 export function MerchantCard({ id, name, category, highRelevanceCount, partnerStatus, partnerGroup }: MerchantCardProps) {
   const status = partnerStatus ?? "existing";
   const statusStyle = STATUS_STYLES[status] ?? STATUS_STYLES.existing;
+  const blocked = isBlockedMerchant(name);
 
   return (
     <Link href={`/merchants/${id}`} className="block group no-underline">
@@ -33,6 +45,11 @@ export function MerchantCard({ id, name, category, highRelevanceCount, partnerSt
             {statusStyle.label}
           </span>
         </div>
+        {blocked && (
+          <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-red-50 text-red-600 border border-red-200 self-start">
+            Apple Pay not accepted
+          </span>
+        )}
 
         {/* Group / category */}
         <p className="text-xs text-apple-gray-400">

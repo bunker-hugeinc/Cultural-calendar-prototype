@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { moments, merchants, pitches } from "@/lib/db/schema";
+import { moments, merchants, pitches, momentMerchants } from "@/lib/db/schema";
 import { eq, and } from "drizzle-orm";
 import { callClaude } from "@/lib/ai";
 import { extractJSONSafe } from "@/lib/json-utils";
@@ -105,6 +105,15 @@ Return a JSON object — all fields written as if Apple Pay is reaching out TO t
     }).returning();
     pitchId = newPitch.id;
   }
+
+  // Associate merchant with moment (idempotent)
+  await db.insert(momentMerchants).values({
+    id: createId(),
+    momentId,
+    merchantId,
+    addedBy: "pitch",
+    activationType: "new",
+  }).onConflictDoNothing();
 
   return NextResponse.json({ pitchId, fromCache: false });
 }

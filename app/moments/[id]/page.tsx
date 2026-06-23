@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
-import { moments, pairingScores, merchants, pitches } from "@/lib/db/schema";
-import { eq, desc } from "drizzle-orm";
+import { moments, pairingScores, merchants, pitches, momentMerchants } from "@/lib/db/schema";
+import { eq, desc, ne } from "drizzle-orm";
 import { MomentDetailFull } from "@/components/moment-detail-full";
 
 export const dynamic = "force-dynamic";
@@ -39,6 +39,27 @@ export default async function MomentDetailPage({
     .where(eq(pairingScores.momentId, id))
     .orderBy(desc(pairingScores.relevanceScore));
 
+  // Load all merchants for the "add partner" modal (exclude dismissed)
+  const allMerchantsForModal = await db
+    .select({ id: merchants.id, name: merchants.name })
+    .from(merchants)
+    .where(ne(merchants.partnerStatus, "dismissed"))
+    .orderBy(merchants.name);
+
+  // Load directly-added partners (not via pitch)
+  const directPartners = await db
+    .select({
+      id: momentMerchants.id,
+      merchantId: momentMerchants.merchantId,
+      merchantName: merchants.name,
+      addedBy: momentMerchants.addedBy,
+      notes: momentMerchants.notes,
+      activationType: momentMerchants.activationType,
+    })
+    .from(momentMerchants)
+    .innerJoin(merchants, eq(momentMerchants.merchantId, merchants.id))
+    .where(eq(momentMerchants.momentId, id));
+
   const momentPitches = await db
     .select({
       id: pitches.id,
@@ -72,9 +93,14 @@ export default async function MomentDetailPage({
         scoreRationale: moment.scoreRationale,
         channelRecommendations: moment.channelRecommendations,
         notes: moment.notes,
+        approvedOffer: moment.approvedOffer,
+        approvedMerchantId: moment.approvedMerchantId,
+        approvedPitchId: moment.approvedPitchId,
       }}
       initialPairings={pairings}
       initialPitches={momentPitches}
+      allMerchants={allMerchantsForModal}
+      initialDirectPartners={directPartners}
     />
   );
 }

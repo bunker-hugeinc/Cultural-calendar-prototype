@@ -62,40 +62,36 @@ export default async function DashboardPage() {
   return (
     <div style={{ padding: "48px 24px", maxWidth: 1100, margin: "0 auto" }}>
 
-      {/* Header */}
-      <div style={{ marginBottom: 48, textAlign: "center" }}>
-        <p className="eyebrow" style={{ marginBottom: 8 }}>APPLE PAY PARTNER MARKETING</p>
-        <h1 style={{ fontSize: "2.2rem", fontWeight: 700, color: "#1d1d1f", marginBottom: 12 }}>
-          Campaign Planning Tool
-        </h1>
-        <p style={{ fontSize: "1rem", color: "#86868b", marginBottom: 28 }}>
-          Start from a cultural moment or a merchant — both paths lead to a pitch.
+      {/* Dashboard hero — single decision point */}
+      <div style={{ marginBottom: 40 }}>
+        <h1 style={{ fontSize: "1.5rem", fontWeight: 600, color: "#1d1d1f", marginBottom: 4 }}>Apple Pay Partner Marketing</h1>
+        <p style={{ fontSize: "0.9rem", color: "#86868b", marginBottom: 24 }}>
+          Find the right moment, the right merchant, and build the pitch.
         </p>
-        <div style={{ display: "flex", gap: 12, justifyContent: "center" }}>
-          <Link href="/calendar" className="btn btn-primary">Start with a Moment →</Link>
-          <Link href="/merchants" className="btn btn-outline">Start with a Merchant →</Link>
+
+        {/* Single two-option decision */}
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 12, maxWidth: 520 }}>
+          <a
+            href="/feed"
+            className="card-apple"
+            style={{ display: "flex", flexDirection: "column", gap: 6, padding: "16px 18px", textDecoration: "none", border: "1px solid #e8e8ed", transition: "border-color 0.15s" }}
+          >
+            <span style={{ fontSize: "0.9rem", fontWeight: 600, color: "#1d1d1f" }}>Start with a moment</span>
+            <span style={{ fontSize: "0.78rem", color: "#86868b", lineHeight: 1.5 }}>
+              Browse cultural moments and find the best merchant partners
+            </span>
+          </a>
+          <a
+            href="/merchants"
+            className="card-apple"
+            style={{ display: "flex", flexDirection: "column", gap: 6, padding: "16px 18px", textDecoration: "none", border: "1px solid #e8e8ed", transition: "border-color 0.15s" }}
+          >
+            <span style={{ fontSize: "0.9rem", fontWeight: 600, color: "#1d1d1f" }}>Start with a merchant</span>
+            <span style={{ fontSize: "0.78rem", color: "#86868b", lineHeight: 1.5 }}>
+              Find the best moment opportunities for a specific partner
+            </span>
+          </a>
         </div>
-      </div>
-
-      {/* Entry point cards */}
-      <div style={{ display: "flex", gap: 20, marginBottom: 48 }}>
-        <a href="/calendar" className="card-p" style={{ flex: 1, display: "block", textDecoration: "none" }}>
-          <p className="eyebrow" style={{ color: "#0071e3", marginBottom: 8 }}>PHASE 1 — DISCOVERY</p>
-          <h2 style={{ fontSize: "1.25rem", fontWeight: 700, marginBottom: 8, color: "#1d1d1f" }}>Start with a moment</h2>
-          <p style={{ fontSize: "0.9rem", color: "#86868b", marginBottom: 20 }}>
-            Find a cultural moment, evaluate its Apple Pay fit, identify the right merchants, and build a partnership pitch.
-          </p>
-          <span className="btn btn-primary">Browse calendar →</span>
-        </a>
-
-        <a href="/merchants" className="card-p" style={{ flex: 1, display: "block", textDecoration: "none" }}>
-          <p className="eyebrow" style={{ color: "#248a3d", marginBottom: 8 }}>PHASE 1 — DISCOVERY</p>
-          <h2 style={{ fontSize: "1.25rem", fontWeight: 700, marginBottom: 8, color: "#1d1d1f" }}>Start with a merchant</h2>
-          <p style={{ fontSize: "0.9rem", color: "#86868b", marginBottom: 20 }}>
-            Identify a current or potential partner, evaluate their fit, find the right moments to activate, and build a pitch.
-          </p>
-          <span className="btn btn-primary">Browse merchants →</span>
-        </a>
       </div>
 
       {/* Stats row */}

@@ -115,6 +115,15 @@ function MomentCard({ m, onRemove }: { m: CalendarMoment; onRemove?: (id: string
             {m.category}
           </span>
           <ScoreBadge score={m.score} />
+          {m.approvedOffer && (
+            <span
+              className="text-[10px] font-bold px-1.5 py-0.5 rounded-full"
+              style={{ background: "#dcfce7", color: "#16a34a" }}
+              title="Offer confirmed"
+            >
+              ✓ Offer confirmed
+            </span>
+          )}
           {(m.pitchCount ?? 0) > 0 && (
             <span
               className="text-[10px] font-bold px-1.5 py-0.5 rounded-full"
