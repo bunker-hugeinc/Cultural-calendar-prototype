@@ -33,6 +33,7 @@ export default async function MomentDetailPage({
       relevanceScore: pairingScores.relevanceScore,
       campaignAngle: pairingScores.campaignAngle,
       rationale: pairingScores.rationale,
+      isOfficialSponsor: pairingScores.isOfficialSponsor,
     })
     .from(pairingScores)
     .innerJoin(merchants, eq(pairingScores.merchantId, merchants.id))

@@ -65,7 +65,7 @@ Return a JSON array. Each element:
   "startDate": "<YYYY-MM-DD, real upcoming date>",
   "endDate": "<YYYY-MM-DD or null>",
   "category": "gather" | "improve" | "excite",
-  "score": <0-5 Apple Pay fit>,
+  "score": <0-10 Apple Pay fit, where 10 is highest>,
   "why": "<1-2 sentences on the Apple Pay partnership angle>"
 }
 If you are unsure of exact dates, give your best estimate for the next occurrence. Return [] only if nothing real matches.`;

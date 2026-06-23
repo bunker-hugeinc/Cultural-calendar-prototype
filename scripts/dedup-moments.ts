@@ -1,8 +1,8 @@
 // Run with: npx tsx scripts/dedup-moments.ts
 // Finds and removes semantically duplicate moments from the DB.
 import { db } from "../lib/db";
-import { moments, pitches } from "../lib/db/schema";
-import { eq } from "drizzle-orm";
+import { moments, pitches, briefs } from "../lib/db/schema";
+import { eq, inArray } from "drizzle-orm";
 
 async function dedupMoments() {
   const all = await db.select().from(moments).orderBy(moments.name);
@@ -44,7 +44,13 @@ async function dedupMoments() {
   if (toDelete.length > 0) {
     console.log(`\nDeleting ${toDelete.length} duplicate moment(s)…`);
     for (const id of toDelete) {
-      await db.delete(pitches).where(eq(pitches.momentId, id));
+      // Delete briefs → pitches → moment (FK chain)
+      const momentPitches = await db.select({ id: pitches.id }).from(pitches).where(eq(pitches.momentId, id));
+      if (momentPitches.length > 0) {
+        const pitchIds = momentPitches.map(p => p.id);
+        await db.delete(briefs).where(inArray(briefs.pitchId, pitchIds));
+        await db.delete(pitches).where(eq(pitches.momentId, id));
+      }
       await db.delete(moments).where(eq(moments.id, id));
       console.log(`  Deleted moment ${id}`);
     }

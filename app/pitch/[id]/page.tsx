@@ -670,15 +670,10 @@ export default function PitchDocumentPage() {
               </div>
             ))}
 
-            {pocData.guidance && (
-              <div style={{
-                padding: "10px 14px", borderRadius: 10, fontSize: "0.85rem",
-                background: pocData.searchSucceeded ? "#eff6ff" : "#fffbeb",
-                color: pocData.searchSucceeded ? "#1e40af" : "#92400e",
-              }}>
-                {pocData.searchSucceeded ? "💡 " : "📋 Where to look: "}
-                {pocData.guidance}
-              </div>
+            {pocData.pocs.length === 0 && (
+              <p style={{ fontSize: "0.82rem", color: "#86868b" }}>
+                No contacts found automatically — try searching LinkedIn for Partnership Manager or Business Development roles at {merchantName || displayMerchant}.
+              </p>
             )}
 
             <button

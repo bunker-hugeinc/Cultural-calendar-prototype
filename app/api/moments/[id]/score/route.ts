@@ -38,6 +38,7 @@ interface MerchantPairing {
   offerType: string;
   campaignAngle: string;
   rationale: string;
+  isOfficialSponsor?: boolean;
 }
 
 interface ScoreResponse {
@@ -206,6 +207,7 @@ Offer type: ${topMerchant.offerType}`;
         relevanceScore: p.relevanceScore,
         campaignAngle: p.campaignAngle,
         rationale: rationaleJson,
+        isOfficialSponsor: p.isOfficialSponsor ?? false,
       })
       .onConflictDoUpdate({
         target: [pairingScores.momentId, pairingScores.merchantId],
@@ -213,6 +215,7 @@ Offer type: ${topMerchant.offerType}`;
           relevanceScore: p.relevanceScore,
           campaignAngle: p.campaignAngle,
           rationale: rationaleJson,
+          isOfficialSponsor: p.isOfficialSponsor ?? false,
         },
       });
     upserted++;

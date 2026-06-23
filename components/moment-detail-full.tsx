@@ -17,6 +17,7 @@ interface Pairing {
   relevanceScore: number;
   campaignAngle: string;
   rationale: string | null;
+  isOfficialSponsor?: boolean | null;
 }
 
 interface ParsedRationale {
@@ -191,11 +192,23 @@ function CategoryPill({ category }: { category: string }) {
 // ── Main component ────────────────────────────────────────────────────────────
 
 interface CompetitorData {
-  competitorsDetected: Array<{ brand: string; category: string; activationMethod: string; dominance: string }>;
+  competitorsDetected: Array<{
+    brand: string;
+    category: string;
+    activationMethod: string;
+    dominance: string;
+    relationshipType?: "official_sponsor" | "formal_partner" | "general_presence";
+  }>;
   overallRisk: "high" | "medium" | "low" | "none";
   keyInsight: string;
   whiteSpace: string;
 }
+
+const RELATIONSHIP_STYLES: Record<string, { label: string; bg: string; color: string }> = {
+  official_sponsor: { label: "Official sponsor", bg: "#fef3c7", color: "#92400e" },
+  formal_partner:   { label: "Formal partner",   bg: "#ffedd5", color: "#9a3412" },
+  general_presence: { label: "General presence", bg: "#f5f5f7", color: "#6e6e73" },
+};
 
 export function MomentDetailFull({ moment, initialPairings, initialPitches = [], allMerchants = [], initialDirectPartners = [] }: Props) {
   const router = useRouter();
@@ -768,9 +781,19 @@ export function MomentDetailFull({ moment, initialPairings, initialPitches = [],
                       color: c.dominance === "dominant" ? "#cc2200" : c.dominance === "significant" ? "#c47c00" : "#6e6e73",
                     }}>{c.dominance}</span>
                     <div>
-                      <span style={{ fontWeight: 600, color: "#1d1d1f" }}>{c.brand}</span>
-                      <span style={{ color: "#86868b", margin: "0 6px" }}>·</span>
-                      <span style={{ color: "#86868b", textTransform: "capitalize" }}>{c.category.replace(/_/g, " ")}</span>
+                      <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+                        <span style={{ fontWeight: 600, color: "#1d1d1f" }}>{c.brand}</span>
+                        <span style={{ color: "#86868b" }}>·</span>
+                        <span style={{ color: "#86868b", textTransform: "capitalize" }}>{c.category.replace(/_/g, " ")}</span>
+                        {c.relationshipType && (() => {
+                          const rs = RELATIONSHIP_STYLES[c.relationshipType];
+                          return rs ? (
+                            <span style={{ fontSize: "0.68rem", fontWeight: 700, padding: "1px 7px", borderRadius: 10, background: rs.bg, color: rs.color }}>
+                              {rs.label}
+                            </span>
+                          ) : null;
+                        })()}
+                      </div>
                       <p style={{ fontSize: "0.78rem", color: "#6e6e73", marginTop: 2 }}>{c.activationMethod}</p>
                     </div>
                   </div>
@@ -1113,6 +1136,11 @@ function MerchantRow({
             <Link href={`/merchants/${pairing.merchantId}`} onClick={e => e.stopPropagation()} style={{ color: "#1d1d1f", textDecoration: "none" }}>
               {pairing.merchantName}
             </Link>
+            {pairing.isOfficialSponsor && (
+              <span style={{ fontSize: "0.65rem", padding: "1px 6px", borderRadius: 6, background: "#fef3c7", color: "#92400e", fontWeight: 700 }}>
+                Official sponsor
+              </span>
+            )}
             {pairing.merchantPartnerStatus === "dismissed" && (
               <span style={{ fontSize: "0.65rem", padding: "1px 6px", borderRadius: 6, background: "rgba(255,59,48,0.1)", color: "#cc2200", fontWeight: 700 }}>
                 Dismissed

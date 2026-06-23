@@ -4,7 +4,7 @@ import { inArray } from "drizzle-orm";
 
 const approvedNames = ["Nike", "Adidas", "Starbucks"];
 const inReviewNames = ["ESPN", "Marriott", "Delta Air Lines", "Whole Foods"];
-const dismissedNames = ["DraftKings", "FanDuel"];
+const dismissedNames: string[] = []; // Sports betting merchants (DraftKings, FanDuel) accept Apple Pay — do not auto-dismiss
 
 async function run() {
   await db.update(merchants).set({ partnerStatus: "approved" })

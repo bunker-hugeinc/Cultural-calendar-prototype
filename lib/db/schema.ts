@@ -29,6 +29,8 @@ export const moments = pgTable("moments", {
   influencerCacheGeneratedAt: timestamp("influencer_cache_generated_at"),
   channelCacheGeneratedAt:   timestamp("channel_cache_generated_at"),
   opportunityCacheGeneratedAt: timestamp("opportunity_cache_generated_at"),
+  // Phase 28: sponsorship signals — known official sponsors for this moment/sport
+  sponsorshipSignals: text("sponsorship_signals"), // JSON: { payment_sponsor, title_sponsors, official_partners }
   // Phase 27: approved offer fields (written when a pitch is approved)
   approvedOffer:      text("approved_offer"),
   approvedMerchantId: text("approved_merchant_id"),
@@ -66,6 +68,7 @@ export const pairingScores = pgTable("pairing_scores", {
   relevanceScore: real("relevance_score").notNull(),
   campaignAngle:  text("campaign_angle").notNull(),
   rationale:      text("rationale"),
+  isOfficialSponsor: boolean("is_official_sponsor"),
   createdAt:      timestamp("created_at").defaultNow(),
   // AI pairing cache
   pairingInfluencerCache: text("pairing_influencer_cache"),  // JSON string

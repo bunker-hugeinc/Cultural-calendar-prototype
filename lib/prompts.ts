@@ -71,10 +71,19 @@ IMPORTANT distinction for white space analysis:
 - COMPETITORS = other payment methods and financial brands: Visa, Mastercard, American Express, Google Pay, Apple Card, Venmo, PayPal, Cash App, Samsung Pay.
 - PARTNERS = merchants and retailers (Nike, Lululemon, Starbucks, etc.) — these are potential co-marketing partners, NOT competitors.
 
+Also include in PART 1:
+  "sponsorshipSignals": {
+    "payment_sponsor": "<name of the official payment sponsor for this event/league, if known — e.g. 'Discover is the Official Payment Sponsor of the NHL'>",
+    "title_sponsors": ["<named title sponsors>"],
+    "official_partners": ["<known official partners relevant to Apple Pay categories>"]
+  }
+  Omit sponsorshipSignals entirely if you have no reliable information. Do not guess.
+
 PART 2 -- Merchant pairings (JSON array). Each item:
 {
   "merchantName": "string (must exactly match input)",
   "relevanceScore": number 0.0-10.0,
+  "isOfficialSponsor": boolean (true if this merchant has a named, formal sponsorship with this event/league),
   "offerType": "The offer mechanic for this merchant × moment pairing. Choose the most fitting: Exclusive Early Access | Limited-Time Discount | Rewards Multiplier | Bundle Deal | Loyalty Bonus | Sweepstakes/Prize | Co-Branded Content | In-Store Experience. If none fit, use a short custom label (max 4 words).",
   "campaignAngle": "1-2 sentence campaign concept specific to THIS merchant x THIS moment. Must be UNIQUE to this merchant — never reuse copy across merchants. Reference the merchant's actual product category, customer base, and the specific Apple Pay transaction type their shoppers would use.",
   "rationale": "2-3 sentences explaining why this pairing works, grounded in actual consumer behavior during this moment at this merchant."
@@ -292,24 +301,27 @@ export function buildCompetitorAnalysisPrompt(
 You are an Apple Pay partnership strategist analyzing the competitive landscape.
 Return ONLY valid JSON. No markdown, no text outside the JSON.`,
 
-    user: `Analyze whether this ${entityType} is dominated by any Apple Pay competitors.
+    user: `Analyze the competitive landscape for Apple Pay in this ${entityType}.
 
 ${entityType === "moment"
   ? `MOMENT: ${entityData.name}\nDate: ${entityData.date ?? "N/A"}\nCategory: ${entityData.category ?? "N/A"}\nDescription: ${entityData.description ?? "N/A"}`
   : `MERCHANT: ${entityData.name}\nCategory: ${entityData.category ?? "N/A"}\nDescription: ${entityData.description ?? "N/A"}`
 }
 
-Analyze the moment/merchant and see if it is dominated by an Apple Pay competitor in topic, formal sponsorship, or partnership. They can be:
+Identify Apple Pay competitors that are active in this space, in priority order:
 
+1. OFFICIAL PAYMENT SPONSORS first — any brand with a named, formal payment sponsorship with this event, league, team, or venue. These are the highest-priority signals. Example: "Discover is the Official Payment Sponsor of the NHL." Do NOT list Visa or any other brand as a default — only include if there is actual evidence of a formal relationship with this specific moment/merchant.
+
+2. FORMAL PARTNERSHIPS — payment brands with named partnerships with the merchant or event organizer.
+
+3. GENERAL COMPETITOR PRESENCE — payment brands commonly associated with this moment category even without formal deals.
+
+Competitors can be:
 * Major card networks or issuers like Mastercard, Citi, Discover, American Express, Chase, Bank of America, Capital One, BMO, Wells Fargo, PNC, US Bank, and others
 * Digital wallets and peer-to-peer options like Google Pay, PayPal, Venmo, Zelle, Samsung Pay/Wallet, Amazon Pay, Alipay, Cash App, and others
 * Buy now pay later brands like Affirm, Klarna, and Afterpay
 
-Note at a high level how they activate within the moment/merchant and how often.
-
-For each competitor you detect, note:
-- How they activate (title sponsorship, presenting sponsor, co-branded content, digital integration, merchant partnership, advertising, event naming rights)
-- Frequency / dominance level: "dominant" | "significant" | "minor"
+For each competitor, note their relationship type and how they activate.
 
 Return a JSON object:
 {
@@ -317,9 +329,7 @@ Return a JSON object:
     {
       "brand": "<brand name>",
       "category": "card_network_issuer" | "digital_wallet" | "bnpl",
-      // card_network_issuer: Mastercard, Visa, Amex, Chase, Citi, etc.
-      // digital_wallet: Google Pay, PayPal, Venmo, Zelle, Samsung Pay/Wallet, Amazon Pay, Alipay, Cash App
-      // bnpl: Affirm, Klarna, Afterpay
+      "relationshipType": "official_sponsor" | "formal_partner" | "general_presence",
       "activationMethod": "<how they activate>",
       "dominance": "dominant" | "significant" | "minor"
     }
@@ -329,6 +339,6 @@ Return a JSON object:
   "whiteSpace": "<1-2 sentences: what activation angles are NOT yet claimed by competitors>"
 }
 
-If no competitors are detected, return competitorsDetected as an empty array and overallRisk as "none".`,
+Return the official payment sponsor as the first result if one exists. If no competitors are detected, return competitorsDetected as an empty array and overallRisk as "none".`,
   };
 }
