@@ -256,8 +256,8 @@ async function seed() {
       await db.update(moments).set({ startDate: m.startDate, endDate: m.endDate ?? null, category: m.category, description: m.description, hook, score, updatedAt: new Date() }).where(eq(moments.id, existing.id));
       momentMap[m.name] = existing.id;
     } else {
-      const [inserted] = await db.insert(moments).values({ name: m.name, startDate: m.startDate, endDate: m.endDate ?? null, category: m.category, description: m.description, hook, score }).returning({ id: moments.id });
-      momentMap[m.name] = inserted.id;
+      const [inserted] = await db.insert(moments).values({ name: m.name, startDate: m.startDate, endDate: m.endDate ?? null, category: m.category, description: m.description, hook, score }).onConflictDoNothing().returning({ id: moments.id });
+      if (inserted) momentMap[m.name] = inserted.id;
     }
   }
   console.log(`  ✓ ${MOMENTS_DATA.length} moments`);

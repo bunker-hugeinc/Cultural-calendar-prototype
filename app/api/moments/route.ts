@@ -47,6 +47,7 @@ export async function POST(req: Request) {
       score: body.score != null ? parseFloat(body.score) : null,
       notes: body.notes ?? null,
     })
+    .onConflictDoNothing()
     .returning();
-  return NextResponse.json(created, { status: 201 });
+  return NextResponse.json(created ?? null, { status: 201 });
 }

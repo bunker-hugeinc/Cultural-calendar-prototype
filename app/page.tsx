@@ -1,7 +1,8 @@
 import { db } from "@/lib/db";
 import { moments, merchants, pitches, feedCandidates } from "@/lib/db/schema";
-import { eq, gte, lte, desc, and } from "drizzle-orm";
+import { eq, gte, lte, desc, and, ne } from "drizzle-orm";
 import Link from "next/link";
+import { UpcomingMoments } from "@/components/upcoming-moments";
 
 export const dynamic = "force-dynamic";
 
@@ -16,16 +17,6 @@ function addDays(dateStr: string, n: number) {
   return `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, "0")}-${String(dt.getDate()).padStart(2, "0")}`;
 }
 
-function formatDate(dateStr: string) {
-  const [y, m, d] = dateStr.split("-").map(Number);
-  return new Date(y, m - 1, d).toLocaleDateString("en-US", { month: "short", day: "numeric" });
-}
-
-const CATEGORY_COLORS: Record<string, string> = {
-  gather:  "#5856d6",
-  improve: "#248a3d",
-  excite:  "#ff6200",
-};
 
 export default async function DashboardPage() {
   const today = todayStr();
@@ -40,7 +31,11 @@ export default async function DashboardPage() {
       id: moments.id, name: moments.name, startDate: moments.startDate,
       category: moments.category, score: moments.score,
     }).from(moments)
-      .where(and(gte(moments.startDate, today), lte(moments.startDate, cutoff90)))
+      .where(and(
+        gte(moments.startDate, today),
+        lte(moments.startDate, cutoff90),
+        ne(moments.status, "dismissed"),
+      ))
       .orderBy(desc(moments.score))
       .limit(4),
     db.select({
@@ -117,37 +112,7 @@ export default async function DashboardPage() {
           <h2 style={{ fontSize: "1.1rem", fontWeight: 700 }}>Upcoming moments <span style={{ color: "#86868b", fontWeight: 400, fontSize: "0.85rem" }}>(next 90 days)</span></h2>
           <Link href="/calendar" style={{ fontSize: "0.85rem", color: "#0071e3", textDecoration: "none" }}>View all →</Link>
         </div>
-        {upcoming.length === 0 ? (
-          <p style={{ color: "#86868b", fontSize: "0.9rem" }}>No upcoming moments in the next 90 days.</p>
-        ) : (
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 12 }}>
-            {upcoming.map(m => (
-              <Link key={m.id} href={`/moments/${m.id}`} style={{ textDecoration: "none" }}>
-                <div className="card-apple" style={{ padding: "16px 20px", display: "flex", alignItems: "center", gap: 16 }}>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontWeight: 600, fontSize: "0.95rem", color: "#1d1d1f", marginBottom: 4, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                      {m.name}
-                    </div>
-                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                      <span style={{ fontSize: "0.75rem", color: "#86868b" }}>{formatDate(m.startDate)}</span>
-                      <span style={{
-                        fontSize: "0.65rem", fontWeight: 700, padding: "2px 7px", borderRadius: 10,
-                        background: CATEGORY_COLORS[m.category] ?? "#86868b",
-                        color: "white", textTransform: "uppercase", letterSpacing: "0.04em",
-                      }}>{m.category}</span>
-                    </div>
-                  </div>
-                  {m.score != null && (
-                    <div style={{ textAlign: "right", flexShrink: 0 }}>
-                      <div style={{ fontSize: "1.2rem", fontWeight: 700, color: "#1d1d1f" }}>{m.score.toFixed(1)}</div>
-                      <div style={{ fontSize: "0.65rem", color: "#86868b" }}>score</div>
-                    </div>
-                  )}
-                </div>
-              </Link>
-            ))}
-          </div>
-        )}
+        <UpcomingMoments initialMoments={upcoming} />
       </div>
 
       {/* Recent pitches + Feed preview side by side */}

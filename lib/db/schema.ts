@@ -1,4 +1,5 @@
-import { pgTable, text, real, timestamp, boolean, unique } from "drizzle-orm/pg-core";
+import { pgTable, text, real, timestamp, boolean, unique, uniqueIndex } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
 import { createId } from "@paralleldrive/cuid2";
 
 // ─── MOMENT ───────────────────────────────────────────────
@@ -35,9 +36,13 @@ export const moments = pgTable("moments", {
   approvedOffer:      text("approved_offer"),
   approvedMerchantId: text("approved_merchant_id"),
   approvedPitchId:    text("approved_pitch_id"),
+  // Phase 29: soft-delete / dismiss from dashboard
+  status: text("status").default("active"), // "active" | "dismissed"
   createdAt:   timestamp("created_at").defaultNow(),
   updatedAt:   timestamp("updated_at").defaultNow(),
-});
+}, (table) => ({
+  uniqueName: uniqueIndex("moments_name_unique_idx").on(sql`lower(${table.name})`),
+}));
 
 // ─── MERCHANT ─────────────────────────────────────────────
 export const merchants = pgTable("merchants", {

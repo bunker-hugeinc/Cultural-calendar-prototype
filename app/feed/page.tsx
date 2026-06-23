@@ -43,7 +43,7 @@ function ScoreChip({ score }: { score: number }) {
   );
 }
 
-const QUARTERS_DEFAULT = { timeWindow: "6m", categories: ["gather", "improve", "excite"] as string[], minScore: 3.0 };
+const QUARTERS_DEFAULT = { timeWindow: "6m", categories: ["gather", "improve", "excite"] as string[], minScore: 6.0 };
 
 export default function FeedPage() {
   const router = useRouter();
@@ -56,7 +56,7 @@ export default function FeedPage() {
 
   const [timeWindow, setTimeWindow] = useState("6m");
   const [categories, setCategories] = useState(["gather", "improve", "excite"]);
-  const [minScore, setMinScore] = useState(3.0);
+  const [minScore, setMinScore] = useState(6.0);
   const [priorityMerchants, setPriorityMerchants] = useState<string[]>([]);
   const [allMerchants, setAllMerchants] = useState<{ id: string; name: string }[]>([]);
 
@@ -236,12 +236,12 @@ export default function FeedPage() {
               MIN SCORE: <span style={{ color: "#0071e3" }}>{minScore.toFixed(1)}</span>
             </label>
             <input
-              type="range" min={0} max={5} step={0.5} value={minScore}
+              type="range" min={0} max={10} step={0.5} value={minScore}
               onChange={e => setMinScore(parseFloat(e.target.value))}
               style={{ width: "100%", accentColor: "#0071e3" }}
             />
             <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.72rem", color: "#86868b" }}>
-              <span>0.0</span><span>5.0</span>
+              <span>0.0</span><span>10.0</span>
             </div>
           </div>
           <button

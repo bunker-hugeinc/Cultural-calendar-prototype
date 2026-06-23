@@ -35,7 +35,8 @@ export async function POST(
       score: candidate.score,
       feedCandidateId: candidate.id,
     })
+    .onConflictDoNothing()
     .returning();
 
-  return NextResponse.json({ moment: newMoment });
+  return NextResponse.json({ moment: newMoment ?? null });
 }
