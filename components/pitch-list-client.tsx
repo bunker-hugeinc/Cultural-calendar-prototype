@@ -105,8 +105,12 @@ export function PitchListClient({ initialPitches }: { initialPitches: PitchRow[]
                       {pitch.primaryMomentName && (
                         <span style={{ fontSize: "0.75rem", color: "#6e6e73" }}>📅 {pitch.primaryMomentName}</span>
                       )}
-                      {pitch.primaryMerchantName && (
+                      {pitch.primaryMerchantName && pitch.primaryMerchantName !== "TBD" ? (
                         <span style={{ fontSize: "0.75rem", color: "#6e6e73" }}>🏪 {pitch.primaryMerchantName}</span>
+                      ) : (
+                        <span style={{ fontSize: "0.65rem", fontWeight: 600, padding: "2px 7px", borderRadius: 10, background: "#fffbeb", color: "#b45309", border: "1px solid #fde68a" }}>
+                          No merchant
+                        </span>
                       )}
                       {pitch.targetQuarter && (
                         <span style={{ fontSize: "0.75rem", color: "#86868b" }}>{pitch.targetQuarter}</span>
@@ -128,18 +132,20 @@ export function PitchListClient({ initialPitches }: { initialPitches: PitchRow[]
                       {meta.label}
                     </span>
                     <span style={{ fontSize: "0.75rem", color: "#86868b" }}>{formatDate(pitch.updatedAt)}</span>
-                    <button
-                      onClick={e => handleDelete(e, pitch.id, pitch.title)}
-                      disabled={deleting === pitch.id}
-                      title="Delete pitch"
-                      style={{
-                        background: "none", border: "none", cursor: "pointer", padding: "4px 6px",
-                        color: "#cc2200", fontSize: "0.95rem", opacity: deleting === pitch.id ? 0.4 : 0.7,
-                        lineHeight: 1,
-                      }}
-                    >
-                      🗑
-                    </button>
+                    {pitch.status === "draft" && (
+                      <button
+                        onClick={e => handleDelete(e, pitch.id, pitch.title)}
+                        disabled={deleting === pitch.id}
+                        title="Delete draft"
+                        style={{
+                          background: "none", border: "none", cursor: "pointer", padding: "4px 6px",
+                          color: "#cc2200", fontSize: "0.95rem", opacity: deleting === pitch.id ? 0.4 : 0.7,
+                          lineHeight: 1,
+                        }}
+                      >
+                        🗑
+                      </button>
+                    )}
                   </div>
                 </div>
               </Link>

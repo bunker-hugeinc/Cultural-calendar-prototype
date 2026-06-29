@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
 import { merchants, pairingScores, moments } from "@/lib/db/schema";
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, gte, and } from "drizzle-orm";
 import { MerchantDetailFull } from "@/components/merchant-detail-full";
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
@@ -17,6 +17,9 @@ export default async function MerchantDetailPage({ params }: { params: Promise<{
   const merchant = await db.query.merchants.findFirst({ where: eq(merchants.id, id) });
   if (!merchant) notFound();
 
+  const today = new Date();
+  const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+
   const pairings = await db
     .select({
       id: pairingScores.id,
@@ -29,7 +32,10 @@ export default async function MerchantDetailPage({ params }: { params: Promise<{
     })
     .from(pairingScores)
     .innerJoin(moments, eq(pairingScores.momentId, moments.id))
-    .where(eq(pairingScores.merchantId, id))
+    .where(and(
+      eq(pairingScores.merchantId, id),
+      gte(moments.startDate, todayStr),
+    ))
     .orderBy(desc(pairingScores.relevanceScore));
 
   return (

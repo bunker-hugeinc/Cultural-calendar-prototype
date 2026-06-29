@@ -270,9 +270,13 @@ export default function PitchDocumentPage() {
 
   function handleBlur(field: keyof PitchData, value: string) {
     clearTimeout(saveTimeouts.current[field]);
+    // Only save if this field has a pending (user-initiated) change.
+    // Without this guard, handleBlur fires on focus-out during page load and
+    // updates updatedAt even when no actual edit was made.
+    const wasDirty = field in pendingChanges.current;
     delete pendingChanges.current[field];
     if (Object.keys(pendingChanges.current).length === 0) hasPending.current = false;
-    savePitchFields({ [field]: value });
+    if (wasDirty) savePitchFields({ [field]: value });
   }
 
   // Flush pending saves on unmount

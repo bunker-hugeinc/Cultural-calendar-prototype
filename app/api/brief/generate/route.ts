@@ -27,49 +27,51 @@ export async function POST(req: NextRequest) {
     const merchant = pitchRows[0].merchants;
     const moment = pitchRows[0].moments;
 
-    const systemPrompt = `You are a campaign strategist for Apple Pay Partner Marketing.
+    const systemPrompt = `You are an expert marketing strategist specializing in partnership and sponsorship briefs for Apple Pay.
 
-Given a cultural moment, its approved merchant partner, and the pitch details, generate a complete Apple Pay Partner Marketing brief.
+You will receive structured context about a sponsorship moment, a merchant partner, and the pitch intent. You must return a complete creative brief in valid JSON covering all 10 fields.
 
-CRITICAL: This tool is for Apple Pay only — NOT Apple Card, NOT Apple Cash.
-NEVER mention: rewards, cash back, 2%, Daily Cash, APR, interest rates, credit limits.
-Apple Pay is a contactless payment method accepted wherever NFC or online checkout supports it.
-Apple Pay's value proposition: speed, security, privacy, broad merchant acceptance.
+APPLE PAY ACCURACY RULES — MANDATORY:
+Never use: "rewards program", "cash back", "cashback", "Daily Cash", "APR", "interest rate", "exclusive rewards", "exclusive offers".
+Apple Pay is described only as: fast, secure, frictionless checkout; tap to pay; seamless in-store/in-app payments; privacy-first transactions.`;
 
-Return a JSON object with exactly these fields — no markdown, no commentary:
+    const userMessage = `Generate a complete creative brief for the following Apple Pay sponsorship opportunity.
+
+MOMENT: ${moment?.name ?? "Unknown"}
+DATE/TIMING: ${moment?.startDate ?? ""}${moment?.endDate ? ` – ${moment.endDate}` : ""}
+CATEGORY: ${moment?.category ?? ""}
+DESCRIPTION: ${moment?.description ?? "Not available"}
+
+MERCHANT PARTNER: ${merchant?.name ?? "Unknown"}
+MERCHANT CATEGORY: ${merchant?.category ?? ""}
+
+PITCH OVERVIEW: ${pitch.businessRationale ?? ""}
+OFFER MECHANICS: ${pitch.offerMechanics ?? ""}
+AUDIENCE REACH: ${pitch.audienceReachNarrative ?? ""}
+TARGET QUARTER: ${pitch.targetQuarter ?? ""}
+
+Return a JSON object with exactly these 10 keys:
 
 {
-  "toplineOverview": "2–3 sentence TL;DR of what this campaign is doing and why now. Be specific to the moment and merchant.",
-  "businessObjectives": ["string", "string"],
-  "audience": "1–2 sentences describing the primary audience including relevant behavioral insight.",
-  "deliverables": ["string", "string"],
-  "successMetrics": ["string", "string"],
-  "timingNotes": "1–2 sentences on timing rationale based on the moment dates. Note any production lead time implications.",
+  "toplineOverview": "2–3 sentence executive summary of the sponsorship opportunity. Why this moment, why this merchant, why Apple Pay.",
+  "businessObjectives": ["bullet string 1", "bullet string 2", "bullet string 3"],
+  "audience": "2–3 sentences describing the primary and secondary audience. Include demographic, behavioral, and psychographic signals relevant to this moment.",
+  "deliverables": ["deliverable 1", "deliverable 2", "deliverable 3", "deliverable 4"],
+  "successMetrics": ["metric 1", "metric 2", "metric 3"],
+  "timingNotes": "1–2 sentences on timing considerations: when assets are due, approval lead time, key campaign windows relative to the moment date.",
   "additionalReferences": [],
-  "foundationalInsights": "2–3 sentences of audience insight specific to this moment and merchant. Reference real behavioral patterns (habit inertia, convenience gaps, trust barriers).",
-  "messagingHierarchy": ["Pillar label — 1-sentence rationale", "Pillar label — rationale"],
-  "creativeTacticalConsiderations": ["string", "string"]
+  "foundationalInsights": "2–4 sentences of strategic insight grounding the brief. What cultural, behavioral, or market trend makes this moment uniquely relevant for Apple Pay right now?",
+  "messagingHierarchy": ["Primary: [message]\\n• [support 1]\\n• [support 2]", "pillar 2 — rationale", "pillar 3 — rationale"],
+  "creativeTacticalConsiderations": ["tactical recommendation 1", "tactical recommendation 2", "tactical recommendation 3"]
 }
 
-businessObjectives: 2–3 bullets on the business problem this campaign solves. Focus on Apple Pay adoption, spending uplift, or partner co-marketing goals.
-deliverables: list what would be produced (e.g. "2 Discovery Cards (UK, FR, DE)", "Partner co-branded social assets").
-successMetrics: 2–3 KPIs from: CID Provisions, Engagement Rate, CTR, Partner Redemptions, Spend Uplift, ROAS, App Opens, Wallet Adds.
+businessObjectives: 2–3 bullets on the business problem this campaign solves. Focus on Apple Pay provisioning, spending uplift, or partner co-marketing goals.
+deliverables: 4–6 specific content or activation deliverables (e.g. co-branded social content, in-store signage, push notification, email banner, event activation).
+successMetrics: 3–5 measurable KPIs (e.g. tap-to-pay transaction volume, merchant co-marketing reach, impressions, new user acquisition). Choose from: CID Provisions, Engagement Rate, CTR, Partner Redemptions, Spend Uplift, ROAS, App Opens, Wallet Adds.
 messagingHierarchy: ordered list of 3–5 message pillars, most to least important. Each: "Label — 1-sentence rationale."
-creativeTacticalConsiderations: 2–4 must-haves or watch-outs specific to this moment and merchant.`;
+creativeTacticalConsiderations: 3–5 tactical recommendations for how the campaign should come to life creatively. Focus on channel, format, and Apple Pay integration point.
 
-    const userMessage = `Moment: ${moment?.name ?? "Unknown"}
-Dates: ${moment?.startDate ?? ""}${moment?.endDate ? ` to ${moment.endDate}` : ""}
-Category: ${moment?.category ?? ""}
-Description: ${moment?.description ?? ""}
-
-Merchant Partner: ${merchant?.name ?? "Unknown"}
-Merchant Category: ${merchant?.category ?? ""}
-
-Partnership Angle: ${pitch.businessRationale ?? ""}
-Offer Mechanics: ${pitch.offerMechanics ?? ""}
-ROI Narrative: ${pitch.roiNarrative ?? ""}
-Audience Reach: ${pitch.audienceReachNarrative ?? ""}
-Target Quarter: ${pitch.targetQuarter ?? ""}`;
+Return ONLY the JSON object. No markdown, no code fences, no explanation.`;
 
     const raw = await callClaude({
       system: systemPrompt,

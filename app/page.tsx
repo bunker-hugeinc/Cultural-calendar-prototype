@@ -3,6 +3,7 @@ import { moments, merchants, pitches, feedCandidates } from "@/lib/db/schema";
 import { eq, gte, lte, desc, and, ne } from "drizzle-orm";
 import Link from "next/link";
 import { UpcomingMoments } from "@/components/upcoming-moments";
+import { DashboardCTACards } from "@/components/dashboard-cta-cards";
 
 export const dynamic = "force-dynamic";
 
@@ -65,28 +66,7 @@ export default async function DashboardPage() {
         </p>
 
         {/* Single two-option decision */}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 12, maxWidth: 520 }}>
-          <a
-            href="/feed"
-            className="card-apple"
-            style={{ display: "flex", flexDirection: "column", gap: 6, padding: "16px 18px", textDecoration: "none", border: "1px solid #e8e8ed", transition: "border-color 0.15s" }}
-          >
-            <span style={{ fontSize: "0.9rem", fontWeight: 600, color: "#1d1d1f" }}>Start with a moment</span>
-            <span style={{ fontSize: "0.78rem", color: "#86868b", lineHeight: 1.5 }}>
-              Browse cultural moments and find the best merchant partners
-            </span>
-          </a>
-          <a
-            href="/merchants"
-            className="card-apple"
-            style={{ display: "flex", flexDirection: "column", gap: 6, padding: "16px 18px", textDecoration: "none", border: "1px solid #e8e8ed", transition: "border-color 0.15s" }}
-          >
-            <span style={{ fontSize: "0.9rem", fontWeight: 600, color: "#1d1d1f" }}>Start with a merchant</span>
-            <span style={{ fontSize: "0.78rem", color: "#86868b", lineHeight: 1.5 }}>
-              Find the best moment opportunities for a specific partner
-            </span>
-          </a>
-        </div>
+        <DashboardCTACards />
       </div>
 
       {/* Stats row */}

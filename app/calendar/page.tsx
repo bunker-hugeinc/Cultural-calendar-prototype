@@ -136,10 +136,10 @@ export default function CalendarPage() {
         setLoading(false);
       })
       .catch(() => setLoading(false));
-    fetch("/api/feed", { cache: "no-store" })
+    fetch("/api/moments/suggested?limit=6", { cache: "no-store" })
       .then(r => r.json())
-      .then((rows: SuggestedCandidate[]) => {
-        if (Array.isArray(rows)) setSuggested(rows.filter(c => (c as { status?: string }).status === "pending").slice(0, 6));
+      .then((data: { moments?: SuggestedCandidate[] }) => {
+        if (data?.moments && Array.isArray(data.moments)) setSuggested(data.moments);
       })
       .catch(() => {});
   }, []);
@@ -295,7 +295,7 @@ export default function CalendarPage() {
 
         {suggested.length === 0 ? (
           <div className="card-p" style={{ textAlign: "center", color: "#86868b" }}>
-            <p style={{ marginBottom: 12 }}>No suggested moments yet.</p>
+            <p style={{ marginBottom: 12 }}>No upcoming suggestions — go to Feed to discover new moments.</p>
             <Link href="/feed" className="btn btn-primary btn-sm" style={{ textDecoration: "none" }}>
               Go to Feed to generate suggestions
             </Link>
